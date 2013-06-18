@@ -129,7 +129,7 @@ jlong     Java_com_aldebaran_qimessaging_Object_connect(JNIEnv *env, jobject job
   try {
     return obj->connect(event,
                         qi::SignalSubscriber(
-                          qi::makeDynamicGenericFunction(
+                          qi::AnyFunction::fromDynamicFunction(
                             boost::bind(&event_callback_to_java, (void*) data, _1)),
                           qi::MetaCallType_Direct));
   } catch (std::exception& e)

@@ -141,7 +141,7 @@ void      Java_com_aldebaran_qimessaging_Session_onDisconnected(JNIEnv *env, job
   data = new qi_method_info(jobjectInstance, signature, jobj);
   gInfoHandler.push(data);
 
-  session->disconnected.connect(qi::makeDynamicGenericFunction(
+  session->disconnected.connect(qi::AnyFunction::fromDynamicFunction(
                                   boost::bind(&event_callback_to_java, (void*) data, _1)),
                                 qi::MetaCallType_Direct);
 }

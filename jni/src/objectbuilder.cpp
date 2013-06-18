@@ -91,7 +91,7 @@ jlong   Java_com_aldebaran_qimessaging_DynamicObjectBuilder_advertiseMethod(JNIE
   int ret = ob->xAdvertiseMethod(sigInfo[0],
                                  sigInfo[1],
                                  sigInfo[2],
-                                 makeDynamicGenericFunction(boost::bind(&call_to_java, signature, data, _1)).dropFirstArgument(),
+                                 AnyFunction::fromDynamicFunction(boost::bind(&call_to_java, signature, data, _1)).dropFirstArgument(),
                                  description);
 
   return (jlong) ret;
