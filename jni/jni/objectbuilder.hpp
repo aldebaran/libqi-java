@@ -15,12 +15,12 @@
 extern "C"
 {
 
-  QIMESSAGING_API jlong   Java_com_aldebaran_qimessaging_GenericObjectBuilder_create();
-  QIMESSAGING_API jobject Java_com_aldebaran_qimessaging_GenericObjectBuilder_object(JNIEnv *env, jobject jobj, jlong pObjectBuilder);
-  QIMESSAGING_API void    Java_com_aldebaran_qimessaging_GenericObjectBuilder_destroy(JNIEnv *env, jobject jobj, jlong pObjectBuilder);
-  QIMESSAGING_API jlong   Java_com_aldebaran_qimessaging_GenericObjectBuilder_advertiseMethod(JNIEnv *env, jobject obj, jlong pObjectBuilder, jstring method, jobject instance, jstring service, jstring desc);
-  QIMESSAGING_API jlong   Java_com_aldebaran_qimessaging_GenericObjectBuilder_advertiseSignal(JNIEnv *env, jobject obj, jlong pObjectBuilder, jstring eventSignature);
-  QIMESSAGING_API jlong   Java_com_aldebaran_qimessaging_GenericObjectBuilder_advertiseProperty(JNIEnv *env, jobject obj, jlong pObjectBuilder, jstring name, jclass propertyBase);
+  QIMESSAGING_API jlong   Java_com_aldebaran_qimessaging_DynamicObjectBuilder_create();
+  QIMESSAGING_API jobject Java_com_aldebaran_qimessaging_DynamicObjectBuilder_object(JNIEnv *env, jobject jobj, jlong pObjectBuilder);
+  QIMESSAGING_API void    Java_com_aldebaran_qimessaging_DynamicObjectBuilder_destroy(JNIEnv *env, jobject jobj, jlong pObjectBuilder);
+  QIMESSAGING_API jlong   Java_com_aldebaran_qimessaging_DynamicObjectBuilder_advertiseMethod(JNIEnv *env, jobject obj, jlong pObjectBuilder, jstring method, jobject instance, jstring service, jstring desc);
+  QIMESSAGING_API jlong   Java_com_aldebaran_qimessaging_DynamicObjectBuilder_advertiseSignal(JNIEnv *env, jobject obj, jlong pObjectBuilder, jstring eventSignature);
+  QIMESSAGING_API jlong   Java_com_aldebaran_qimessaging_DynamicObjectBuilder_advertiseProperty(JNIEnv *env, jobject obj, jlong pObjectBuilder, jstring name, jclass propertyBase);
 
 } // !extern "C"
 

@@ -1,7 +1,7 @@
 package com.aldebaran;
 
 import com.aldebaran.qimessaging.Application;
-import com.aldebaran.qimessaging.GenericObjectBuilder;
+import com.aldebaran.qimessaging.DynamicObjectBuilder;
 import com.aldebaran.qimessaging.QimessagingException;
 import com.aldebaran.qimessaging.Object;
 import com.aldebaran.qimessaging.Session;
@@ -15,7 +15,7 @@ public class App
     String sdAddr = "tcp://127.0.0.1:9559";
     Session s = new Session();
     QimessagingService service = new ReplyService();
-    GenericObjectBuilder ob = new GenericObjectBuilder();
+    DynamicObjectBuilder ob = new DynamicObjectBuilder();
 
     if (args.length >= 1)
       sdAddr = args[0];

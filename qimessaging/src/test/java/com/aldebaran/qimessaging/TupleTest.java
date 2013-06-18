@@ -28,7 +28,7 @@ public class TupleTest
     String url = sd.listenUrl();
 
     // Create new QiMessaging generic object
-    GenericObjectBuilder ob = new GenericObjectBuilder();
+    DynamicObjectBuilder ob = new DynamicObjectBuilder();
 
     // Get instance of ReplyService
     QimessagingService reply = new ReplyService();

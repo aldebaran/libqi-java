@@ -5,7 +5,7 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 
-import com.aldebaran.qimessaging.GenericObjectBuilder;
+import com.aldebaran.qimessaging.DynamicObjectBuilder;
 import com.aldebaran.qimessaging.QimessagingService;
 import com.aldebaran.qimessaging.Object;
 import com.aldebaran.qimessaging.Tuple;
@@ -16,7 +16,7 @@ public class ReplyService extends QimessagingService
 
   public Object createObject()
   {
-    GenericObjectBuilder ob = new GenericObjectBuilder();
+    DynamicObjectBuilder ob = new DynamicObjectBuilder();
 
     try {
       ob.advertiseSignal("fire::(i)");

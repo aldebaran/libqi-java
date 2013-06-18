@@ -2,7 +2,7 @@ package com.aldebaran.qimessaging;
 
 import java.lang.reflect.Method;
 
-public class GenericObjectBuilder {
+public class DynamicObjectBuilder {
 
   static
   {
@@ -23,9 +23,9 @@ public class GenericObjectBuilder {
   private static native long   advertiseSignal(long pObjectBuilder, String eventSignature);
   private static native long   advertiseProperty(long pObjectBuilder, String name, Class<?> propertyBase);
 
-  public GenericObjectBuilder()
+  public DynamicObjectBuilder()
   {
-    _p = GenericObjectBuilder.create();
+    _p = DynamicObjectBuilder.create();
   }
 
   /**
@@ -51,7 +51,7 @@ public class GenericObjectBuilder {
       // If method name match signature
       if (methodSignature.contains(method.getName()) == true)
       {
-        if (GenericObjectBuilder.advertiseMethod(_p, methodSignature, service, className, description) == 0)
+        if (DynamicObjectBuilder.advertiseMethod(_p, methodSignature, service, className, description) == 0)
           throw new QimessagingException("Cannot register method " + methodSignature);
         return;
       }
@@ -67,14 +67,14 @@ public class GenericObjectBuilder {
   {
     if (_p == 0)
       throw new Exception("Invalid object");
-    GenericObjectBuilder.advertiseSignal(_p, signalSignature);
+    DynamicObjectBuilder.advertiseSignal(_p, signalSignature);
   }
 
   public void advertiseProperty(String name, Class<?> propertyBase) throws QimessagingException
   {
     if (_p == 0)
       throw new QimessagingException("Invalid object");
-    if (GenericObjectBuilder.advertiseProperty(_p, name, propertyBase) <= 0)
+    if (DynamicObjectBuilder.advertiseProperty(_p, name, propertyBase) <= 0)
       throw new QimessagingException("Cannot advertise " + name + " property");
   }
 
@@ -85,7 +85,7 @@ public class GenericObjectBuilder {
    */
   public Object object()
   {
-    return (Object) GenericObjectBuilder.object(_p);
+    return (Object) DynamicObjectBuilder.object(_p);
   }
 
   /**
@@ -96,7 +96,7 @@ public class GenericObjectBuilder {
   protected void finalize() throws Throwable
   {
     System.out.println("com.aldebaran.qimessaging.GenericObjectBuilder: finalize");
-    GenericObjectBuilder.destroy(_p);
+    DynamicObjectBuilder.destroy(_p);
     super.finalize();
   }
 }

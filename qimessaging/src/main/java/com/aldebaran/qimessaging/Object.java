@@ -26,8 +26,8 @@ public class Object {
 
   /**
    * Object constructor is not public,
-   * user must use GenericObjectBuilder.
-   * @see GenericObjectBuilder
+   * user must use DynamicObjectBuilder.
+   * @see DynamicObjectBuilder
    */
   Object(long p)
   {

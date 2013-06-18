@@ -23,7 +23,7 @@ public class ReplyService extends QimessagingService
 
   public Object createObject()
   {
-    GenericObjectBuilder ob = new GenericObjectBuilder();
+    DynamicObjectBuilder ob = new DynamicObjectBuilder();
 
     try {
       ob.advertiseSignal("fire::(i)");

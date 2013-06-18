@@ -55,7 +55,7 @@ public class EmbeddedTools
     Tuple   t   = new Tuple1<java.lang.Object>();
     Boolean b   = new Boolean(true);
 
-    GenericObjectBuilder ob = new GenericObjectBuilder();
+    DynamicObjectBuilder ob = new DynamicObjectBuilder();
     Object obj  = ob.object();
 
     Map<java.lang.Object, java.lang.Object> m  = new Hashtable<java.lang.Object, java.lang.Object>();
