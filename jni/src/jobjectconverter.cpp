@@ -437,7 +437,7 @@ std::pair<qi::GenericValuePtr, bool> GenericValue_from_JObject(jobject val)
  *   objects only by this typedef pointer, never by value and we do not want to copy
  *   a jobject.
  */
-class JObjectType: public qi::TypeDynamic
+class JObjectTypeInterface: public qi::DynamicTypeInterface
 {
   public:
 
@@ -518,5 +518,5 @@ class JObjectType: public qi::TypeDynamic
 };
 
 /* Register jobject -> See the above comment for explanations */
-QI_TYPE_REGISTER_CUSTOM(jobject, JObjectType);
+QI_TYPE_REGISTER_CUSTOM(jobject, JObjectTypeInterface);
 
