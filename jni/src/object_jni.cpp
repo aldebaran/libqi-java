@@ -17,15 +17,15 @@
 
 qiLogCategory("qimessaging.jni");
 
-JNIObject::JNIObject(const qi::ObjectPtr& o)
+JNIObject::JNIObject(const qi::AnyObject& o)
 {
-  qi::ObjectPtr* newO = new qi::ObjectPtr();
+  qi::AnyObject* newO = new qi::AnyObject();
   *newO = o;
 
   this->build(newO);
 }
 
-JNIObject::JNIObject(qi::ObjectPtr *newO)
+JNIObject::JNIObject(qi::AnyObject *newO)
 {
   this->build(newO);
 }
@@ -49,7 +49,7 @@ jobject JNIObject::object()
   return _obj;
 }
 
-qi::ObjectPtr      JNIObject::objectPtr()
+qi::AnyObject      JNIObject::objectPtr()
 {
   jfieldID fid = _env->GetFieldID(_cls, "_p", "J");
 
@@ -60,7 +60,7 @@ qi::ObjectPtr      JNIObject::objectPtr()
   }
 
   jlong fieldValue = _env->GetLongField(_obj, fid);
-  return *(reinterpret_cast<qi::ObjectPtr*>(fieldValue));
+  return *(reinterpret_cast<qi::AnyObject*>(fieldValue));
 }
 
 qi::GenericObject* JNIObject::genericObject()
@@ -74,12 +74,12 @@ qi::GenericObject* JNIObject::genericObject()
   }
 
   jlong fieldValue = _env->GetLongField(_obj, fid);
-  qi::ObjectPtr* ptr = reinterpret_cast<qi::ObjectPtr*>(fieldValue);
+  qi::AnyObject* ptr = reinterpret_cast<qi::AnyObject*>(fieldValue);
 
   return reinterpret_cast<qi::GenericObject*>((*ptr).get());
 }
 
-void JNIObject::build(qi::ObjectPtr *newO)
+void JNIObject::build(qi::AnyObject *newO)
 {
   JVM()->GetEnv((void**) &_env, QI_JNI_MIN_VERSION);
 

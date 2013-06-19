@@ -21,7 +21,7 @@ qiLogCategory("qimessaging.jni");
 
 MethodInfoHandler gInfoHandler;
 
-qi::Future<qi::AnyReference>* call_from_java(JNIEnv *env, qi::ObjectPtr object, const std::string& strMethodName, jobjectArray listParams)
+qi::Future<qi::AnyReference>* call_from_java(JNIEnv *env, qi::AnyObject object, const std::string& strMethodName, jobjectArray listParams)
 {
   qi::GenericFunctionParameters params;
   jsize size;

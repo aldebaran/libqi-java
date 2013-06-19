@@ -28,8 +28,8 @@ jlong   Java_com_aldebaran_qimessaging_GenericObject_qiObjectBuilderCreate(JNIEn
 jlong   Java_com_aldebaran_qimessaging_GenericObject_qiObjectBuilderGetObject(JNIEnv *env, jobject jobj, jlong pObjectBuilder)
 {
   qi::DynamicObjectBuilder *ob = reinterpret_cast<qi::DynamicObjectBuilder *>(pObjectBuilder);
-  qi::ObjectPtr *obj = new qi::ObjectPtr();
-  qi::ObjectPtr &o = *(reinterpret_cast<qi::ObjectPtr *>(obj));
+  qi::AnyObject *obj = new qi::AnyObject();
+  qi::AnyObject &o = *(reinterpret_cast<qi::AnyObject *>(obj));
 
   o = ob->object();
   return (jlong) obj;
@@ -50,8 +50,8 @@ jlong   Java_com_aldebaran_qimessaging_DynamicObjectBuilder_create()
 jobject Java_com_aldebaran_qimessaging_DynamicObjectBuilder_object(JNIEnv* env, jobject QI_UNUSED(jobj), jlong pObjectBuilder)
 {
   qi::DynamicObjectBuilder *ob = reinterpret_cast<qi::DynamicObjectBuilder *>(pObjectBuilder);
-  qi::ObjectPtr *obj = new qi::ObjectPtr();
-  qi::ObjectPtr &o = *(reinterpret_cast<qi::ObjectPtr *>(obj));
+  qi::AnyObject *obj = new qi::AnyObject();
+  qi::AnyObject &o = *(reinterpret_cast<qi::AnyObject *>(obj));
 
   JVM(env);
   o = ob->object();

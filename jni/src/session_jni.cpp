@@ -71,7 +71,7 @@ jobject   Java_com_aldebaran_qimessaging_Session_service(JNIEnv* env, jobject QI
   qi::Session *s = reinterpret_cast<qi::Session*>(pSession);
   std::string serviceName = qi::jni::toString(jname);
 
-  qi::ObjectPtr *obj = new qi::ObjectPtr();
+  qi::AnyObject *obj = new qi::AnyObject();
   jobject proxy = 0;
 
   try

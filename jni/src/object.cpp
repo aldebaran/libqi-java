@@ -19,7 +19,7 @@ extern MethodInfoHandler gInfoHandler;
 
 jlong   Java_com_aldebaran_qimessaging_Object_property(JNIEnv* env, jobject jobj, jlong pObj, jstring name)
 {
-  qi::ObjectPtr&     obj = *(reinterpret_cast<qi::ObjectPtr*>(pObj));
+  qi::AnyObject&     obj = *(reinterpret_cast<qi::AnyObject*>(pObj));
   std::string        propName = qi::jni::toString(name);
 
   qi::Future<qi::GenericValue>* ret = new qi::Future<qi::GenericValue>();
@@ -41,7 +41,7 @@ jlong   Java_com_aldebaran_qimessaging_Object_property(JNIEnv* env, jobject jobj
 
 jlong  Java_com_aldebaran_qimessaging_Object_setProperty(JNIEnv* env, jobject QI_UNUSED(jobj), jlong pObj, jstring name, jobject property)
 {
-  qi::ObjectPtr&    obj = *(reinterpret_cast<qi::ObjectPtr*>(pObj));
+  qi::AnyObject&    obj = *(reinterpret_cast<qi::AnyObject*>(pObj));
   std::string       propName = qi::jni::toString(name);
 
   JVM(env);
@@ -55,7 +55,7 @@ jlong  Java_com_aldebaran_qimessaging_Object_setProperty(JNIEnv* env, jobject QI
 
 jlong     Java_com_aldebaran_qimessaging_Object_asyncCall(JNIEnv* env, jobject QI_UNUSED(jobj), jlong pObject, jstring jmethod, jobjectArray args)
 {
-  qi::ObjectPtr&    obj = *(reinterpret_cast<qi::ObjectPtr*>(pObject));
+  qi::AnyObject&    obj = *(reinterpret_cast<qi::AnyObject*>(pObject));
   std::string       method;
   qi::Future<qi::AnyReference>* fut = 0;
 
@@ -85,7 +85,7 @@ jlong     Java_com_aldebaran_qimessaging_Object_asyncCall(JNIEnv* env, jobject Q
 
 jstring   Java_com_aldebaran_qimessaging_Object_printMetaObject(JNIEnv* env, jobject QI_UNUSED(jobj), jlong pObject)
 {
-  qi::ObjectPtr&    obj = *(reinterpret_cast<qi::ObjectPtr*>(pObject));
+  qi::AnyObject&    obj = *(reinterpret_cast<qi::AnyObject*>(pObject));
   std::stringstream ss;
 
   qi::details::printMetaObject(ss, obj->metaObject());
@@ -94,14 +94,14 @@ jstring   Java_com_aldebaran_qimessaging_Object_printMetaObject(JNIEnv* env, job
 
 void      Java_com_aldebaran_qimessaging_Object_destroy(JNIEnv* QI_UNUSED(env), jobject QI_UNUSED(jobj), jlong pObject)
 {
-  qi::ObjectPtr*    obj = reinterpret_cast<qi::ObjectPtr*>(pObject);
+  qi::AnyObject*    obj = reinterpret_cast<qi::AnyObject*>(pObject);
 
   delete obj;
 }
 
 jlong     Java_com_aldebaran_qimessaging_Object_connect(JNIEnv *env, jobject jobj, jlong pObject, jstring method, jobject instance, jstring service, jstring eventName)
 {
-  qi::ObjectPtr&             obj = *(reinterpret_cast<qi::ObjectPtr *>(pObject));
+  qi::AnyObject&             obj = *(reinterpret_cast<qi::AnyObject *>(pObject));
   std::string                signature = qi::jni::toString(method);
   std::string                event = qi::jni::toString(eventName);
   qi_method_info*            data;
@@ -142,7 +142,7 @@ jlong     Java_com_aldebaran_qimessaging_Object_connect(JNIEnv *env, jobject job
 
 void      Java_com_aldebaran_qimessaging_Object_post(JNIEnv *env, jobject QI_UNUSED(jobj), jlong pObject, jstring eventName, jobjectArray jargs)
 {
-  qi::ObjectPtr obj = *(reinterpret_cast<qi::ObjectPtr *>(pObject));
+  qi::AnyObject obj = *(reinterpret_cast<qi::AnyObject *>(pObject));
   std::string   event = qi::jni::toString(eventName);
   qi::GenericFunctionParameters params;
   std::string signature;

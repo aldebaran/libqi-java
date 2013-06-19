@@ -16,7 +16,7 @@
 #include <jnitools.hpp>
 
 // Generic callback for call forward
-qi::Future<qi::AnyReference>*    call_from_java(JNIEnv *env, qi::ObjectPtr object, const std::string& strMethodName, jobjectArray listParams);
+qi::Future<qi::AnyReference>*    call_from_java(JNIEnv *env, qi::AnyObject object, const std::string& strMethodName, jobjectArray listParams);
 qi::AnyReference                 call_to_java(std::string signature, void* data, const qi::GenericFunctionParameters& params);
 qi::AnyReference                 event_callback_to_java(void *vinfo, const std::vector<qi::AnyReference>& params);
 

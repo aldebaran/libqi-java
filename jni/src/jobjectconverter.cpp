@@ -154,7 +154,7 @@ struct toJObject
       throw std::runtime_error("Cannot convert GenericObject to Jobject.");
     }
 
-    void visitObjectPtr(qi::ObjectPtr o)
+    void visitAnyObject(qi::AnyObject o)
     {
 
       try
@@ -309,7 +309,7 @@ qi::AnyReference GenericValue_from_JObject_RemoteObject(jobject val)
 {
   JNIObject obj(val);
 
-  qi::ObjectPtr* tmp = new qi::ObjectPtr();
+  qi::AnyObject* tmp = new qi::AnyObject();
   *tmp = obj.objectPtr();
   return qi::AnyReference(*tmp);
 }

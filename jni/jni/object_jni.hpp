@@ -16,17 +16,17 @@
 class JNIObject
 {
   public:
-    JNIObject(const qi::ObjectPtr& o);
-    JNIObject(qi::ObjectPtr* o);
+    JNIObject(const qi::AnyObject& o);
+    JNIObject(qi::AnyObject* o);
     JNIObject(jobject value);
     ~JNIObject();
 
     jobject object();
     qi::GenericObject* genericObject();
-    qi::ObjectPtr      objectPtr();
+    qi::AnyObject      objectPtr();
 
   private:
-    void build(qi::ObjectPtr *o);
+    void build(qi::AnyObject *o);
 
     jobject _obj;
     jclass  _cls;
