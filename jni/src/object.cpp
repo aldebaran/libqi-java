@@ -22,14 +22,14 @@ jlong   Java_com_aldebaran_qimessaging_Object_property(JNIEnv* env, jobject jobj
   qi::AnyObject&     obj = *(reinterpret_cast<qi::AnyObject*>(pObj));
   std::string        propName = qi::jni::toString(name);
 
-  qi::Future<qi::GenericValue>* ret = new qi::Future<qi::GenericValue>();
+  qi::Future<qi::AnyValue>* ret = new qi::Future<qi::AnyValue>();
 
   JVM(env);
   JVM()->AttachCurrentThread((envPtr) &env, (void*) 0);
 
   try
   {
-    *ret = obj->property<qi::GenericValue>(propName).async();
+    *ret = obj->property<qi::AnyValue>(propName).async();
   } catch (qi::FutureUserException& e)
   {
     throwJavaError(env, e.what());
@@ -48,7 +48,7 @@ jlong  Java_com_aldebaran_qimessaging_Object_setProperty(JNIEnv* env, jobject QI
   JVM()->AttachCurrentThread((envPtr) &env, (void*) 0);
 
   qi::Future<void>* ret = new qi::Future<void>();
-  *ret = obj->setProperty(propName, qi::GenericValue::from<jobject>(property)).async();
+  *ret = obj->setProperty(propName, qi::AnyValue::from<jobject>(property)).async();
 
   return (jlong) ret;
 }
@@ -162,7 +162,7 @@ void      Java_com_aldebaran_qimessaging_Object_post(JNIEnv *env, jobject QI_UNU
   while (i < size)
   {
     jobject current = env->NewGlobalRef(env->GetObjectArrayElement(jargs, i));
-    qi::AnyReference val = qi::AnyReference(GenericValue_from_JObject(current).first);
+    qi::AnyReference val = qi::AnyReference(AnyValue_from_JObject(current).first);
     params.push_back(val);
     i++;
   }

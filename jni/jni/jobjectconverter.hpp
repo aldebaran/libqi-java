@@ -13,8 +13,8 @@
 #include <jni.h>
 #include <qitype/type.hpp>
 
-jobject JObject_from_GenericValue(qi::AnyReference val);
-void JObject_from_GenericValue(qi::AnyReference val, jobject* target);
-std::pair<qi::AnyReference, bool> GenericValue_from_JObject(jobject val);
+jobject JObject_from_AnyValue(qi::AnyReference val);
+void JObject_from_AnyValue(qi::AnyReference val, jobject* target);
+std::pair<qi::AnyReference, bool> AnyValue_from_JObject(jobject val);
 
 #endif // !_JOBJECTCONVERTER_HPP_

@@ -80,13 +80,13 @@ qi::AnyReference call_to_java(std::string signature, void* data, const qi::Gener
     throwJavaError(env, "Internal method informations are not valid");
     return res;
   }
-  // Translate parameters from GenericValues to jobjects
+  // Translate parameters from AnyValues to jobjects
   qi::GenericFunctionParameters::const_iterator it = params.begin();
   qi::GenericFunctionParameters::const_iterator end = params.end();
   for(; it != end; it++)
   {
     jvalue value;
-    value.l = JObject_from_GenericValue(*it);
+    value.l = JObject_from_AnyValue(*it);
     args[index] = value;
     index++;
   }
@@ -132,8 +132,8 @@ qi::AnyReference call_to_java(std::string signature, void* data, const qi::Gener
   if (sigInfo[0] == "")
     return qi::AnyReference(qi::typeOf<void>());
 
-  // Convert return value in GenericValue
-  res = GenericValue_from_JObject(ret).first;
+  // Convert return value in AnyValue
+  res = AnyValue_from_JObject(ret).first;
   qi::jni::releaseObject(ret);
   return res;
 }

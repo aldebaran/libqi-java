@@ -59,7 +59,7 @@ F.A.Q
 How it works
 ------------
 
-* Table of type bindings between GenericValue and Java Objects
+* Table of type bindings between AnyValue and Java Objects
 
   - int32         <-> java.lang.Integer
   - bool          <-> java.lang.Boolean
@@ -70,7 +70,7 @@ How it works
   - list          <-> java.util.ArrayList
   - tuple         <-> com.aldebaran.qimessaging.Tuple
 
- Java to GenericValue only :
+ Java to AnyValue only :
   - java.lang.Double -> float
 
  When using native types with qiMessaging bindings, you may cast to corresponding java.lang class to ensure code safety.
