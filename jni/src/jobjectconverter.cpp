@@ -33,7 +33,7 @@ struct toJObject
         qiLogFatal("qimessaging.jni") << "Cannot initialize Java environment.";
     }
 
-    void visitUnknown(qi::GenericValuePtr value)
+    void visitUnknown(qi::AnyReference value)
     {
       throwJavaError(env, "Error in conversion: Unable to convert unknown type in Java");
     }
@@ -169,18 +169,18 @@ struct toJObject
 
     }
 
-    void visitPointer(qi::GenericValuePtr pointee)
+    void visitPointer(qi::AnyReference pointee)
     {
       qiLogFatal() << "Error in conversion: Unable to convert pointer in Java";
       throwJavaError(env, "Error in conversion: Unable to convert pointer in Java");
     }
 
-    void visitTuple(const std::string& className, const std::vector<qi::GenericValuePtr>& tuple, const std::vector<std::string>& annotations)
+    void visitTuple(const std::string& className, const std::vector<qi::AnyReference>& tuple, const std::vector<std::string>& annotations)
     {
       JNITuple jtuple(tuple.size());
       int i = 0;
 
-      for(std::vector<qi::GenericValuePtr>::const_iterator it = tuple.begin(); it != tuple.end(); ++it)
+      for(std::vector<qi::AnyReference>::const_iterator it = tuple.begin(); it != tuple.end(); ++it)
       {
         jobject current = (*it).to<jobject>();
         jtuple.set(i++, current);
@@ -189,12 +189,12 @@ struct toJObject
       *result = jtuple.object();
     }
 
-    void visitDynamic(qi::GenericValuePtr pointee)
+    void visitDynamic(qi::AnyReference pointee)
     {
       *result = JObject_from_GenericValue(pointee);
     }
 
-    void visitRaw(qi::GenericValuePtr value)
+    void visitRaw(qi::AnyReference value)
     {
       // Not tested.
       /* Encapuslate the buffer in ByteBuffer */
@@ -215,7 +215,7 @@ struct toJObject
       env->DeleteLocalRef(ar);
     }
 
-    void visitIterator(qi::GenericValuePtr v)
+    void visitIterator(qi::AnyReference v)
     {
       visitUnknown(v);
     }
@@ -232,7 +232,7 @@ struct toJObject
 
 }; // !toJObject
 
-jobject JObject_from_GenericValue(qi::GenericValuePtr val)
+jobject JObject_from_GenericValue(qi::AnyReference val)
 {
   jobject result= NULL;
   toJObject tjo(&result);
@@ -240,13 +240,13 @@ jobject JObject_from_GenericValue(qi::GenericValuePtr val)
   return result;
 }
 
-void JObject_from_GenericValue(qi::GenericValuePtr val, jobject* target)
+void JObject_from_GenericValue(qi::AnyReference val, jobject* target)
 {
   toJObject tal(target);
   qi::typeDispatch<toJObject>(tal, val);
 }
 
-qi::GenericValuePtr GenericValue_from_JObject_List(jobject val)
+qi::AnyReference GenericValue_from_JObject_List(jobject val)
 {
   JNIEnv* env;
   JNIList list(val);
@@ -263,10 +263,10 @@ qi::GenericValuePtr GenericValue_from_JObject_List(jobject val)
     res.push_back(qi::GenericValue(GenericValue_from_JObject(current).first));
   }
 
-  return qi::GenericValueRef(res);
+  return qi::AnyReference(res);
 }
 
-qi::GenericValuePtr GenericValue_from_JObject_Map(jobject hashtable)
+qi::AnyReference GenericValue_from_JObject_Map(jobject hashtable)
 {
   JNIEnv* env;
   std::map<qi::GenericValue, qi::GenericValue>& res = *new std::map<qi::GenericValue, qi::GenericValue>();
@@ -280,24 +280,24 @@ qi::GenericValuePtr GenericValue_from_JObject_Map(jobject hashtable)
   {
     key = keys.nextElement();
     value = ht.at(key);
-    qi::GenericValuePtr newKey = GenericValue_from_JObject(key).first;
-    qi::GenericValuePtr newValue = GenericValue_from_JObject(value).first;
+    qi::AnyReference newKey = GenericValue_from_JObject(key).first;
+    qi::AnyReference newValue = GenericValue_from_JObject(value).first;
     res[qi::GenericValue(newKey)] = newValue;
     env->DeleteLocalRef(key);
     env->DeleteLocalRef(value);
   }
-  return qi::GenericValueRef(res);
+  return qi::AnyReference(res);
 }
 
-qi::GenericValuePtr GenericValue_from_JObject_Tuple(jobject val)
+qi::AnyReference GenericValue_from_JObject_Tuple(jobject val)
 {
   JNITuple tuple(val);
   int i = 0;
-  std::vector<qi::GenericValuePtr>& res = *new std::vector<qi::GenericValuePtr>();
+  std::vector<qi::AnyReference>& res = *new std::vector<qi::AnyReference>();
 
   while (i < tuple.size())
   {
-    qi::GenericValuePtr value = GenericValue_from_JObject(tuple.get(i)).first;
+    qi::AnyReference value = GenericValue_from_JObject(tuple.get(i)).first;
     res.push_back(value);
     i++;
   }
@@ -305,18 +305,18 @@ qi::GenericValuePtr GenericValue_from_JObject_Tuple(jobject val)
   return qi::makeGenericTuple(res);
 }
 
-qi::GenericValuePtr GenericValue_from_JObject_RemoteObject(jobject val)
+qi::AnyReference GenericValue_from_JObject_RemoteObject(jobject val)
 {
   JNIObject obj(val);
 
   qi::ObjectPtr* tmp = new qi::ObjectPtr();
   *tmp = obj.objectPtr();
-  return qi::GenericValueRef(*tmp);
+  return qi::AnyReference(*tmp);
 }
 
-std::pair<qi::GenericValuePtr, bool> GenericValue_from_JObject(jobject val)
+std::pair<qi::AnyReference, bool> GenericValue_from_JObject(jobject val)
 {
-  qi::GenericValuePtr res;
+  qi::AnyReference res;
   JNIEnv* env;
   bool copy = false;
 
@@ -342,49 +342,49 @@ std::pair<qi::GenericValuePtr, bool> GenericValue_from_JObject(jobject val)
 
   if (val == NULL)
   {
-    res = qi::GenericValuePtr(qi::typeOf<void>());
+    res = qi::AnyReference(qi::typeOf<void>());
   }
   else if (env->IsInstanceOf(val, stringClass))
   {
     const char* data = env->GetStringUTFChars((jstring) val, 0);
     std::string tmp = std::string(data);
     env->ReleaseStringUTFChars((jstring) val, data);
-    res = qi::GenericValueRef(*new std::string(tmp));
+    res = qi::AnyReference(*new std::string(tmp));
     copy = true;
   }
   else if (env->IsInstanceOf(val, floatClass))
   {
     jmethodID mid = env->GetMethodID(floatClass, "floatValue","()F");
     jfloat v = env->CallFloatMethod(val, mid);
-    res = qi::GenericValueRef((float)v).clone();
+    res = qi::AnyReference((float)v).clone();
     copy = true;
   }
   else if (env->IsInstanceOf(val, doubleClass)) // If double, convert to float
   {
     jmethodID mid = env->GetMethodID(doubleClass, "doubleValue","()D");
     jfloat v = (jfloat) env->CallDoubleMethod(val, mid);
-    res = qi::GenericValueRef((float)v).clone();
+    res = qi::AnyReference((float)v).clone();
     copy = true;
   }
   else if (env->IsInstanceOf(val, longClass))
   {
     jmethodID mid = env->GetMethodID(longClass, "longValue","()L");
     jlong v = env->CallLongMethod(val, mid);
-    res = qi::GenericValueRef(v).clone();
+    res = qi::AnyReference(v).clone();
     copy = true;
   }
   else if (env->IsInstanceOf(val, boolClass))
   {
     jmethodID mid = env->GetMethodID(boolClass, "booleanValue","()Z");
     jboolean v = env->CallBooleanMethod(val, mid);
-    res = qi::GenericValueRef((bool) v).clone();
+    res = qi::AnyReference((bool) v).clone();
     copy = true;
   }
   else if (env->IsInstanceOf(val, int32Class))
   {
     jmethodID mid = env->GetMethodID(int32Class, "intValue","()I");
     jint v = env->CallIntMethod(val, mid);
-    res = qi::GenericValueRef((int) v).clone();
+    res = qi::AnyReference((int) v).clone();
     copy = true;
   }
   else if (env->IsInstanceOf(val, listClass))
@@ -462,12 +462,12 @@ class JObjectTypeInterface: public qi::DynamicTypeInterface
       return *tmp;
     }
 
-    virtual qi::GenericValuePtr get(void* storage)
+    virtual qi::AnyReference get(void* storage)
     {
       return GenericValue_from_JObject(*((jobject*)ptrFromStorage(&storage))).first;
     }
 
-    virtual void set(void** storage, qi::GenericValuePtr src)
+    virtual void set(void** storage, qi::AnyReference src)
     {
       // storage is jobject*
       // We will assign *storage to target, so we need it to be allocated
@@ -492,7 +492,7 @@ class JObjectTypeInterface: public qi::DynamicTypeInterface
         return 0;
 
       jobject* cloned = new jobject;
-      *cloned = JObject_from_GenericValue(qi::GenericValueRef(*ginstance));
+      *cloned = JObject_from_GenericValue(qi::AnyReference(*ginstance));
 
       return cloned;
     }

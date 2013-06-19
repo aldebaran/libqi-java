@@ -73,13 +73,13 @@ namespace qi
       static void onSuccess(JNIEnv *env, jclass cls, qi::CallbackInfo *info);
       static void onFailure(JNIEnv *env, jclass cls, qi::CallbackInfo *info);
       static void onComplete(JNIEnv *env, jclass cls, qi::CallbackInfo *info);
-      static qi::CallbackInfo* methodInfo(const qi::Future<qi::GenericValuePtr> &future);
-      static void addCallbackInfo(qi::Future<GenericValuePtr>* future, qi::CallbackInfo* info);
-      static void removeCallbackInfo(const qi::Future<qi::GenericValuePtr>& future);
+      static qi::CallbackInfo* methodInfo(const qi::Future<qi::AnyReference> &future);
+      static void addCallbackInfo(qi::Future<AnyReference>* future, qi::CallbackInfo* info);
+      static void removeCallbackInfo(const qi::Future<qi::AnyReference>& future);
       static jobject futurePointer(JNIEnv* env, qi::CallbackInfo* info);
 
     public:
-      std::map<qi::Future<qi::GenericValuePtr>*, qi::CallbackInfo*> _map;
+      std::map<qi::Future<qi::AnyReference>*, qi::CallbackInfo*> _map;
   };
 
 } // !qi

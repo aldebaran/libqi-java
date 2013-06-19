@@ -57,7 +57,7 @@ jlong     Java_com_aldebaran_qimessaging_Object_asyncCall(JNIEnv* env, jobject Q
 {
   qi::ObjectPtr&    obj = *(reinterpret_cast<qi::ObjectPtr*>(pObject));
   std::string       method;
-  qi::Future<qi::GenericValuePtr>* fut = 0;
+  qi::Future<qi::AnyReference>* fut = 0;
 
   // Init JVM singleton and attach current thread to JVM
   JVM(env);
@@ -162,7 +162,7 @@ void      Java_com_aldebaran_qimessaging_Object_post(JNIEnv *env, jobject QI_UNU
   while (i < size)
   {
     jobject current = env->NewGlobalRef(env->GetObjectArrayElement(jargs, i));
-    qi::GenericValuePtr val = qi::GenericValueRef(GenericValue_from_JObject(current).first);
+    qi::AnyReference val = qi::AnyReference(GenericValue_from_JObject(current).first);
     params.push_back(val);
     i++;
   }

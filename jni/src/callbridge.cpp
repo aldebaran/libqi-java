@@ -21,7 +21,7 @@ qiLogCategory("qimessaging.jni");
 
 MethodInfoHandler gInfoHandler;
 
-qi::Future<qi::GenericValuePtr>* call_from_java(JNIEnv *env, qi::ObjectPtr object, const std::string& strMethodName, jobjectArray listParams)
+qi::Future<qi::AnyReference>* call_from_java(JNIEnv *env, qi::ObjectPtr object, const std::string& strMethodName, jobjectArray listParams)
 {
   qi::GenericFunctionParameters params;
   jsize size;
@@ -31,13 +31,13 @@ qi::Future<qi::GenericValuePtr>* call_from_java(JNIEnv *env, qi::ObjectPtr objec
   while (i < size)
   {
     jobject current = env->NewGlobalRef(env->GetObjectArrayElement(listParams, i));
-    qi::GenericValuePtr val = qi::GenericValueRef(current).clone();
+    qi::AnyReference val = qi::AnyReference(current).clone();
     params.push_back(val);
 
     i++;
   }
 
-  qi::Future<qi::GenericValuePtr> *fut = new qi::Future<qi::GenericValuePtr>();
+  qi::Future<qi::AnyReference> *fut = new qi::Future<qi::AnyReference>();
   try
   {
     *fut = object->metaCall(strMethodName, params);
@@ -55,9 +55,9 @@ qi::Future<qi::GenericValuePtr>* call_from_java(JNIEnv *env, qi::ObjectPtr objec
   return fut;
 }
 
-qi::GenericValuePtr call_to_java(std::string signature, void* data, const qi::GenericFunctionParameters& params)
+qi::AnyReference call_to_java(std::string signature, void* data, const qi::GenericFunctionParameters& params)
 {
-  qi::GenericValuePtr res;
+  qi::AnyReference res;
   jvalue*             args = new jvalue[params.size()];
   int                 index = 0;
   JNIEnv*             env = 0;
@@ -130,7 +130,7 @@ qi::GenericValuePtr call_to_java(std::string signature, void* data, const qi::Ge
 
   // If method return signature is void, return here
   if (sigInfo[0] == "")
-    return qi::GenericValuePtr(qi::typeOf<void>());
+    return qi::AnyReference(qi::typeOf<void>());
 
   // Convert return value in GenericValue
   res = GenericValue_from_JObject(ret).first;
@@ -138,7 +138,7 @@ qi::GenericValuePtr call_to_java(std::string signature, void* data, const qi::Ge
   return res;
 }
 
-qi::GenericValuePtr event_callback_to_java(void *vinfo, const std::vector<qi::GenericValuePtr>& params)
+qi::AnyReference event_callback_to_java(void *vinfo, const std::vector<qi::AnyReference>& params)
 {
   qi_method_info*  info = static_cast<qi_method_info*>(vinfo);
 

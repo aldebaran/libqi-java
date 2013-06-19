@@ -13,7 +13,7 @@
 #include <qi/future.hpp>
 #include <qimessaging/api.hpp>
 
-//jobject   newJavaFuture(qi::Future<qi::GenericValuePtr> *fut);
+//jobject   newJavaFuture(qi::Future<qi::AnyReference> *fut);
 
 extern "C"
 {

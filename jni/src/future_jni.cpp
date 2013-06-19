@@ -15,7 +15,7 @@
 
 qiLogCategory("qimessaging.java");
 
-void      java_future_callback(const qi::Future<qi::GenericValuePtr>& future)
+void      java_future_callback(const qi::Future<qi::AnyReference>& future)
 {
   JNIEnv *env = 0;
   jclass  cls = 0;
@@ -51,7 +51,7 @@ void      java_future_callback(const qi::Future<qi::GenericValuePtr>& future)
 
 jboolean  Java_com_aldebaran_qimessaging_Future_qiFutureCallCancel(JNIEnv *env, jobject obj, jlong pFuture, jboolean mayInterup)
 {
-  qi::Future<qi::GenericValuePtr>* fut = reinterpret_cast<qi::Future<qi::GenericValuePtr>*>(pFuture);
+  qi::Future<qi::AnyReference>* fut = reinterpret_cast<qi::Future<qi::AnyReference>*>(pFuture);
 
   if (fut->isCanceleable() == false)
     return false;
@@ -62,7 +62,7 @@ jboolean  Java_com_aldebaran_qimessaging_Future_qiFutureCallCancel(JNIEnv *env, 
 
 jobject  Java_com_aldebaran_qimessaging_Future_qiFutureCallGet(JNIEnv *env, jobject obj, jlong pFuture)
 {
-  qi::Future<qi::GenericValuePtr>* fut = reinterpret_cast<qi::Future<qi::GenericValuePtr>*>(pFuture);
+  qi::Future<qi::AnyReference>* fut = reinterpret_cast<qi::Future<qi::AnyReference>*>(pFuture);
 
   try
   {
@@ -77,7 +77,7 @@ jobject  Java_com_aldebaran_qimessaging_Future_qiFutureCallGet(JNIEnv *env, jobj
 
 jobject  Java_com_aldebaran_qimessaging_Future_qiFutureCallGetWithTimeout(JNIEnv *env, jobject obj, jlong pFuture, jint timeout)
 {
-  qi::Future<qi::GenericValuePtr>* fut = reinterpret_cast<qi::Future<qi::GenericValuePtr>*>(pFuture);
+  qi::Future<qi::AnyReference>* fut = reinterpret_cast<qi::Future<qi::AnyReference>*>(pFuture);
 
   qi::FutureState status = fut->wait(timeout);
 
@@ -95,21 +95,21 @@ jobject  Java_com_aldebaran_qimessaging_Future_qiFutureCallGetWithTimeout(JNIEnv
 
 jboolean Java_com_aldebaran_qimessaging_Future_qiFutureCallIsCancelled(JNIEnv *env, jobject obj, jlong pFuture)
 {
-  qi::Future<qi::GenericValuePtr>* fut = reinterpret_cast<qi::Future<qi::GenericValuePtr>*>(pFuture);
+  qi::Future<qi::AnyReference>* fut = reinterpret_cast<qi::Future<qi::AnyReference>*>(pFuture);
 
   return fut->isCanceled();
 }
 
 jboolean Java_com_aldebaran_qimessaging_Future_qiFutureCallIsDone(JNIEnv *env, jobject obj, jlong pFuture)
 {
-  qi::Future<qi::GenericValuePtr>* fut = reinterpret_cast<qi::Future<qi::GenericValuePtr>*>(pFuture);
+  qi::Future<qi::AnyReference>* fut = reinterpret_cast<qi::Future<qi::AnyReference>*>(pFuture);
 
   return fut->isFinished();
 }
 
 jboolean Java_com_aldebaran_qimessaging_Future_qiFutureCallConnect(JNIEnv *env, jobject obj, jlong pFuture, jobject callback, jstring jclassName, jobjectArray args)
 {
-  qi::Future<qi::GenericValuePtr>* fut = reinterpret_cast<qi::Future<qi::GenericValuePtr>*>(pFuture);
+  qi::Future<qi::AnyReference>* fut = reinterpret_cast<qi::Future<qi::AnyReference>*>(pFuture);
   std::string className = qi::jni::toString(jclassName);
   qi::CallbackInfo* info = 0;
 
@@ -129,7 +129,7 @@ jboolean Java_com_aldebaran_qimessaging_Future_qiFutureCallConnect(JNIEnv *env, 
 
 void  Java_com_aldebaran_qimessaging_Future_qiFutureCallWaitWithTimeout(JNIEnv* QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pFuture, jint timeout)
 {
-  qi::Future<qi::GenericValuePtr>* fut = reinterpret_cast<qi::Future<qi::GenericValuePtr>*>(pFuture);
+  qi::Future<qi::AnyReference>* fut = reinterpret_cast<qi::Future<qi::AnyReference>*>(pFuture);
 
   if (timeout)
     fut->wait(timeout);
