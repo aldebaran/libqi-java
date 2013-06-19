@@ -116,7 +116,7 @@ struct toJObject
       checkForError();
     }
 
-    void visitList(qi::GenericIterator it, qi::GenericIterator end)
+    void visitList(qi::AnyIterator it, qi::AnyIterator end)
     {
       JNIList list; // this is OK.
 
@@ -131,7 +131,7 @@ struct toJObject
       *result = list.object();
     }
 
-    void visitMap(qi::GenericIterator it, qi::GenericIterator end)
+    void visitMap(qi::AnyIterator it, qi::AnyIterator end)
     {
       jobject key, value;
       JNIHashTable ht;
