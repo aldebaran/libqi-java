@@ -11,7 +11,7 @@
 
 #include <qitype/genericobject.hpp>
 #include <qitype/genericobjectbuilder.hpp>
-#include <qitype/functiontype.hpp>
+#include <qitype/anyfunction.hpp>
 
 #include <callbridge.hpp>
 #include <jobjectconverter.hpp>

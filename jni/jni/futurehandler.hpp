@@ -12,7 +12,7 @@
 #include <jni.h>
 #include <qitype/genericobject.hpp>
 #include <qitype/genericobjectbuilder.hpp>
-#include <qitype/functiontype.hpp>
+#include <qitype/anyfunction.hpp>
 
 #include <jnitools.hpp>
 
