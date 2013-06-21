@@ -6,7 +6,7 @@
 ** Copyright (C) 2012, 2013 Aldebaran Robotics
 */
 
-#include <qitype/genericobject.hpp>
+#include <qitype/anyobject.hpp>
 
 #include <jnitools.hpp>
 #include <object.hpp>

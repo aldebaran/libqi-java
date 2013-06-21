@@ -9,7 +9,7 @@
 #include <map>
 #include <qi/log.hpp>
 #include <qitype/metamethod.hpp>
-#include <qitype/genericobjectbuilder.hpp>
+#include <qitype/dynamicobjectbuilder.hpp>
 #include <jnitools.hpp>
 
 #include <object_jni.hpp>

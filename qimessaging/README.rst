@@ -121,7 +121,7 @@ Package bindings manually
 
   - mvn -f pom-android.xml -Dmaven.test.skip android:ndk-build compile package
 
-Links
+SignalLinks
 -----
 
   * Maven native on google code: http://code.google.com/p/mavennatives/

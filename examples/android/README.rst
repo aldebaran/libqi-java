@@ -42,7 +42,7 @@ F.A.Q
   - Mark qimessaging.jar
   - Move jar to top of the list
 
-* qimessaging.jar is not in MyApp.apk, I got an UnsatifiedLinkError exception !
+* qimessaging.jar is not in MyApp.apk, I got an UnsatifiedSignalLinkError exception !
   - Well...Install Android NDK
   - Set ANDROID_NDK_HOME in your path
   - Then try to figure out what is going on.

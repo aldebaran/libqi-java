@@ -9,8 +9,8 @@
 #include <qi/log.hpp>
 #include <qi/future.hpp>
 
-#include <qitype/genericobject.hpp>
-#include <qitype/genericobjectbuilder.hpp>
+#include <qitype/anyobject.hpp>
+#include <qitype/dynamicobjectbuilder.hpp>
 #include <qitype/anyfunction.hpp>
 
 #include <callbridge.hpp>

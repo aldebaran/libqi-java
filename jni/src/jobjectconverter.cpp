@@ -8,11 +8,11 @@
 
 #include <qi/log.hpp>
 #include <qitype/signature.hpp>
-#include <qitype/genericobjectbuilder.hpp>
-#include <qitype/genericobject.hpp>
+#include <qitype/dynamicobjectbuilder.hpp>
+#include <qitype/anyobject.hpp>
 #include <qitype/anyvalue.hpp>
 #include <qitype/typedispatcher.hpp>
-#include <qitype/type.hpp>
+#include <qitype/typeinterface.hpp>
 
 #include <jnitools.hpp>
 #include <jobjectconverter.hpp>

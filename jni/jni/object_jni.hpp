@@ -11,7 +11,7 @@
 
 #include <jni.h>
 
-#include <qitype/genericobject.hpp>
+#include <qitype/anyobject.hpp>
 
 class JNIObject
 {

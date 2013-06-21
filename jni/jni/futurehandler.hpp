@@ -10,8 +10,8 @@
 #define _FUTUREHANDLER_HPP_
 
 #include <jni.h>
-#include <qitype/genericobject.hpp>
-#include <qitype/genericobjectbuilder.hpp>
+#include <qitype/anyobject.hpp>
+#include <qitype/dynamicobjectbuilder.hpp>
 #include <qitype/anyfunction.hpp>
 
 #include <jnitools.hpp>
