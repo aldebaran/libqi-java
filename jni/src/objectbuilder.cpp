@@ -10,6 +10,8 @@
 #include <qi/log.hpp>
 #include <qitype/metamethod.hpp>
 #include <qitype/dynamicobjectbuilder.hpp>
+#include <qitype/anyobject.hpp>
+#include <qitype/anyfunction.hpp>
 #include <jnitools.hpp>
 
 #include <object_jni.hpp>
@@ -91,7 +93,7 @@ jlong   Java_com_aldebaran_qimessaging_DynamicObjectBuilder_advertiseMethod(JNIE
   int ret = ob->xAdvertiseMethod(sigInfo[0],
                                  sigInfo[1],
                                  sigInfo[2],
-                                 AnyFunction::fromDynamicFunction(boost::bind(&call_to_java, signature, data, _1)).dropFirstArgument(),
+                                 qi::AnyFunction::fromDynamicFunction(boost::bind(&call_to_java, signature, data, _1)).dropFirstArgument(),
                                  description);
 
   return (jlong) ret;
