@@ -208,7 +208,8 @@ public class EmbeddedTools
       if (toDelete.exists())
       {
         System.out.printf("Deleting %s\n", toDelete.getAbsolutePath());
-        toDelete.delete();
+        if (toDelete.delete() == false)
+          System.out.printf("%s was not deleted.\n", toDelete.getAbsolutePath());
       }
       else
       {
