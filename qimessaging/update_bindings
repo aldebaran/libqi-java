@@ -12,17 +12,19 @@ import subprocess
 """
 Global values
 """
-__usage__  = "./do --platform={android, desktop}"
+__usage__  = "./do --platform={android, desktop} [--release=true]"
 jarname    = "nativeqimessaging-"#platform
 default_repo_url = "/tmp/maven/"#jarname
 
-def jar_package(jarname, file_list, config=None):
+def jar_package(jarname, file_list, is_release, config=None):
     """
     Package file info jar file
     """
     callee = ["qimvn", "jar"]
     if config and config != "desktop":
         callee += ["-c", config]
+    if is_release:
+        callee += ["--release"]
 
     callee += [jarname] + file_list
     return subprocess.call(callee)
@@ -69,7 +71,7 @@ def deploy_native_package(platform):
     url = "file:///tmp/maven/qimessaging-" + platform
     return deploy("qimessaging", "target/" + jarname, url, packaging_format = packaging_format)
 
-def package_native_libraries(platform):
+def package_native_libraries(platform, is_release):
     """
     Package all native libraries in a jar and
     deploy them with Maven
@@ -86,7 +88,7 @@ def package_native_libraries(platform):
         config = "android"
 
     # Generate a jar package containing native libraries
-    if jar_package(jar_name, native_librairies, config) is not 0:
+    if jar_package(jar_name, native_librairies, is_release, config=config) is not 0:
         return 1
 
     # Deploy generated jar
@@ -97,11 +99,11 @@ def package_native_libraries(platform):
     callee = ["rm", jar_name]
     return subprocess.call(callee)
 
-def deploy_bindings(platform):
+def deploy_bindings(platform, is_release):
     """
     Deploy qimessaging bindings using Maven
     """
-    if package_native_libraries(platform) is not 0:
+    if package_native_libraries(platform, is_release) is not 0:
         return False
     if deploy_native_package(platform) is not 0:
         return False
@@ -112,10 +114,16 @@ if __name__ == "__main__":
 
     opt_parser.set_defaults(
         platform = "desktop",
+        release=False,
         dest = default_repo_url
         )
 
     opt_parser.add_option("--platform=", dest="platform", help="Platform to configure")
+    opt_parser.add_option("--release", dest="release")
     (opts, _args) = opt_parser.parse_args()
 
-    deploy_bindings(opts.platform)
+    if opts.release:
+        print("release !")
+    else:
+        print("pas release")
+    deploy_bindings(opts.platform, opts.release)
