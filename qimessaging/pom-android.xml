@@ -122,7 +122,7 @@
                 <goal>perform</goal>
               </goals>
               <configuration>
-                <pomFileName>qimessaging/pom-android.xml</pomFileName>
+                <pomFileName>pom-android.xml</pomFileName>
               </configuration>
             </execution>
           </executions>
