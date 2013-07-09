@@ -1,5 +1,5 @@
 <project version="3">
   <qibuild name="qimessaging-jni">
-    <depends buildtime="true" runtime="true" names="libqimessaging">
+    <depends buildtime="true" runtime="true" names="libqimessaging" />
   </qibuild>
 </project>
