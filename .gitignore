@@ -1,3 +1,4 @@
+build-*
 bin/pom.xml
 
 # Ignore unpacked C++ librairies
