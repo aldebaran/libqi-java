@@ -9,6 +9,12 @@
     <version>1.0-SNAPSHOT</version>
     <name>Android NDK - QiMessaging APKLIB</name>
 
+
+    <scm>
+      <connection>scm:git:ssh://git@git.aldebaran.lan/java/qimessaging.git</connection>
+      <developerConnection>scm:git:ssh://git@git.aldebaran.lan/java/qimessaging.git</developerConnection>
+    </scm>
+
     <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>

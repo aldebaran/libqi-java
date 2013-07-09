@@ -25,6 +25,11 @@
     </license>
   </licenses>
 
+  <scm>
+    <connection>scm:git:ssh://git@git.aldebaran.lan/java/qimessaging.git</connection>
+    <developerConnection>scm:git:ssh://git@git.aldebaran.lan/java/qimessaging.git</developerConnection>
+  </scm>
+
   <properties> <!-- Project encoding -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <lib.directory>src/main/resources/</lib.directory>
