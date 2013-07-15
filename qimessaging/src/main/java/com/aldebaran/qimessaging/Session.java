@@ -20,7 +20,8 @@ public class Session
   private static native boolean qiSessionIsConnected(long pSession);
   private static native void    qiSessionClose(long pSession);
   private static native Object  service(long pSession, String name);
-  private static native boolean registerService(long pSession, String name, Object obj);
+  private static native int     registerService(long pSession, String name, Object obj);
+  private static native void    unregisterService(long pSession, int idx);
   private static native void    onDisconnected(long pSession, String callback, java.lang.Object obj);
 
   // Members
@@ -97,9 +98,19 @@ public class Session
    * @param object Instance of service
    * @return
    */
-  public boolean registerService(String name, Object object)
+  public int registerService(String name, Object object)
   {
     return Session.registerService(_session, name, object);
+  }
+
+  /**
+   * Unregister service from Service Directory
+   * @param idx is return by registerService
+   * @see registerService
+   */
+  public void unregisterService(int idx)
+  {
+    Session.unregisterService(_session, idx);
   }
 
   public void onDisconnected(String callback, java.lang.Object object)

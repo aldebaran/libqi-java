@@ -61,7 +61,7 @@ public class TypeTest
 
     // Register service as serviceTest
     obj = ob.object();
-    assertTrue("Service must be registered", s.registerService("serviceTest", obj));
+    assertTrue("Service must be registered", s.registerService("serviceTest", obj) > 0);
 
     // Connect client session to service directory
     client.connect(url).sync();

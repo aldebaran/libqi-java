@@ -21,6 +21,7 @@ public class IntegrationTest
   public Session          s = null;
   public Session          client = null;
   public ServiceDirectory sd = null;
+  public int              idx = 0;
 
   @Before
   public void setUp() throws Exception
@@ -56,7 +57,8 @@ public class IntegrationTest
 
     // Register service as serviceTest
     obj = ob.object();
-    assertTrue("Service must be registered", s.registerService("serviceTest", obj));
+    idx = s.registerService("serviceTest", obj);
+    assertTrue("Service must be registered", idx > 0);
 
     // Connect client session to service directory
     client.connect(url).sync();
@@ -69,6 +71,8 @@ public class IntegrationTest
   @After
   public void tearDown()
   {
+    s.unregisterService(idx);
+
     obj = null;
     proxy = null;
 

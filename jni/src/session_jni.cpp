@@ -89,12 +89,12 @@ jobject   Java_com_aldebaran_qimessaging_Session_service(JNIEnv* env, jobject QI
   }
 }
 
-jboolean  Java_com_aldebaran_qimessaging_Session_registerService(JNIEnv *env, jobject QI_UNUSED(jobj), jlong pSession, jstring jname, jobject object)
+jint  Java_com_aldebaran_qimessaging_Session_registerService(JNIEnv *env, jobject QI_UNUSED(jobj), jlong pSession, jstring jname, jobject object)
 {
   qi::Session*    session = reinterpret_cast<qi::Session*>(pSession);
   std::string     name    = qi::jni::toString(jname);
   JNIObject obj(object);
-  jlong ret = 0;
+  jint ret = 0;
 
   try
   {
@@ -104,16 +104,24 @@ jboolean  Java_com_aldebaran_qimessaging_Session_registerService(JNIEnv *env, jo
   {
     qiLogError() << "Throwing exception : " << e.what();
     throwJavaError(env, e.what());
-    return false;
+    return 0;
   }
 
   if (ret <= 0)
   {
     throwJavaError(env, "Cannot register service");
-    return false;
+    return 0;
   }
 
-  return true;
+  return ret;
+}
+
+void  Java_com_aldebaran_qimessaging_Session_unregisterService(JNIEnv *env, jobject obj, jlong pSession, jint serviceId)
+{
+  qi::Session*    session = reinterpret_cast<qi::Session*>(pSession);
+  unsigned int    id = static_cast<unsigned int>(serviceId);
+
+  session->unregisterService(id);
 }
 
 void      Java_com_aldebaran_qimessaging_Session_onDisconnected(JNIEnv *env, jobject jobj, jlong pSession, jstring jcallbackName, jobject jobjectInstance)
