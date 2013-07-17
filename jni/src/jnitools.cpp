@@ -116,7 +116,7 @@ void getJavaSignature(std::string &sig, const std::string& sigInfo)
       sig.append("V");
       break;
     case qi::Signature::Type_Dynamic:
-      sig.append("L");
+      sig.append("Ljava/lang/Object;");
       break;
     case qi::Signature::Type_Map:
     {

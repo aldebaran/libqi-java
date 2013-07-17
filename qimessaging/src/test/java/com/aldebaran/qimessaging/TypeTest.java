@@ -55,6 +55,7 @@ public class TypeTest
     ob.advertiseMethod("abacus::{ib}({ib})", reply, "Flip all booleans in map");
     ob.advertiseMethod("echoFloatList::[m]([f])", reply, "Return the exact same list");
     ob.advertiseMethod("createObject::o()", reply, "Return a test object");
+    ob.advertiseMethod("generic::b(m)", reply, "Take a value as argument");
 
     // Connect session to Service Directory
     s.connect(url).sync();
@@ -252,5 +253,22 @@ public class TypeTest
     }
 
     assertEquals(args, ret);
+  }
+
+  @Test
+  public void testValue()
+  {
+    String str = "hello world";
+    Boolean ret = null;
+
+    try {
+      ret = proxy.<Boolean>call("generic", str).get();
+    }
+    catch (Exception e)
+    {
+      fail("Call Error must not be thrown : " + e.getMessage());
+    }
+
+    assertTrue(ret);
   }
 }

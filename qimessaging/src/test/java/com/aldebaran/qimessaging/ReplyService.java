@@ -12,6 +12,15 @@ public class ReplyService extends QimessagingService
     throw new Exception("Expected Failure");
   }
 
+  public Boolean generic(java.lang.Object obj)
+  {
+    if (obj == null)
+      return false;
+
+    System.out.println("Object received : " + obj);
+    return true;
+  }
+
   public Object createObject()
   {
     GenericObjectBuilder ob = new GenericObjectBuilder();
