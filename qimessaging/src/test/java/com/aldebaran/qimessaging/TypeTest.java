@@ -153,6 +153,7 @@ public class TypeTest
   /**
    * Test Boolean conversion
    */
+  @Test
   public void testBoolean()
   {
     Boolean ret = null;
@@ -170,6 +171,7 @@ public class TypeTest
   /**
    * Test Map conversion
    */
+  @Test
   public void testEmptyMap()
   {
     Map<Integer, Boolean> args = new Hashtable<Integer, Boolean>();
@@ -189,6 +191,7 @@ public class TypeTest
   /**
    * Test Map conversion
    */
+  @Test
   public void testIntegerBooleanMap()
   {
     Map<Integer, Boolean> args = new Hashtable<Integer, Boolean>();
@@ -215,6 +218,7 @@ public class TypeTest
   /**
    * Test List conversion
    */
+  @Test
   public void testEmptyList()
   {
     List<Float> args = new ArrayList<Float>();
@@ -234,6 +238,7 @@ public class TypeTest
   /**
    * Test List conversion
    */
+  @Test
   public void testIntegerList()
   {
     List<Float> args = new ArrayList<Float>();
