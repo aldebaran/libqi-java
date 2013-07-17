@@ -181,7 +181,7 @@
     <repository>
       <id>local-repository</id>
     <name>Native qimessaging library jar repository</name>
-    <url>file:///tmp/maven/nativeqimessaging-desktop</url>
+    <url>http://maven.aldebaran.lan/maven/nativeqimessaging-desktop</url>
     </repository>
   </repositories>
 
