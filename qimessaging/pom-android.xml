@@ -6,7 +6,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.aldebaran.app</groupId> <!-- Qimessaging Java bindings properties -->
     <artifactId>qimessaging-apklib</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.22-SNAPSHOT</version>
     <name>Android NDK - QiMessaging APKLIB</name>
 
 
@@ -25,7 +25,7 @@
     <dependencies>
       <dependency> <!-- Dependency to native qimessaging library (embeded into a jar) -->
         <groupId>com.aldebaran</groupId>
-        <version>1.0-SNAPSHOT</version>
+        <version>1.22-SNAPSHOT</version>
         <artifactId>nativeqimessaging-android</artifactId>
         <type>jar</type>
       </dependency>
@@ -79,7 +79,7 @@
                   <artifactItem> <!-- Specify maven behavior with nativeqimessaging.jar -->
                     <groupId>com.aldebaran</groupId>
                     <artifactId>nativeqimessaging-android</artifactId>
-                    <version>1.0-SNAPSHOT</version>
+                    <version>1.22-SNAPSHOT</version>
                     <classifier>${build.type}</classifier>
                     <type>jar</type>
                     <overWrite>true</overWrite>

@@ -5,7 +5,7 @@
 
   <groupId>com.aldebaran.app</groupId> <!-- QiMessaging Java bindings properties -->
   <artifactId>qimessaging</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.22-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>qimessaging</name> <!-- Project name -->
@@ -54,7 +54,7 @@
     </dependency>
     <dependency> <!-- Dependency to native qimessaging library (embeded into a jar) -->
       <groupId>com.aldebaran</groupId>
-      <version>1.0-SNAPSHOT</version>
+      <version>1.22-SNAPSHOT</version>
       <artifactId>nativeqimessaging-desktop</artifactId>
     </dependency>
   </dependencies>
@@ -153,7 +153,7 @@
                 <artifactItem> <!-- Specify maven behavior with nativeqimessaging.jar -->
                   <groupId>com.aldebaran</groupId>
                   <artifactId>nativeqimessaging-desktop</artifactId>
-                  <version>1.0-SNAPSHOT</version>
+                  <version>1.22-SNAPSHOT</version>
                   <classifier>${build.type}</classifier>
                   <type>jar</type>
                   <overWrite>true</overWrite>
