@@ -17,7 +17,7 @@ std::map<std::string, jobject> supportedTypes;
 
 jint JNI_OnLoad(JavaVM* QI_UNUSED(vm), void* QI_UNUSED(reserved))
 {
-  qiLogInfo() << "qimessagingjni loaded.";
+  qiLogInfo() << "qimessagingjni loaded 1.22.";
   return QI_JNI_MIN_VERSION;
 }
 
