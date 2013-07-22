@@ -95,7 +95,7 @@ public class Session
   protected void finalize() throws Throwable
   {
     System.out.println("com.aldebaran.qimessaging.Session : finalize");
-    Session.qiSessionDestroy(_session);
+    //Session.qiSessionDestroy(_session);
     super.finalize();
   }
 
