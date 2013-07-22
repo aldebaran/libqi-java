@@ -27,10 +27,9 @@ jlong Java_com_aldebaran_qimessaging_Session_qiSessionCreate()
   return (jlong) session;
 }
 
-void Java_com_aldebaran_qimessaging_Session_qiSessionDestroy(jlong pSession)
+void Java_com_aldebaran_qimessaging_Session_qiSessionDestroy(JNIEnv* QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pSession)
 {
   qi::Session *s = reinterpret_cast<qi::Session*>(pSession);
-  s->close();
   delete s;
 }
 

@@ -15,7 +15,7 @@
 extern "C"
 {
   QIMESSAGING_API jlong     Java_com_aldebaran_qimessaging_Session_qiSessionCreate();
-  QIMESSAGING_API void      Java_com_aldebaran_qimessaging_Session_qiSessionDestroy(jlong pSession);
+  QIMESSAGING_API void      Java_com_aldebaran_qimessaging_Session_qiSessionDestroy(JNIEnv* QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pSession);
   QIMESSAGING_API jboolean  Java_com_aldebaran_qimessaging_Session_qiSessionIsConnected(JNIEnv *env, jobject obj, jlong pSession);
   QIMESSAGING_API jlong     Java_com_aldebaran_qimessaging_Session_qiSessionConnect(JNIEnv *env, jobject obj, jlong pSession, jstring jurl);
   QIMESSAGING_API void      Java_com_aldebaran_qimessaging_Session_qiSessionClose(JNIEnv *env, jobject obj, jlong pSession);
