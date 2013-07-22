@@ -87,9 +87,16 @@ public class Session
     Session.qiSessionClose(_session);
   }
 
-  protected void finalize()
+  /**
+   * Called by garbage collector
+   * Finalize is overriden to manually delete C++ data
+   */
+  @Override
+  protected void finalize() throws Throwable
   {
+    System.out.println("com.aldebaran.qimessaging.Session : finalize");
     Session.qiSessionDestroy(_session);
+    super.finalize();
   }
 
   /**

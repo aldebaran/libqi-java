@@ -89,10 +89,14 @@ public class GenericObjectBuilder {
   }
 
   /**
-   * Called on garbage collection, ensure that C++ ObjectBuilder is destroyed too.
+   * Called by garbage collector
+   * Finalize is overriden to manually delete C++ data
    */
-  protected void finalize()
+  @Override
+  protected void finalize() throws Throwable
   {
+    System.out.println("com.aldebaran.qimessaging.GenericObjectBuilder: finalize");
     GenericObjectBuilder.destroy(_p);
+    super.finalize();
   }
 }

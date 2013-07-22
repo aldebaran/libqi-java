@@ -53,11 +53,15 @@ public class Application
     Application.qiApplicationRun(_application);
   }
 
-  protected void finalize()
+  /**
+   * Called by garbage collector
+   * Finalize is overriden to manually delete C++ data
+   */
+  @Override
+  protected void finalize() throws Throwable
   {
-    System.out.println("com.aldebaran.qimessaging.Application : finalizing...");
-    System.exit(0);
-    //Application.qiApplicationDestroy(_application);
+    System.out.println("com.aldebaran.qimessaging.Application: finalize");
+    super.finalize();
   }
 
 }

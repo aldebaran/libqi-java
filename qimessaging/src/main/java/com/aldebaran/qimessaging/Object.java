@@ -117,8 +117,15 @@ public class Object {
     return Object.printMetaObject(_p);
   }
 
-  protected void finalize()
+  /**
+   * Called by garbage collector
+   * Finalize is overriden to manually delete C++ data
+   */
+  @Override
+  protected void finalize() throws Throwable
   {
+    System.out.println("com.aldebaran.qimessaging.Object : finalize");
     Object.destroy(_p);
+    super.finalize();
   }
 }
