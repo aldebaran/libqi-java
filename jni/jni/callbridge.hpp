@@ -12,7 +12,6 @@
 #include <list>
 #include <jni.h>
 
-#include <qimessaging/api.hpp>
 #include <jnitools.hpp>
 
 // Generic callback for call forward

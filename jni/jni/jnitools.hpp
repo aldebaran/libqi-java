@@ -10,7 +10,6 @@
 #define _JAVA_JNI_JNITOOLS_HPP_
 
 #include <iostream>
-#include <qimessaging/api.hpp>
 #include <jni.h>
 
 #ifdef ANDROID
@@ -32,10 +31,10 @@
 // JNI utils
 extern "C"
 {
-  QIMESSAGING_API jint JNI_OnLoad(JavaVM *vm, void*);
-  QIMESSAGING_API void Java_com_aldebaran_qimessaging_EmbeddedTools_initTypeSystem(JNIEnv* env, jobject jobj, jobject str, jobject i, jobject f, jobject d,
+  JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void*);
+  JNIEXPORT void Java_com_aldebaran_qimessaging_EmbeddedTools_initTypeSystem(JNIEnv* env, jobject jobj, jobject str, jobject i, jobject f, jobject d,
                                                                                    jobject l, jobject m, jobject al, jobject tuple, jobject obj, jobject b);
-  QIMESSAGING_API void Java_com_aldebaran_qimessaging_EmbeddedTools_initTupleInTypeSystem(JNIEnv* env, jobject jobj, jobject t1, jobject t2, jobject t3, jobject t4,
+  JNIEXPORT void Java_com_aldebaran_qimessaging_EmbeddedTools_initTupleInTypeSystem(JNIEnv* env, jobject jobj, jobject t1, jobject t2, jobject t3, jobject t4,
                                                                                    jobject t5, jobject t6, jobject t7, jobject t8);
 } // !extern C
 

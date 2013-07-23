@@ -9,20 +9,19 @@
 #ifndef _JAVA_JNI_SESSION_HPP_
 #define _JAVA_JNI_SESSION_HPP_
 
-#include <qimessaging/api.hpp>
 #include <jni.h>
 
 extern "C"
 {
-  QIMESSAGING_API jlong     Java_com_aldebaran_qimessaging_Session_qiSessionCreate();
-  QIMESSAGING_API void      Java_com_aldebaran_qimessaging_Session_qiSessionDestroy(JNIEnv* QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pSession);
-  QIMESSAGING_API jboolean  Java_com_aldebaran_qimessaging_Session_qiSessionIsConnected(JNIEnv *env, jobject obj, jlong pSession);
-  QIMESSAGING_API jlong     Java_com_aldebaran_qimessaging_Session_qiSessionConnect(JNIEnv *env, jobject obj, jlong pSession, jstring jurl);
-  QIMESSAGING_API void      Java_com_aldebaran_qimessaging_Session_qiSessionClose(JNIEnv *env, jobject obj, jlong pSession);
-  QIMESSAGING_API jobject   Java_com_aldebaran_qimessaging_Session_service(JNIEnv* env, jobject obj, jlong pSession, jstring jname);
-  QIMESSAGING_API jint      Java_com_aldebaran_qimessaging_Session_registerService(JNIEnv *env, jobject obj, jlong pSession, jstring name, jobject object);
-  QIMESSAGING_API void      Java_com_aldebaran_qimessaging_Session_unregisterService(JNIEnv *env, jobject obj, jlong pSession, jint serviceId);
-  QIMESSAGING_API void      Java_com_aldebaran_qimessaging_Session_onDisconnected(JNIEnv *env, jobject obj, jlong pSession, jstring callbackName, jobject objectInstance);
+  JNIEXPORT jlong     Java_com_aldebaran_qimessaging_Session_qiSessionCreate();
+  JNIEXPORT void      Java_com_aldebaran_qimessaging_Session_qiSessionDestroy(JNIEnv* QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pSession);
+  JNIEXPORT jboolean  Java_com_aldebaran_qimessaging_Session_qiSessionIsConnected(JNIEnv *env, jobject obj, jlong pSession);
+  JNIEXPORT jlong     Java_com_aldebaran_qimessaging_Session_qiSessionConnect(JNIEnv *env, jobject obj, jlong pSession, jstring jurl);
+  JNIEXPORT void      Java_com_aldebaran_qimessaging_Session_qiSessionClose(JNIEnv *env, jobject obj, jlong pSession);
+  JNIEXPORT jobject   Java_com_aldebaran_qimessaging_Session_service(JNIEnv* env, jobject obj, jlong pSession, jstring jname);
+  JNIEXPORT jint      Java_com_aldebaran_qimessaging_Session_registerService(JNIEnv *env, jobject obj, jlong pSession, jstring name, jobject object);
+  JNIEXPORT void      Java_com_aldebaran_qimessaging_Session_unregisterService(JNIEnv *env, jobject obj, jlong pSession, jint serviceId);
+  JNIEXPORT void      Java_com_aldebaran_qimessaging_Session_onDisconnected(JNIEnv *env, jobject obj, jlong pSession, jstring callbackName, jobject objectInstance);
 
 } // !extern "C"
 

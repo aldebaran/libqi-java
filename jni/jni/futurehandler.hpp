@@ -23,9 +23,9 @@ namespace qi
     jobject      instance;
     jobjectArray args;
     std::string  className;
-    std::string  interface;
+    std::string  interfaceName;
 
-    CallbackInfo(jobject instance, jobjectArray args, const std::string& className, const std::string& interface = "com/aldebaran/qimessaging/Callback")
+    CallbackInfo(jobject instance, jobjectArray args, const std::string& className, const std::string& interfaceName = "com/aldebaran/qimessaging/Callback")
     {
       JNIEnv* env = 0;
       JVM()->GetEnv((void**) &env, QI_JNI_MIN_VERSION);
@@ -44,7 +44,7 @@ namespace qi
       this->instance = env->NewGlobalRef(instance);
       this->args = array;
       this->className = className;
-      this->interface = interface;
+      this->interfaceName = interfaceName;
     }
 
     ~CallbackInfo()
