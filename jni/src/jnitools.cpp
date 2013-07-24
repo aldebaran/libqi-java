@@ -82,7 +82,7 @@ JavaVM*       JVM(JNIEnv* env)
     env->GetJavaVM(&gJVM);
 
   if (gJVM == 0 && env == 0)
-    qiLogError() << "JVM singleton wasn't initialised";
+    qiLogError() << "JVM singleton wasn't initialized";
   return gJVM;
 }
 
