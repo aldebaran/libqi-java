@@ -3,4 +3,5 @@
   <project src="jni" />
   <!-- standalone maven project -->
   <project src="qimessaging" />
+  <project src="doc" />
 </project>
