@@ -1,3 +1,6 @@
 <project version="3">
+  <!-- qibuild project in c++ for the jni shared library -->
   <project src="jni" />
+  <!-- standalone maven project -->
+  <project src="qimessaging" />
 </project>
