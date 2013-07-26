@@ -75,4 +75,4 @@ Notes
 ------
 
 * The ``Application`` constructor *must* be called exactly once
-  in the main Java process for the build system and the event loop to work.
+  in the main Java process for the type system and the event loop to work.
