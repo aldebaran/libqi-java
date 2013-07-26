@@ -20,18 +20,6 @@ public class EmbeddedTools
   private static native void initTypeSystem(java.lang.Object str, java.lang.Object i, java.lang.Object f, java.lang.Object d, java.lang.Object l, java.lang.Object m, java.lang.Object al, java.lang.Object t, java.lang.Object o, java.lang.Object b);
   private static native void initTupleInTypeSystem(java.lang.Object t1, java.lang.Object t2, java.lang.Object t3, java.lang.Object t4, java.lang.Object t5, java.lang.Object t6, java.lang.Object t7, java.lang.Object t8);
 
-  public static String  getSuitableLibraryExtention()
-  {
-    String[] ext = new String[] {".so", ".dylib", ".dll"};
-    String osName = System.getProperty("os.name");
-
-    if (osName == "Windows")
-      return ext[2];
-    if (osName == "Mac")
-      return ext[1];
-
-    return ext[0];
-  }
 
   /**
    * To work correctly, QiMessaging<->java type system needs to compare type class template.
@@ -81,7 +69,7 @@ public class EmbeddedTools
   }
 
   /**
-   * Native C++ librairies are package with java sources.
+   * Native C++ libraries are packaged with java sources.
    * This way, we are able to load them anywhere, anytime.
    */
   public boolean loadEmbeddedLibraries()
