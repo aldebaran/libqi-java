@@ -88,7 +88,7 @@ public class IntegrationTest
    * Create a dumb service binding famous reply::s(s) method,
    * then connect a client session to service directory,
    * get a proxy on 'serviceTest',
-   * finaly call 'reply::(s)' and check answer.
+   * finally call 'reply::(s)' and check answer.
    */
   @Test
   public void testCallService()
@@ -110,7 +110,7 @@ public class IntegrationTest
    * Create a dumb service binding famous reply::s(s) method,
    * then connect a client session to service directory,
    * get a proxy on 'serviceTest',
-   * finaly call 'reply' without signature and check answer.
+   * finally call 'reply' without signature and check answer.
    */
   @Test
   public void testCallReplyWithoutSignature()

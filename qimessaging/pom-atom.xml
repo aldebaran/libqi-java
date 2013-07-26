@@ -52,7 +52,7 @@
       <version>4.6</version>
       <scope>test</scope>
     </dependency>
-    <dependency> <!-- Dependency to native qimessaging library (embeded into a jar) -->
+    <dependency> <!-- Dependency to native qimessaging library (embedded into a jar) -->
       <groupId>com.aldebaran</groupId>
       <version>1.22-SNAPSHOT</version>
       <artifactId>nativeqimessaging-atom</artifactId>

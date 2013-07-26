@@ -87,7 +87,7 @@ Work with Eclipse :
 
     File -> Import -> Existing project
 
-* Finaly add qimessaging library in path::
+* Finally add qimessaging library in path::
 
     Right-click on : referenced libraries/qimessaging.jar/properties"
     select "Native library/External Folder..."

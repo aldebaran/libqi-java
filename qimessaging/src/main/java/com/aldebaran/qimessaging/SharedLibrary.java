@@ -125,7 +125,7 @@ public class SharedLibrary
       return false;
     }
 
-    System.out.format("Loding: %s \n", tmpLibraryPath);
+    System.out.format("Loading: %s \n", tmpLibraryPath);
     System.load(tmpLibraryPath);
 
     return true;

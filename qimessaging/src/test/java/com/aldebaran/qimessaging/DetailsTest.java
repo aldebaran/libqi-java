@@ -19,11 +19,11 @@ public class DetailsTest
     String os = System.getProperty("os.name");
 
     if (os.compareTo("Windows") == 0)
-      assertTrue("Windows extention is .dll", EmbeddedTools.getSuitableLibraryExtention().compareTo(".dll") == 0);
+      assertTrue("Windows extension is .dll", EmbeddedTools.getSuitableLibraryExtention().compareTo(".dll") == 0);
     else if (os.compareTo("Mac") == 0)
-      assertTrue("Mac extention is .dylib", EmbeddedTools.getSuitableLibraryExtention().compareTo(".dylib") == 0);
+      assertTrue("Mac extension is .dylib", EmbeddedTools.getSuitableLibraryExtention().compareTo(".dylib") == 0);
     else
-      assertTrue("Unix extention is .so", EmbeddedTools.getSuitableLibraryExtention().compareTo(".so") == 0);
+      assertTrue("Unix extension is .so", EmbeddedTools.getSuitableLibraryExtention().compareTo(".so") == 0);
   }
 
 }

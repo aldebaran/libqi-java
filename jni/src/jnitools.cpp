@@ -72,7 +72,7 @@ void Java_com_aldebaran_qimessaging_EmbeddedTools_initTupleInTypeSystem(JNIEnv* 
  * JNIEnv structure is thread dependent.
  * To use a JNIEnv* pointer in another thread (such as QiMessaging callback)
  * it must be attach to current thread (via JavaVM->AttachCurrentThread())
- * Therefore we keep a pointer to the JavaVM, wich is thread safe.
+ * Therefore we keep a pointer to the JavaVM, which is thread safe.
  */
 JavaVM*       JVM(JNIEnv* env)
 {
@@ -165,7 +165,7 @@ std::string   toJavaSignature(const std::string &signature)
   getJavaSignature(sig, sigInfo[2].substr(1, sigInfo[2].size()-2));
   sig.append(")");
 
-  // Finaly add return signature (or 'V' if empty)
+  // Finally add return signature (or 'V' if empty)
   if (sigInfo[0] == "")
     sig.append("V");
   else

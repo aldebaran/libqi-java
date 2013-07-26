@@ -23,7 +23,7 @@
     <packaging>apklib</packaging>
 
     <dependencies>
-      <dependency> <!-- Dependency to native qimessaging library (embeded into a jar) -->
+      <dependency> <!-- Dependency to native qimessaging library (embedded into a jar) -->
         <groupId>com.aldebaran</groupId>
         <version>1.22-SNAPSHOT</version>
         <artifactId>nativeqimessaging-android</artifactId>
