@@ -48,9 +48,9 @@ qi::Future<qi::AnyReference>* call_from_java(JNIEnv *env, qi::AnyObject object, 
   }
 
   // Destroy arguments
-  i = 0;
-  for(qi::GenericFunctionParameters::iterator it = params.begin(); it != params.end(); ++it)
-    (*it).destroy();
+//  i = 0;
+//  for(qi::GenericFunctionParameters::iterator it = params.begin(); it != params.end(); ++it)
+//    (*it).destroy();
 
   return fut;
 }
