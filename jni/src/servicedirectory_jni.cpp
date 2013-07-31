@@ -11,6 +11,14 @@
 #include "jnitools.hpp"
 #include "servicedirectory_jni.hpp"
 
+/**
+ * @brief Java_com_aldebaran_qimessaging_ServiceDirectory_qiTestSDCreate
+ * @param env JNI environment, mandatory argument.
+ * @param obj JNI environment, mandatory argument.
+ * @return a pointer on C++ ServiceDirectory instance
+ *
+ * This class only exists for tests purpose. That is why addresse is not customisable.
+ */
 jlong   Java_com_aldebaran_qimessaging_ServiceDirectory_qiTestSDCreate(JNIEnv *env, jobject obj)
 {
   qi::ServiceDirectory *sd = new qi::ServiceDirectory();

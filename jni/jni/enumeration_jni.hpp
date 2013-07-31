@@ -11,6 +11,10 @@
 
 #include <jni.h>
 
+/**
+ * @brief JNIEnumeration::JNIEnumeration Helper class to manipulation Java Enumeration in C++
+ * @param obj
+ */
 class JNIEnumeration
 {
   public:

@@ -11,6 +11,9 @@
 
 #include <jni.h>
 
+/**
+ * @brief The JNITuple class Helper class to manipulate com.aldebaran.qimessaging.Tuple classes.
+ */
 class JNITuple
 {
   public:

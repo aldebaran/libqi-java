@@ -86,6 +86,14 @@ JavaVM*       JVM(JNIEnv* env)
   return gJVM;
 }
 
+/**
+ * @brief getJavaSignature Convert qitype-like signature into Java-like signature.
+ * @param sig Java signature to be.
+ * @param sigInfo qitype signature.
+ *
+ * Do not call this function, use toJavaSignature instead
+ * @see toJavaSignature
+ */
 void getJavaSignature(std::string &sig, const std::string& sigInfo)
 {
   unsigned int i = 0;
@@ -155,6 +163,11 @@ void getJavaSignature(std::string &sig, const std::string& sigInfo)
   }
 }
 
+/**
+ * @brief toJavaSignature Convert qitype-like signature into Java-like signature.
+ * @param signature qitype signature
+ * @return Java signature
+ */
 std::string   toJavaSignature(const std::string &signature)
 {
   std::vector<std::string> sigInfo = qi::signatureSplit(signature);
@@ -174,6 +187,12 @@ std::string   toJavaSignature(const std::string &signature)
   return sig;
 }
 
+/**
+ * @brief throwJavaError Helper function to throw generic Java exception from C++
+ * @param env JNI environment
+ * @param message content of exception
+ * @return 0 on success, a positive number otherwise
+ */
 jint throwJavaError(JNIEnv *env, const char *message)
 {
   jclass		 exClass;
@@ -189,6 +208,12 @@ jint throwJavaError(JNIEnv *env, const char *message)
   return env->ThrowNew(exClass, message);
 }
 
+/**
+ * @brief propertyBaseSignature Get the qitype signature of a Java class template (jclass)
+ * @param env JNI environment
+ * @param propertyBase element to inspect
+ * @return a qitype signature
+ */
 std::string propertyBaseSignature(JNIEnv* env, jclass propertyBase)
 {
   std::string sig;
@@ -250,9 +275,6 @@ std::string propertyBaseSignature(JNIEnv* env, jclass propertyBase)
 
   return sig;
 }
-
-// JNIEnv.FindClass has not same behavior on desktop and android.
-// Here is a little wrapper to find wanted class anywhere.
 
 namespace qi {
   namespace jni {

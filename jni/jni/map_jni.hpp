@@ -12,6 +12,9 @@
 #include <jni.h>
 #include <enumeration_jni.hpp>
 
+/**
+ * @brief The JNIHashTable class Helper class to manipulation Java Hashtable<?, ?> (map) in C++
+ */
 class JNIHashTable
 {
   public:

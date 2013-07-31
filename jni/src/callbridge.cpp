@@ -70,6 +70,13 @@ qi::Future<qi::AnyReference>* call_from_java(JNIEnv *env, qi::AnyObject object, 
   return fut;
 }
 
+/**
+ * @brief call_to_java Heller function to call Java methods.
+ * @param signature qitype signature formated
+ * @param data pointer on a qi_method_info (which hold Java object class and reference)
+ * @param params parameters to forward to called method
+ * @return
+ */
 qi::AnyReference call_to_java(std::string signature, void* data, const qi::GenericFunctionParameters& params)
 {
   qi::AnyReference res;
@@ -153,6 +160,12 @@ qi::AnyReference call_to_java(std::string signature, void* data, const qi::Gener
   return res;
 }
 
+/**
+ * @brief event_callback_to_java Generic callback for all events
+ * @param vinfo pointer on a qi_method_info (which hold Java object class and reference)
+ * @param params parameters to forward to callback
+ * @return
+ */
 qi::AnyReference event_callback_to_java(void *vinfo, const std::vector<qi::AnyReference>& params)
 {
   qi_method_info*  info = static_cast<qi_method_info*>(vinfo);

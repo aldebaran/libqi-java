@@ -18,6 +18,9 @@
 
 namespace qi
 {
+  /**
+   * @brief The CallbackInfo struct Container used by FutureHandler
+   */
   struct CallbackInfo
   {
     jobject      instance;
@@ -67,6 +70,9 @@ namespace qi
     }
   };
 
+  /**
+   * @brief The FutureHandler class Helper class bridging C++ Future and Java callback (onSuccess, onFailure, onComplete) implementation
+   */
   class FutureHandler
   {
     public:

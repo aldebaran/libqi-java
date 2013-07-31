@@ -8,6 +8,12 @@
 
 #include <futurehandler.hpp>
 
+/**
+ * @brief globalFutureHandler
+ * Foreach callback set in Java, an entry is added here.
+ * QiMessaging bindings search here when callback from future is called to find out which Java callback
+ * needs to be called.
+ */
 static qi::FutureHandler globalFutureHandler;
 
 namespace qi {

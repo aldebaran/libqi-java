@@ -11,6 +11,9 @@
 
 #include <jni.h>
 
+/**
+ * @brief The JNIList class Helper class to manipulation Java List<?> in C++
+ */
 class JNIList
 {
   public:

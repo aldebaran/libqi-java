@@ -44,6 +44,12 @@ struct qi_method_info
   }
 };
 
+/**
+ * @brief The MethodInfoHandler class
+ * Singleton holding all qi_method_info instances.
+ * Entries are added whenever  Object.connect() or DynamicObjectBuilder.advertiseMethod is called.
+ * Entries are deleted when the com.aldebaran.qimessaging.Object is collected.
+ */
 class MethodInfoHandler
 {
   public:
