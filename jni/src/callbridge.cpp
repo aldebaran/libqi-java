@@ -21,12 +21,24 @@ qiLogCategory("qimessaging.jni");
 
 MethodInfoHandler gInfoHandler;
 
+/**
+ * @brief call_from_java Helper function to call qiMessaging method with Java arguments
+ * @param env JNI environment given by JVM.
+ * @param object The proxy making the call
+ * @param strMethodName Name (with or without signature) of the method to call
+ * @param listParams List of Java parameters given for call
+ * @return
+ */
 qi::Future<qi::AnyReference>* call_from_java(JNIEnv *env, qi::AnyObject object, const std::string& strMethodName, jobjectArray listParams)
 {
   qi::GenericFunctionParameters params;
   jsize size;
   jsize i = 0;
 
+  // For each Java object
+  // We need to create a global reference to make sure they will
+  // survive long enough.
+  // We put them into a GenericFunctionParameters array.
   size = env->GetArrayLength(listParams);
   while (i < size)
   {
@@ -37,6 +49,7 @@ qi::Future<qi::AnyReference>* call_from_java(JNIEnv *env, qi::AnyObject object, 
     i++;
   }
 
+  // Create future and start metacall
   qi::Future<qi::AnyReference> *fut = new qi::Future<qi::AnyReference>();
   try
   {
@@ -48,9 +61,11 @@ qi::Future<qi::AnyReference>* call_from_java(JNIEnv *env, qi::AnyObject object, 
   }
 
   // Destroy arguments
-//  i = 0;
-//  for(qi::GenericFunctionParameters::iterator it = params.begin(); it != params.end(); ++it)
-//    (*it).destroy();
+  for(qi::GenericFunctionParameters::iterator it = params.begin(); it != params.end(); ++it)
+  {
+    qiLogDebug() << "Releasing global reference on Java parameter";
+    qi::jni::releaseObject((*it).to<jobject>());
+  }
 
   return fut;
 }
