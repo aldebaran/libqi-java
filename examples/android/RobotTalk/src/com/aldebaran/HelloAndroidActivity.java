@@ -2,7 +2,7 @@ package com.aldebaran;
 
 import com.aldebaran.qimessaging.CallError;
 import com.aldebaran.qimessaging.Application;
-import com.aldebaran.qimessaging.GenericObject;
+import com.aldebaran.qimessaging.Object;
 import com.aldebaran.qimessaging.Session;
 import android.app.Activity;
 import android.content.Context;
@@ -47,10 +47,10 @@ public class HelloAndroidActivity extends Activity
     String url = "tcp://" + mEdit.getText().toString() + ":" + EditPort.getText().toString();
     Log.v("com.aldebaran.RobotTalk.connectSD", "Connecting to " + url);
 
-    _session = new Session();
+    session = new Session();
     try
     {
-      _session.connect(url);
+      session.connect(url).sync();
     }
     catch (Exception e)
     {
@@ -61,10 +61,10 @@ public class HelloAndroidActivity extends Activity
     }
 
     Log.v("com.aldebaran.RobotTalk.connectSD", "Trying to get a proxy on serviceTest");
-    GenericObject proxy = _session.service("ALTextToSpeech");
-
-    if (proxy == null)
-    {
+    Object proxy;
+    try {
+      proxy = session.service("ALTextToSpeech");
+    } catch (Exception e1) {
       Toast toast = Toast.makeText(context, "Cannot get proxy on ALTextToSpeech", Toast.LENGTH_SHORT);
       toast.show();
       Log.v("com.aldebaran.RobotTalk.connectSD", "Failure ! Cannot get proxy on ALTextToSpeech");

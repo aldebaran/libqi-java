@@ -41,7 +41,7 @@
     <!-- Dependency to qiMessaging bindings -->
     <dependency>
       <groupId>com.aldebaran</groupId>
-      <version>1.0-SNAPSHOT</version>
+      <version>1.22-SNAPSHOT</version>
       <artifactId>qimessaging</artifactId>
     </dependency>
   </dependencies>
@@ -95,7 +95,7 @@
     <repository>
       <id>local-repository</id>
     <name>qiMessaging Java bindings</name>
-    <url>file:///tmp/maven/qimessaging-desktop</url>
+    <url>http://maven.aldebaran.lan/maven/qimessaging-desktop</url>
     </repository>
   </repositories>
 

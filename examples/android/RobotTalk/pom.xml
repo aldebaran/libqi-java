@@ -38,6 +38,11 @@
                 <configuration>
                     <androidManifestFile>${project.basedir}/AndroidManifest.xml</androidManifestFile>
                     <sourceDirectory>${project.basedir}/src/</sourceDirectory>
+                    <archive>
+                      <manifest>
+                        <mainClass>jp.softbank.custombrowser.MainActivity</mainClass>
+                      </manifest>
+                    </archive>
                 </configuration>
                 <extensions>true</extensions>
 
@@ -57,7 +62,7 @@
       <repository>
         <id>local-repository</id>
         <name>Native qimessaging library apklib repository</name>
-        <url>file:///tmp/maven/qimessaging-android</url>
+        <url>http://maven.aldebaran.lan/maven/qimessaging-android</url>
       </repository>
   </repositories>
 </project>
