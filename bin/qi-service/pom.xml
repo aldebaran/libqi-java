@@ -7,7 +7,7 @@
   <!-- properties -->
   <groupId>com.aldebaran.app</groupId>
   <artifactId>qi-service</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.22-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>qi-service</name> <!-- Project name -->
