@@ -102,7 +102,30 @@ public class ObjectTest
     } catch (Exception e) {
       fail("Call must succeed : " + e.getMessage());
     }
-
     assertEquals("42 !", ret);
+
+    try {
+        ret = ro.<String>call("add", 42).get();
+      } catch (Exception e) {
+        String res = "Arguments types did not match for add::(i):\n  Candidate:\n  add::(iii) (1)\n";
+        if (!res.equals(e.getMessage()))
+          assertTrue(false);
+      }
+
+    try {
+        ret = ro.<String>call("add", "42", 42, 42).get();
+      } catch (Exception e) {
+        String res = "Arguments types did not match for add::(sii):\n  Candidate:\n  add::(iii) (1)\n";
+        if (!res.equals(e.getMessage()))
+          assertTrue(false);
+      }
+
+    try {
+        ret = ro.<String>call("addFoo").get();
+      } catch (Exception e) {
+          String res = "Can't find method: addFoo::()<>\n";
+        if (!res.equals(e.getMessage()))
+          assertTrue(false);
+      }
   }
 }
