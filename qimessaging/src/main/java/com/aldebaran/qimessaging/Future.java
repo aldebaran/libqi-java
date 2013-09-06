@@ -143,7 +143,6 @@ public class Future <T>
   @Override
   protected void finalize() throws Throwable
   {
-    System.out.println("com.aldebaran.qimessaging.Future: finalize");
     super.finalize();
   }
 

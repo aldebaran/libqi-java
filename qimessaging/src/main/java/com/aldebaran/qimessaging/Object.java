@@ -124,7 +124,6 @@ public class Object {
   @Override
   protected void finalize() throws Throwable
   {
-    System.out.println("com.aldebaran.qimessaging.Object : finalize");
     Object.destroy(_p);
     super.finalize();
   }

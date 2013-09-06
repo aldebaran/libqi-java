@@ -95,7 +95,6 @@ public class DynamicObjectBuilder {
   @Override
   protected void finalize() throws Throwable
   {
-    System.out.println("com.aldebaran.qimessaging.GenericObjectBuilder: finalize");
     DynamicObjectBuilder.destroy(_p);
     super.finalize();
   }
