@@ -67,8 +67,23 @@ Were ``HelloService`` implementation looks like this:
    :language: java
 
 
+In order for the service to run, you should first run a ``master``,
+and then connect your Java sercive to it:
+
+.. code-block:: console
+
+  $ /path/to/cpp/sdk/bin/qi-master
+  $ java App
+
+
 You can then call the advertised methods of the ``hello``
-service as you would do for any other ``NAOqi`` service
+service as you would do for any other ``NAOqi`` service,
+or using ``qicli``
+
+.. code-block:: console
+
+  $ /path/to/cpp/sdk/bin/qicli hello.greet "world"
+
 
 
 Notes
