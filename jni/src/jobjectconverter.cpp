@@ -6,6 +6,7 @@
 ** Copyright (C) 2012, 2013 Aldebaran Robotics
 */
 
+
 #include <qi/log.hpp>
 #include <qitype/signature.hpp>
 #include <qitype/dynamicobjectbuilder.hpp>
@@ -196,20 +197,21 @@ struct toJObject
 
     void visitRaw(qi::AnyReference value)
     {
-      // Not tested.
-      /* Encapuslate the buffer in ByteBuffer */
       qi::Buffer buf = value.as<qi::Buffer>();
 
       // Create a new ByteBuffer and reserve enough space
-      jclass cls = env->FindClass("java/lang/ByteBuffer");
-      jmethodID mid = env->GetMethodID(cls, "init","(I)V");
-      jobject ar = env->NewObject(cls, mid, buf.size() + 1);
+      jclass cls = env->FindClass("java/nio/ByteBuffer");
+      jmethodID mid = env->GetStaticMethodID(cls, "allocate", "(I)Ljava/nio/ByteBuffer;");
+      jobject ar = env->CallStaticObjectMethod(cls, mid, buf.size());
 
+      // Put qi::Buffer content into a byte[] object
+      const jbyte* data = (const jbyte*) buf.data();
+      jbyteArray byteArray = env->NewByteArray(buf.size());
+      env->SetByteArrayRegion(byteArray, 0, buf.size(), data);
 
-      // Put qi::Buffer content into ByteByffer
-      mid = env->GetMethodID(cls, "put","([B]II)[LJava/lang/ByteBuffer;");
-      *result = env->CallObjectMethod(ar, mid, buf.data(), 0, buf.size());
-
+      // Put the byte[] object into the ByteBuffer
+      mid = env->GetMethodID(cls, "put","([BII)Ljava/nio/ByteBuffer;");
+      *result = env->CallObjectMethod(ar, mid, byteArray, 0, buf.size());
       checkForError();
       env->DeleteLocalRef(cls);
       env->DeleteLocalRef(ar);
