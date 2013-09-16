@@ -55,7 +55,7 @@ public class Application
 
   /**
    * Called by garbage collector
-   * Finalize is overriden to manually delete C++ data
+   * Finalize is overridden manually in order to delete C++ data
    */
   @Override
   protected void finalize() throws Throwable
