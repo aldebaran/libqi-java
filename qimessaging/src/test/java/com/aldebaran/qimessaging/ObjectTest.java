@@ -121,7 +121,7 @@ public class ObjectTest
     try {
         ret = ro.<String>call("addFoo").get();
       } catch (Exception e) {
-          String expected = "Can't find method: addFoo::()<>\n";
+          String expected = "Can't find method: addFoo::()\n";
 	      assertEquals(expected, e.getMessage());
       }
   }
