@@ -10,6 +10,7 @@
 
 #include <qi/log.hpp>
 #include <qi/api.hpp>
+#include <qitype/anyfunction.hpp>
 #include <qimessaging/session.hpp>
 
 #include <jni.h>
@@ -141,7 +142,8 @@ void      Java_com_aldebaran_qimessaging_Session_onDisconnected(JNIEnv *env, job
   data = new qi_method_info(jobjectInstance, signature, jobj);
   gInfoHandler.push(data);
 
-  session->disconnected.connect(qi::AnyFunction::fromDynamicFunction(
-                                  boost::bind(&event_callback_to_java, (void*) data, _1)),
-                                qi::MetaCallType_Direct);
+  session->disconnected.connect(
+      qi::AnyFunction::fromDynamicFunction(
+          boost::bind(&event_callback_to_java, (void*) data, _1))).
+          setCallType(qi::MetaCallType_Direct);
 }
