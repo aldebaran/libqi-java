@@ -24,7 +24,14 @@ public class Application
 
   /**
    * Application constructor.
-   * @param args Arguments given to main() function.
+   */
+  public Application() {
+    _application = Application.qiApplicationCreate();
+  }
+
+  /**
+   * Application constructor.
+   * @param args Arguments given to main() function. (unused !)
    * @since 1.20
    */
   public Application(String[] args)
