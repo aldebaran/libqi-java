@@ -107,25 +107,22 @@ public class ObjectTest
     try {
         ret = ro.<String>call("add", 42).get();
       } catch (Exception e) {
-        String res = "Arguments types did not match for add::(i):\n  Candidate:\n  add::(iii) (1)\n";
-        if (!res.equals(e.getMessage()))
-          assertTrue(false);
+        String expected = "Arguments types did not match for add::(i):\n  Candidate:\n  add::(iii) (1)\n";
+        assertEquals(expected, e.getMessage());
       }
 
     try {
         ret = ro.<String>call("add", "42", 42, 42).get();
       } catch (Exception e) {
-        String res = "Arguments types did not match for add::(sii):\n  Candidate:\n  add::(iii) (1)\n";
-        if (!res.equals(e.getMessage()))
-          assertTrue(false);
+        String expected = "remote call: failed to convert argument 0 from m to i";
+        assertEquals(expected, e.getMessage());
       }
 
     try {
         ret = ro.<String>call("addFoo").get();
       } catch (Exception e) {
-          String res = "Can't find method: addFoo::()<>\n";
-        if (!res.equals(e.getMessage()))
-          assertTrue(false);
+          String expected = "Can't find method: addFoo::()<>\n";
+	      assertEquals(expected, e.getMessage());
       }
   }
 }
