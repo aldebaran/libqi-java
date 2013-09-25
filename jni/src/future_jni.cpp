@@ -53,7 +53,7 @@ jboolean  Java_com_aldebaran_qimessaging_Future_qiFutureCallCancel(JNIEnv *env, 
 {
   qi::Future<qi::AnyReference>* fut = reinterpret_cast<qi::Future<qi::AnyReference>*>(pFuture);
 
-  if (fut->isCanceleable() == false)
+  if (fut->isCancelable() == false)
     return false;
 
   fut->cancel();
