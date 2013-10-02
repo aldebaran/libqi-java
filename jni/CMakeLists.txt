@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 2.8)
 project(qimessaging-jni)
 
 find_package(qibuild)
+
+qi_sanitize_compile_flags()
 if (NOT ANDROID AND NOT I_AM_A_ROBOT)
   find_package(JNI REQUIRED)
   include_directories(${JNI_INCLUDE_DIRS})
