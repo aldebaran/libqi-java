@@ -66,7 +66,15 @@ jobject  Java_com_aldebaran_qimessaging_Future_qiFutureCallGet(JNIEnv *env, jobj
 
   try
   {
-    return fut->value().to<jobject>();
+    // UGLY WORKAROUND
+    // jobject typeinterface has deep-value meaning on the pointed _jobject
+    // but jobject as a C++ type is just _jobject*
+    // so workaround by allocating, and performin only a shallow delete
+    qi::AnyReference arRes = fut->value();
+    std::pair<qi::AnyReference, bool> converted = arRes.convert(qi::typeOf<jobject>());
+    jobject result = * (jobject*)converted.first.value;
+    delete (jobject*)converted.first.value;
+    return result;
   }
   catch (std::runtime_error &e)
   {
@@ -83,7 +91,7 @@ jobject  Java_com_aldebaran_qimessaging_Future_qiFutureCallGetWithTimeout(JNIEnv
 
   switch(status) {
   case qi::FutureState_FinishedWithValue:
-    return fut->value().to<jobject>();
+    return Java_com_aldebaran_qimessaging_Future_qiFutureCallGetWithTimeout(env, obj, pFuture, 0);
   case qi::FutureState_Running:
     return 0;
   default:

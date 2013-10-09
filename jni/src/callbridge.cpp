@@ -35,39 +35,29 @@ qi::Future<qi::AnyReference>* call_from_java(JNIEnv *env, qi::AnyObject object, 
   jsize size;
   jsize i = 0;
 
-  // For each Java object
-  // We need to create a global reference to make sure they will
-  // survive long enough.
-  // We put them into a GenericFunctionParameters array.
   size = env->GetArrayLength(listParams);
+  // We need to take references on jobjects, so they can't move while we make the call
+  std::vector<jobject> objs;
+  objs.resize(size);
   while (i < size)
   {
-    jobject current = env->NewGlobalRef(env->GetObjectArrayElement(listParams, i));
-    qi::AnyReference val = qi::AnyReference(current).clone();
+    jobject current = env->GetObjectArrayElement(listParams, i);
+    objs[i] = current;
+    qi::AnyReference val(objs[i]);
     params.push_back(val);
-
-    i++;
+    ++i;
   }
-
   // Create future and start metacall
   qi::Future<qi::AnyReference> *fut = new qi::Future<qi::AnyReference>();
   try
   {
     *fut = object->metaCall(strMethodName, params);
+    return fut;
   } catch (std::runtime_error &e)
   {
     throwJavaError(env, e.what());
     return 0;
   }
-
-  // Destroy arguments
-  for(qi::GenericFunctionParameters::iterator it = params.begin(); it != params.end(); ++it)
-  {
-    qiLogDebug() << "Releasing global reference on Java parameter";
-    qi::jni::releaseObject((*it).to<jobject>());
-  }
-
-  return fut;
 }
 
 /**

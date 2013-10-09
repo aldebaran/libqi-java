@@ -123,12 +123,13 @@ struct toJObject
 
       for(; it != end; ++it)
       {
-        jobject current = (*it).to<jobject>();
-        list.push_back(current);
+        qi::AnyReference arRes = *it;
+        std::pair<qi::AnyReference, bool> converted = arRes.convert(qi::typeOf<jobject>());
+        jobject result = * (jobject*)converted.first.value;
+        delete (jobject*)converted.first.value;
+        list.push_back(result);
       }
 
-      it.destroy();
-      end.destroy();
       *result = list.object();
     }
 
@@ -146,8 +147,6 @@ struct toJObject
       }
 
       *result = ht.object();
-      it.destroy();
-      end.destroy();
     }
 
     void visitObject(qi::GenericObject obj)
@@ -183,8 +182,11 @@ struct toJObject
 
       for(std::vector<qi::AnyReference>::const_iterator it = tuple.begin(); it != tuple.end(); ++it)
       {
-        jobject current = (*it).to<jobject>();
-        jtuple.set(i++, current);
+        qi::AnyReference arRes = *it;
+        std::pair<qi::AnyReference, bool> converted = arRes.convert(qi::typeOf<jobject>());
+        jobject result = * (jobject*)converted.first.value;
+        delete (jobject*)converted.first.value;
+        jtuple.set(i++, result);
       }
 
       *result = jtuple.object();
