@@ -29,7 +29,7 @@ jlong   Java_com_aldebaran_qimessaging_Object_property(JNIEnv* env, jobject jobj
 
   try
   {
-    *ret = obj->property<qi::AnyValue>(propName).async();
+    *ret = obj.property<qi::AnyValue>(propName).async();
   } catch (qi::FutureUserException& e)
   {
     throwJavaError(env, e.what());
@@ -48,7 +48,7 @@ jlong  Java_com_aldebaran_qimessaging_Object_setProperty(JNIEnv* env, jobject QI
   JVM()->AttachCurrentThread((envPtr) &env, (void*) 0);
 
   qi::Future<void>* ret = new qi::Future<void>();
-  *ret = obj->setProperty(propName, qi::AnyValue::from<jobject>(property)).async();
+  *ret = obj.setProperty(propName, qi::AnyValue::from<jobject>(property)).async();
 
   return (jlong) ret;
 }
@@ -88,7 +88,7 @@ jstring   Java_com_aldebaran_qimessaging_Object_printMetaObject(JNIEnv* env, job
   qi::AnyObject&    obj = *(reinterpret_cast<qi::AnyObject*>(pObject));
   std::stringstream ss;
 
-  qi::details::printMetaObject(ss, obj->metaObject());
+  qi::details::printMetaObject(ss, obj.metaObject());
   return qi::jni::toJstring(ss.str());
 }
 
@@ -127,7 +127,7 @@ jlong     Java_com_aldebaran_qimessaging_Object_connect(JNIEnv *env, jobject job
 
 
   try {
-    qi::SignalLink link =obj->connect(event,
+    qi::SignalLink link =obj.connect(event,
                         qi::SignalSubscriber(
                           qi::AnyFunction::fromDynamicFunction(
                             boost::bind(&event_callback_to_java, (void*) data, _1))).setCallType(qi::MetaCallType_Direct));
@@ -173,7 +173,7 @@ void      Java_com_aldebaran_qimessaging_Object_post(JNIEnv *env, jobject QI_UNU
     signature += params[i].signature(true).toString();
   signature += ")";
 
-  obj->metaPost(event, params);
+  obj.metaPost(event, params);
 
   // Destroy arguments
   i = 0;

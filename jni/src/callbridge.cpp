@@ -51,7 +51,7 @@ qi::Future<qi::AnyReference>* call_from_java(JNIEnv *env, qi::AnyObject object, 
   qi::Future<qi::AnyReference> *fut = new qi::Future<qi::AnyReference>();
   try
   {
-    *fut = object->metaCall(strMethodName, params);
+    *fut = object.metaCall(strMethodName, params);
     return fut;
   } catch (std::runtime_error &e)
   {
