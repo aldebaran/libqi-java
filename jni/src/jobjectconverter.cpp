@@ -460,7 +460,7 @@ class JObjectTypeInterface: public qi::DynamicTypeInterface
 
     virtual void* ptrFromStorage(void** s)
     {
-      jobject* tmp = (jobject*) s;
+      jobject** tmp = (jobject**) s;
       return *tmp;
     }
 
@@ -471,9 +471,11 @@ class JObjectTypeInterface: public qi::DynamicTypeInterface
 
     virtual void set(void** storage, qi::AnyReference src)
     {
-      // storage is jobject*
-      // We will assign *storage to target, so we need it to be allocated
-      jobject *target = new jobject;
+      jobject* &target = *(jobject**)storage;
+      if (!target) // allocate on demand, per the model we should not do that
+        target = new jobject;
+
+      // storage is jobject**
 
       // Giving jobject* to JObject_from_AnyValue
       JObject_from_AnyValue(src, target);
@@ -483,7 +485,6 @@ class JObjectTypeInterface: public qi::DynamicTypeInterface
       JVM()->AttachCurrentThread((envPtr) &env, (void *) 0);
       env->NewGlobalRef(*target);
 
-      *storage = target;
     }
 
     virtual void* clone(void* obj)
@@ -501,13 +502,15 @@ class JObjectTypeInterface: public qi::DynamicTypeInterface
 
     virtual void destroy(void* obj)
     {
+      if (!obj)
+        return;
       // void* obj is a jobject
-      jobject jobj = (jobject) obj;
+      jobject* jobj = (jobject*) obj;
 
       JNIEnv *env;
       JVM()->GetEnv((void **) &env, QI_JNI_MIN_VERSION);
       JVM()->AttachCurrentThread((envPtr) &env, (void *) 0);
-      env->DeleteGlobalRef(jobj);
+      env->DeleteGlobalRef(*jobj);
     }
 
     virtual bool less(void* a, void* b)
