@@ -13,7 +13,7 @@
 #include <jnitools.hpp>
 #include "application_jni.hpp"
 
-jlong Java_com_aldebaran_qimessaging_Application_qiApplicationCreate(JNIEnv *env, jobject QI_UNUSED(jobj))
+jlong Java_com_aldebaran_qimessaging_Application_qiApplicationCreate(JNIEnv *env, jclass QI_UNUSED(jobj))
 {
   // Emulate empty command line arguments.
   int argc = 1;
@@ -31,21 +31,21 @@ jlong Java_com_aldebaran_qimessaging_Application_qiApplicationCreate(JNIEnv *env
   return ret;
 }
 
-void Java_com_aldebaran_qimessaging_Application_qiApplicationDestroy(jlong pApplication)
+void Java_com_aldebaran_qimessaging_Application_qiApplicationDestroy(JNIEnv *,jlong pApplication)
 {
   qi::Application* app = reinterpret_cast<qi::Application *>(pApplication);
 
   delete app;
 }
 
-void Java_com_aldebaran_qimessaging_Application_qiApplicationRun(jlong pApplication)
+void Java_com_aldebaran_qimessaging_Application_qiApplicationRun(JNIEnv *, jlong pApplication)
 {
   qi::Application* app = reinterpret_cast<qi::Application *>(pApplication);
 
   app->run();
 }
 
-void Java_com_aldebaran_qimessaging_Application_qiApplicationStop(jlong pApplication)
+void Java_com_aldebaran_qimessaging_Application_qiApplicationStop(JNIEnv *, jlong pApplication)
 {
   qi::Application* app = reinterpret_cast<qi::Application *>(pApplication);
 

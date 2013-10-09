@@ -13,10 +13,10 @@
 
 extern "C"
 {
-  JNIEXPORT jlong Java_com_aldebaran_qimessaging_Application_qiApplicationCreate(JNIEnv *env, jobject jobj);
-  JNIEXPORT void  Java_com_aldebaran_qimessaging_Application_qiApplicationDestroy(jlong pApplication);
-  JNIEXPORT void  Java_com_aldebaran_qimessaging_Application_qiApplicationRun(jlong pApplication);
-  JNIEXPORT void  Java_com_aldebaran_qimessaging_Application_qiApplicationStop(jlong pApplication);
+  JNIEXPORT jlong Java_com_aldebaran_qimessaging_Application_qiApplicationCreate(JNIEnv *env, jclass jobj);
+  JNIEXPORT void  Java_com_aldebaran_qimessaging_Application_qiApplicationDestroy(JNIEnv *env, jlong pApplication);
+  JNIEXPORT void  Java_com_aldebaran_qimessaging_Application_qiApplicationRun(JNIEnv *env, jlong pApplication);
+  JNIEXPORT void  Java_com_aldebaran_qimessaging_Application_qiApplicationStop(JNIEnv *env, jlong pApplication);
 
 } // !extern "C"
 
