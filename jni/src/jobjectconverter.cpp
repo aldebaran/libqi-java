@@ -267,7 +267,7 @@ qi::AnyReference AnyValue_from_JObject_List(jobject val)
     res.push_back(qi::AnyValue(AnyValue_from_JObject(current).first));
   }
 
-  return qi::AnyReference(res);
+  return qi::AnyReference::from(res);
 }
 
 qi::AnyReference AnyValue_from_JObject_Map(jobject hashtable)
@@ -290,7 +290,7 @@ qi::AnyReference AnyValue_from_JObject_Map(jobject hashtable)
     env->DeleteLocalRef(key);
     env->DeleteLocalRef(value);
   }
-  return qi::AnyReference(res);
+  return qi::AnyReference::from(res);
 }
 
 qi::AnyReference AnyValue_from_JObject_Tuple(jobject val)
@@ -315,7 +315,7 @@ qi::AnyReference AnyValue_from_JObject_RemoteObject(jobject val)
 
   qi::AnyObject* tmp = new qi::AnyObject();
   *tmp = obj.objectPtr();
-  return qi::AnyReference(*tmp);
+  return qi::AnyReference::from(*tmp);
 }
 
 std::pair<qi::AnyReference, bool> AnyValue_from_JObject(jobject val)
@@ -353,42 +353,42 @@ std::pair<qi::AnyReference, bool> AnyValue_from_JObject(jobject val)
     const char* data = env->GetStringUTFChars((jstring) val, 0);
     std::string tmp = std::string(data);
     env->ReleaseStringUTFChars((jstring) val, data);
-    res = qi::AnyReference(*new std::string(tmp));
+    res = qi::AnyReference::from(*new std::string(tmp));
     copy = true;
   }
   else if (env->IsInstanceOf(val, floatClass))
   {
     jmethodID mid = env->GetMethodID(floatClass, "floatValue","()F");
     jfloat v = env->CallFloatMethod(val, mid);
-    res = qi::AnyReference((float)v).clone();
+    res = qi::AnyReference::from((float)v).clone();
     copy = true;
   }
   else if (env->IsInstanceOf(val, doubleClass)) // If double, convert to float
   {
     jmethodID mid = env->GetMethodID(doubleClass, "doubleValue","()D");
     jfloat v = (jfloat) env->CallDoubleMethod(val, mid);
-    res = qi::AnyReference((float)v).clone();
+    res = qi::AnyReference::from((float)v).clone();
     copy = true;
   }
   else if (env->IsInstanceOf(val, longClass))
   {
     jmethodID mid = env->GetMethodID(longClass, "longValue","()L");
     jlong v = env->CallLongMethod(val, mid);
-    res = qi::AnyReference(v).clone();
+    res = qi::AnyReference::from(v).clone();
     copy = true;
   }
   else if (env->IsInstanceOf(val, boolClass))
   {
     jmethodID mid = env->GetMethodID(boolClass, "booleanValue","()Z");
     jboolean v = env->CallBooleanMethod(val, mid);
-    res = qi::AnyReference((bool) v).clone();
+    res = qi::AnyReference::from((bool) v).clone();
     copy = true;
   }
   else if (env->IsInstanceOf(val, int32Class))
   {
     jmethodID mid = env->GetMethodID(int32Class, "intValue","()I");
     jint v = env->CallIntMethod(val, mid);
-    res = qi::AnyReference((int) v).clone();
+    res = qi::AnyReference::from((int) v).clone();
     copy = true;
   }
   else if (env->IsInstanceOf(val, listClass))
@@ -497,8 +497,8 @@ class JObjectTypeInterface: public qi::DynamicTypeInterface
         return 0;
 
       jobject* cloned = new jobject;
-      *cloned = JObject_from_AnyValue(qi::AnyReference(*ginstance));
-
+      *cloned = JObject_from_AnyValue(qi::AnyReference::from(*ginstance));
+      qiLogDebug() << "Cloning : " << *ginstance << " " << *cloned;
       return cloned;
     }
 

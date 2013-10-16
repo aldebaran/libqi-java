@@ -7,7 +7,7 @@
 */
 
 #include <qi/log.hpp>
-#include <qimessaging/servicedirectory.hpp>
+#include <qimessaging/session.hpp>
 #include "jnitools.hpp"
 #include "servicedirectory_jni.hpp"
 
@@ -21,9 +21,9 @@
  */
 jlong   Java_com_aldebaran_qimessaging_ServiceDirectory_qiTestSDCreate(JNIEnv *env, jobject obj)
 {
-  qi::ServiceDirectory *sd = new qi::ServiceDirectory();
+  qi::Session *sd = new qi::Session();
 
-  qi::Future<void> fut = sd->listen("tcp://0.0.0.0:0");
+  qi::Future<void> fut = sd->listenStandalone("tcp://0.0.0.0:0");
   fut.wait();
   if (fut.hasError())
   {
@@ -41,14 +41,14 @@ jlong   Java_com_aldebaran_qimessaging_ServiceDirectory_qiTestSDCreate(JNIEnv *e
 
 void    Java_com_aldebaran_qimessaging_ServiceDirectory_qiTestSDDestroy(jlong pSD)
 {
-  qi::ServiceDirectory *sd = reinterpret_cast<qi::ServiceDirectory *>(pSD);
+  qi::Session *sd = reinterpret_cast<qi::Session *>(pSD);
 
   delete sd;
 }
 
 jstring Java_com_aldebaran_qimessaging_ServiceDirectory_qiListenUrl(JNIEnv* QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pSD)
 {
-  qi::ServiceDirectory *sd = reinterpret_cast<qi::ServiceDirectory *>(pSD);
+  qi::Session *sd = reinterpret_cast<qi::Session *>(pSD);
 
   if (!sd)
   {
@@ -61,7 +61,7 @@ jstring Java_com_aldebaran_qimessaging_ServiceDirectory_qiListenUrl(JNIEnv* QI_U
 
 void    Java_com_aldebaran_qimessaging_ServiceDirectory_qiTestSDClose(jlong pSD)
 {
-  qi::ServiceDirectory *sd = reinterpret_cast<qi::ServiceDirectory *>(pSD);
+  qi::Session *sd = reinterpret_cast<qi::Session *>(pSD);
 
   if (!sd)
   {

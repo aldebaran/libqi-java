@@ -43,8 +43,7 @@ qi::Future<qi::AnyReference>* call_from_java(JNIEnv *env, qi::AnyObject object, 
   {
     jobject current = env->GetObjectArrayElement(listParams, i);
     objs[i] = current;
-    qi::AnyReference val(objs[i]);
-    params.push_back(val);
+    params.push_back(qi::AnyReference::from(objs[i]));
     ++i;
   }
   // Create future and start metacall
