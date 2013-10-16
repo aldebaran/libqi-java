@@ -25,7 +25,6 @@ class JNIObject
     ~JNIObject();
 
     jobject object();
-    qi::GenericObject* genericObject();
     qi::AnyObject      objectPtr();
 
   private:

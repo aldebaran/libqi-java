@@ -63,22 +63,6 @@ qi::AnyObject      JNIObject::objectPtr()
   return *(reinterpret_cast<qi::AnyObject*>(fieldValue));
 }
 
-qi::GenericObject* JNIObject::genericObject()
-{
-  jfieldID fid = _env->GetFieldID(_cls, "_p", "J");
-
-  if (!fid)
-  {
-    qiLogFatal() << "JNIObject: Cannot get GenericObject";
-    throw "JNIObject: Cannot get GenericObject";
-  }
-
-  jlong fieldValue = _env->GetLongField(_obj, fid);
-  qi::AnyObject* ptr = reinterpret_cast<qi::AnyObject*>(fieldValue);
-
-  return reinterpret_cast<qi::GenericObject*>((*ptr).get());
-}
-
 void JNIObject::build(qi::AnyObject *newO)
 {
   JVM()->GetEnv((void**) &_env, QI_JNI_MIN_VERSION);
