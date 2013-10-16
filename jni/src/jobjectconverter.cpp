@@ -264,7 +264,8 @@ qi::AnyReference AnyValue_from_JObject_List(jobject val)
   for (int i = 0; i < size; i++)
   {
     jobject current = list.get(i);
-    res.push_back(qi::AnyValue(AnyValue_from_JObject(current).first));
+    std::pair<qi::AnyReference, bool> conv = AnyValue_from_JObject(current);
+    res.push_back(qi::AnyValue(conv.first, !conv.second, true));
   }
 
   return qi::AnyReference::from(res);
@@ -284,9 +285,9 @@ qi::AnyReference AnyValue_from_JObject_Map(jobject hashtable)
   {
     key = keys.nextElement();
     value = ht.at(key);
-    qi::AnyReference newKey = AnyValue_from_JObject(key).first;
-    qi::AnyReference newValue = AnyValue_from_JObject(value).first;
-    res[qi::AnyValue(newKey)] = newValue;
+    std::pair<qi::AnyReference, bool> convKey = AnyValue_from_JObject(key);
+    std::pair<qi::AnyReference, bool> convValue = AnyValue_from_JObject(value);
+    res[qi::AnyValue(convKey.first, !convKey.second, true)] = qi::AnyValue(convValue.first, !convValue.second, true);
     env->DeleteLocalRef(key);
     env->DeleteLocalRef(value);
   }
@@ -297,16 +298,20 @@ qi::AnyReference AnyValue_from_JObject_Tuple(jobject val)
 {
   JNITuple tuple(val);
   int i = 0;
-  std::vector<qi::AnyReference>& res = *new std::vector<qi::AnyReference>();
-
+  std::vector<qi::AnyReference> elements;
+  std::vector<qi::AnyReference> toFree;
   while (i < tuple.size())
   {
-    qi::AnyReference value = AnyValue_from_JObject(tuple.get(i)).first;
-    res.push_back(value);
+    std::pair<qi::AnyReference, bool> convValue = AnyValue_from_JObject(tuple.get(i));
+    elements.push_back(convValue.first);
+    if (convValue.second)
+      toFree.push_back(convValue.first);
     i++;
   }
-
-  return qi::makeGenericTuple(res);
+  qi::AnyReference res = qi::makeGenericTuple(elements); // copies
+  for (unsigned i=0; i<toFree.size(); ++i)
+    toFree[i].destroy();
+  return res;
 }
 
 qi::AnyReference AnyValue_from_JObject_RemoteObject(jobject val)
@@ -403,10 +408,12 @@ std::pair<qi::AnyReference, bool> AnyValue_from_JObject(jobject val)
   }
   else if (qi::jni::isTuple(val))
   {
+    copy = true;
     res = AnyValue_from_JObject_Tuple(val);
   }
   else if (env->IsInstanceOf(val, objectClass))
   {
+    copy = true;
     res = AnyValue_from_JObject_RemoteObject(val);
   }
   else
