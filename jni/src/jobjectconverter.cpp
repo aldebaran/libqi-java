@@ -217,6 +217,7 @@ struct toJObject
       checkForError();
       env->DeleteLocalRef(cls);
       env->DeleteLocalRef(ar);
+      env->DeleteLocalRef(byteArray);
     }
 
     void visitIterator(qi::AnyReference v)
