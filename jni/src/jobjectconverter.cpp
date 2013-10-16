@@ -476,7 +476,31 @@ class JObjectTypeInterface: public qi::DynamicTypeInterface
 
     virtual qi::AnyReference get(void* storage)
     {
-      return AnyValue_from_JObject(*((jobject*)ptrFromStorage(&storage))).first;
+      static const unsigned int MEMORY_DEFAULT_SIZE = 20;
+      static unsigned int MEMORY_SIZE = 0;
+      static bool init = false;
+      static qi::AnyReference* memoryBuffer;
+      if (!init)
+      {
+        /* This is such an awful hack, we'd rather provide a way to
+        * control it from outside: 0 means disable cleanup entirely.
+        */
+        init = true;
+        std::string v = qi::os::getenv("QI_JAVA_REFERENCE_POOL_SIZE");
+        if (!v.empty())
+          MEMORY_SIZE = strtol(v.c_str(), 0, 0);
+        if (MEMORY_SIZE)
+          memoryBuffer = new qi::AnyReference[MEMORY_SIZE];
+      }
+      static unsigned int memoryPosition = 0;
+      std::pair<qi::AnyReference, bool> convValue = AnyValue_from_JObject(*((jobject*)ptrFromStorage(&storage)));
+      if (convValue.second && MEMORY_SIZE)
+      {
+        memoryBuffer[memoryPosition].destroy();
+        memoryBuffer[memoryPosition] = convValue.first;
+        memoryPosition = (memoryPosition+1) % MEMORY_SIZE;
+      }
+      return convValue.first;
     }
 
     virtual void set(void** storage, qi::AnyReference src)
