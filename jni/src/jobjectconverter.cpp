@@ -125,8 +125,8 @@ struct toJObject
       {
         qi::AnyReference arRes = *it;
         std::pair<qi::AnyReference, bool> converted = arRes.convert(qi::typeOf<jobject>());
-        jobject result = * (jobject*)converted.first.value;
-        delete (jobject*)converted.first.value;
+        jobject result = * (jobject*)converted.first.rawValue();
+        delete (jobject*)converted.first.rawValue();
         list.push_back(result);
       }
 
@@ -184,8 +184,8 @@ struct toJObject
       {
         qi::AnyReference arRes = *it;
         std::pair<qi::AnyReference, bool> converted = arRes.convert(qi::typeOf<jobject>());
-        jobject result = * (jobject*)converted.first.value;
-        delete (jobject*)converted.first.value;
+        jobject result = * (jobject*)converted.first.rawValue();
+        delete (jobject*)converted.first.rawValue();
         jtuple.set(i++, result);
       }
 

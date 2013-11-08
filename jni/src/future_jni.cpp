@@ -72,8 +72,8 @@ jobject  Java_com_aldebaran_qimessaging_Future_qiFutureCallGet(JNIEnv *env, jobj
     // so workaround by allocating, and performin only a shallow delete
     qi::AnyReference arRes = fut->value();
     std::pair<qi::AnyReference, bool> converted = arRes.convert(qi::typeOf<jobject>());
-    jobject result = * (jobject*)converted.first.value;
-    delete (jobject*)converted.first.value;
+    jobject result = * (jobject*)converted.first.rawValue();
+    delete (jobject*)converted.first.rawValue();
     return result;
   }
   catch (std::runtime_error &e)
