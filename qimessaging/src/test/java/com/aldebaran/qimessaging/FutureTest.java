@@ -19,7 +19,7 @@ import org.junit.Test;
  */
 public class FutureTest
 {
-  public Application      app = null;
+  static public Application      app = null;
   public Object           proxy = null;
   public Object           obj = null;
   public Session          s = null;
@@ -33,7 +33,8 @@ public class FutureTest
   {
     onSuccessCalled = false;
     onCompleteCalled = false;
-    app = new Application(null);
+    if (app==null)
+      app = new Application(null);
     sd = new ServiceDirectory();
     s = new Session();
     client = new Session();
@@ -85,8 +86,6 @@ public class FutureTest
     s = null;
     client = null;
     sd = null;
-    app.stop();
-    app = null;
   }
 
   @Test
