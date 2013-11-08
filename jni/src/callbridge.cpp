@@ -140,7 +140,7 @@ qi::AnyReference call_to_java(std::string signature, void* data, const qi::Gener
   delete[] args;
 
   // If method return signature is void, return here
-  if (sigInfo[0] == "")
+  if (sigInfo[0] == "" || sigInfo[0] == "v")
     return qi::AnyReference(qi::typeOf<void>());
 
   // Convert return value in AnyValue
