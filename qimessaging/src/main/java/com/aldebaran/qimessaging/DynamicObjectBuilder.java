@@ -22,6 +22,16 @@ public class DynamicObjectBuilder {
   private static native long   advertiseMethod(long pObjectBuilder, String method, java.lang.Object instance, String className, String description);
   private static native long   advertiseSignal(long pObjectBuilder, String eventSignature);
   private static native long   advertiseProperty(long pObjectBuilder, String name, Class<?> propertyBase);
+  private static native long   advertiseThreadSafeness(long pObjectBuilder, boolean isThreadSafe);
+
+  /// Possible thread models for an object
+  public enum ObjectThreadingModel
+  {
+    /// Object is not thread safe, all method calls must occur in the same thread
+    SingleThread,
+    /// Object is thread safe, multiple calls can occur in different threads in parallel
+    MultiThread
+  }
 
   public DynamicObjectBuilder()
   {
@@ -76,6 +86,22 @@ public class DynamicObjectBuilder {
       throw new QimessagingException("Invalid object");
     if (DynamicObjectBuilder.advertiseProperty(_p, name, propertyBase) <= 0)
       throw new QimessagingException("Cannot advertise " + name + " property");
+  }
+
+  /**
+   * Declare the thread-safeness state of an instance
+   * @param threadModel if set to ObjectThreadingModel.MultiThread,
+   *        your object is expected to be
+   *        thread safe, and calls to its method will potentially
+   *        occur in parallel in multiple threads.
+   *        If false, qimessaging will use a per-instance mutex
+   *        to prevent multiple calls at the same time.
+   */
+  public void setThreadingModel(ObjectThreadingModel threadModel) throws QimessagingException
+  {
+    if (_p == 0)
+      throw new QimessagingException("Invalid object");
+    DynamicObjectBuilder.advertiseThreadSafeness(_p, threadModel == ObjectThreadingModel.MultiThread);
   }
 
   /**

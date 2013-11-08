@@ -20,6 +20,8 @@ extern "C"
   JNIEXPORT jlong   Java_com_aldebaran_qimessaging_DynamicObjectBuilder_advertiseMethod(JNIEnv *env, jobject obj, jlong pObjectBuilder, jstring method, jobject instance, jstring service, jstring desc);
   JNIEXPORT jlong   Java_com_aldebaran_qimessaging_DynamicObjectBuilder_advertiseSignal(JNIEnv *env, jobject obj, jlong pObjectBuilder, jstring eventSignature);
   JNIEXPORT jlong   Java_com_aldebaran_qimessaging_DynamicObjectBuilder_advertiseProperty(JNIEnv *env, jobject obj, jlong pObjectBuilder, jstring name, jclass propertyBase);
+  JNIEXPORT jlong   Java_com_aldebaran_qimessaging_DynamicObjectBuilder_advertiseThreadSafeness(JNIEnv *env, jobject obj, jlong pObjectBuilder, jboolean isThreadSafe);
+
 
 } // !extern "C"
 

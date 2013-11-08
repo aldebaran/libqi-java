@@ -117,3 +117,11 @@ jlong   Java_com_aldebaran_qimessaging_DynamicObjectBuilder_advertiseProperty(JN
   std::string sig = propertyBaseSignature(env, propertyBase);
   return (jlong) ob->xAdvertiseProperty(name, sig);
 }
+
+
+jlong Java_com_aldebaran_qimessaging_DynamicObjectBuilder_advertiseThreadSafeness(JNIEnv *env, jobject obj, jlong pObjectBuilder, jboolean isThreadSafe)
+{
+  qi::DynamicObjectBuilder  *ob = reinterpret_cast<qi::DynamicObjectBuilder *>(pObjectBuilder);
+  ob->setThreadingModel(isThreadSafe?qi::ObjectThreadingModel_MultiThread:qi::ObjectThreadingModel_SingleThread);
+  return 1;
+}

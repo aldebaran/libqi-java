@@ -9,7 +9,9 @@ import org.junit.Test;
 public class ObjectTest
 {
   public Object     proxy = null;
+  public Object     proxyts = null;
   public Object     obj = null;
+  public Object     objts = null;
   public Session          s = null;
   public Session          client = null;
   public ServiceDirectory sd = null;
@@ -44,20 +46,32 @@ public class ObjectTest
     ob.advertiseMethod("abacus::{ib}({ib})", reply, "Flip all booleans in map");
     ob.advertiseMethod("echoFloatList::[m]([f])", reply, "Return the exact same list");
     ob.advertiseMethod("createObject::o()", reply, "Return a test object");
+    ob.advertiseMethod("setStored::v(i)", reply, "Set stored value");
+    ob.advertiseMethod("waitAndAddToStored::i(ii)", reply, "Wait given time, and return stored + val");
+
+    QimessagingService replyts = new ReplyService();
+    DynamicObjectBuilder obts = new DynamicObjectBuilder();
+    obts.advertiseMethod("setStored::v(i)", replyts, "Set stored value");
+    obts.advertiseMethod("waitAndAddToStored::i(ii)", replyts, "Wait given time, and return stored + val");
+    obts.setThreadingModel(DynamicObjectBuilder.ObjectThreadingModel.MultiThread);
 
     // Connect session to Service Directory
     s.connect(url).sync();
 
     // Register service as serviceTest
     obj = ob.object();
+    objts = obts.object();
     assertTrue("Service must be registered", s.registerService("serviceTest", obj) > 0);
+    assertTrue("Service must be registered", s.registerService("serviceTestTs", objts) > 0);
 
     // Connect client session to service directory
     client.connect(url).sync();
 
     // Get a proxy to serviceTest
     proxy = client.service("serviceTest");
+    proxyts = client.service("serviceTestTs");
     assertNotNull(proxy);
+    assertNotNull(proxyts);
   }
 
   @After
@@ -74,6 +88,24 @@ public class ObjectTest
     sd = null;
     app.stop();
     app = null;
+  }
+
+  @Test
+  public void singleThread() throws Exception
+  {
+    Future<Integer> v0;
+    v0 = proxy.<Integer>call("waitAndAddToStored", 500, 0);
+    Thread.sleep(10);
+    Future<Void> v1 = proxy.<Void>call("setStored", 42);
+    assertEquals(v0.get(), new Integer(0));
+  }
+  @Test
+  public void multiThread() throws Exception
+  {
+    Future<Integer> v0 = proxyts.<Integer>call("waitAndAddToStored", 500, 0);
+    Thread.sleep(10);
+    Future<Void> v1 = proxyts.<Void>call("setStored", 42);
+    assertEquals(v0.get(), new Integer(42));
   }
 
   @Test

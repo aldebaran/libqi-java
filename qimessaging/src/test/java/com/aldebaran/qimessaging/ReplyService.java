@@ -7,6 +7,7 @@ import java.util.Map;
 
 public class ReplyService extends QimessagingService
 {
+  private int storedValue = 0;
   public Boolean iWillThrow() throws Exception
   {
     throw new Exception("Expected Failure");
@@ -159,5 +160,15 @@ public class ReplyService extends QimessagingService
     }
     return l;
   }
-
+  public void setStored(Integer v)
+  {
+    storedValue = v;
+  }
+  public Integer waitAndAddToStored(Integer msDelay, Integer v)
+  {
+    try {
+      Thread.sleep(msDelay);
+    } catch(Exception e) {}
+    return v + storedValue;
+  }
 }
