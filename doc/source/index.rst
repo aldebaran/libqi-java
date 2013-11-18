@@ -85,6 +85,25 @@ or using ``qicli``
   $ /path/to/cpp/sdk/bin/qicli hello.greet "world"
 
 
+Reacting to events
+------------------
+
+.. literalinclude:: /samples/ReactToEvents/ReactToEvents.java
+   :language: java
+
+
+Note: This example does not use the familiar ``ALMemory.subscribeToEvent`` method.
+
+Instead it calls the ``ALMemory.subscriber`` method.
+
+This returns a ``com.aldebaran.qimessaging.Object`` on which we can connect
+a signal named ``signal`` to our callback.
+(This is a bit weird but required for NAOqi 1 backward compatibility)
+
+Note how we specify the "signature" of the function we want to call:
+``signal`` returns a ``com.aldebaran.qimessaging.Object``, and the
+callback also takes a ``com.aldebaran.qimessaging.Object`` as parameter.
+
 
 Notes
 ------
