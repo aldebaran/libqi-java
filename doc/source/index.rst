@@ -92,17 +92,25 @@ Reacting to events
    :language: java
 
 
-Note: This example does not use the familiar ``ALMemory.subscribeToEvent`` method.
+Note: This example does not use the familiar ``ALMemory.subscribeToEvent`` method,
+but a new generic Signal system, bridged to the old API through the
+``ALMemory.subscriber`` method.
 
-Instead it calls the ``ALMemory.subscriber`` method.
+This method returns a ``com.aldebaran.qimessaging.Object``, which has a
+signal named ``signal``, on which we can connect our callback.
 
-This returns a ``com.aldebaran.qimessaging.Object`` on which we can connect
-a signal named ``signal`` to our callback.
-(This is a bit weird but required for NAOqi 1 backward compatibility)
+The main advantage of this new approach is that it no longuer requires
+you to register a module in order to monitor events.
 
-Note how we specify the "signature" of the function we want to call:
-``signal`` returns a ``com.aldebaran.qimessaging.Object``, and the
-callback also takes a ``com.aldebaran.qimessaging.Object`` as parameter.
+Note that at this point you have to specify the "signature", of both
+the signal, and the callback function we want to call:
+
+"m" stands for *anything*, which means that ``signal`` accepts all
+instances of ``java.lang.Object``, and that the callback should
+accept a ``java.lang.Object`` as parameter. The effective type
+of the argument will vary depending on what was passed to
+``signal``, for instance a ``java.lang.Integer`` or a
+``java.lang.String``.
 
 
 Notes
