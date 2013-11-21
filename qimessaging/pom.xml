@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
 
 
-  <groupId>com.aldebaran.app</groupId> <!-- QiMessaging Java bindings properties -->
+  <groupId>com.aldebaran</groupId> <!-- QiMessaging Java bindings properties -->
   <artifactId>qimessaging</artifactId>
   <version>1.22-SNAPSHOT</version>
   <packaging>jar</packaging>
