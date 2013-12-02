@@ -23,12 +23,6 @@
     <packaging>apklib</packaging>
 
     <dependencies>
-      <dependency> <!-- Dependency to native qimessaging library (embedded into a jar) -->
-        <groupId>com.aldebaran</groupId>
-        <version>1.22-SNAPSHOT</version>
-        <artifactId>nativeqimessaging-android</artifactId>
-        <type>jar</type>
-      </dependency>
       <dependency>
         <groupId>com.google.android</groupId>
         <artifactId>android</artifactId>
@@ -44,6 +38,11 @@
     </dependencies>
 
     <build>
+      <resources>
+        <resource>
+          <directory>native-android</directory>
+        </resource>
+      </resources>
       <plugins>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -62,13 +61,5 @@
         </plugin>
       </plugins>
     </build>
-
-    <repositories> <!-- Specify address of nativeqimessaging maven repository -->
-      <repository>
-        <id>local-repository</id>
-        <name>Native qimessaging library jar repository</name>
-        <url>http://maven.aldebaran.lan/maven/nativeqimessaging-android</url>
-      </repository>
-    </repositories>
 
 </project>
