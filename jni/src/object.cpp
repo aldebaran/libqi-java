@@ -17,19 +17,39 @@ qiLogCategory("qimessaging.jni");
 
 extern MethodInfoHandler gInfoHandler;
 
+static void adaptFuture(qi::Future<void> f, qi::Promise<qi::AnyReference> p)
+{
+  if (f.hasError())
+    p.setError(f.error());
+  else
+    p.setValue(qi::AnyReference(qi::typeOf<void>()));
+}
+
+static void adaptFutureValue(qi::Future<qi::AnyValue> f, qi::Promise<qi::AnyReference> p)
+{
+  if (f.hasError())
+    p.setError(f.error());
+  else
+    p.setValue(qi::AnyReference::from(f.value()).clone());
+}
+
+
 jlong   Java_com_aldebaran_qimessaging_Object_property(JNIEnv* env, jobject jobj, jlong pObj, jstring name)
 {
   qi::AnyObject&     obj = *(reinterpret_cast<qi::AnyObject*>(pObj));
   std::string        propName = qi::jni::toString(name);
 
-  qi::Future<qi::AnyValue>* ret = new qi::Future<qi::AnyValue>();
+  qi::Future<qi::AnyReference>* ret = new qi::Future<qi::AnyReference>();
 
   JVM(env);
   JVM()->AttachCurrentThread((envPtr) &env, (void*) 0);
 
   try
   {
-    *ret = obj.property<qi::AnyValue>(propName).async();
+    qi::Future<qi::AnyValue> f = obj.property<qi::AnyValue>(propName);
+    qi::Promise<qi::AnyReference> prom;
+     *ret = prom.future();
+     f.connect(adaptFutureValue, _1, prom);
   } catch (qi::FutureUserException& e)
   {
     throwJavaError(env, e.what());
@@ -47,9 +67,12 @@ jlong  Java_com_aldebaran_qimessaging_Object_setProperty(JNIEnv* env, jobject QI
   JVM(env);
   JVM()->AttachCurrentThread((envPtr) &env, (void*) 0);
 
-  qi::Future<void>* ret = new qi::Future<void>();
-  *ret = obj.setProperty(propName, qi::AnyValue::from<jobject>(property)).async();
+  qi::Future<qi::AnyReference>* ret = new qi::Future<qi::AnyReference>();
 
+  qi::Future<void> f = obj.setProperty(propName, qi::AnyValue::from<jobject>(property)).async();
+  qi::Promise<qi::AnyReference> promise;
+  *ret = promise.future();
+  f.connect(adaptFuture, _1, promise);
   return (jlong) ret;
 }
 
