@@ -31,6 +31,7 @@ public class FutureTest
   @Before
   public void setUp() throws Exception
   {
+    System.out.println("Setup...");
     onSuccessCalled = false;
     onCompleteCalled = false;
     if (app==null)
@@ -80,6 +81,7 @@ public class FutureTest
   @After
   public void tearDown()
   {
+    System.out.println("teardown...");
     s.close();
     client.close();
 
@@ -166,7 +168,7 @@ public class FutureTest
       count++;
       try
       {
-        Thread.sleep(500);
+        Thread.sleep(100);
       } catch (InterruptedException e) {}
     }
 
@@ -186,6 +188,7 @@ public class FutureTest
   @Test
   public void testGetTimeout()
   {
+    System.out.println("testGetTimeout...");
     Future<String> fut = null;
 
     // Call a 2s long function
@@ -201,7 +204,7 @@ public class FutureTest
     boolean hasTimeout = false;
     try
     {
-      fut.get(1, TimeUnit.SECONDS);
+      fut.get(200, TimeUnit.MILLISECONDS);
     } catch (TimeoutException e)
     {
       hasTimeout = true;
@@ -222,6 +225,7 @@ public class FutureTest
   @Test
   public void testGetTimeoutSuccess()
   {
+   System.out.println("testGetTimeoutSuccess...");
     Future<String> fut = null;
 
     // Call a 2s long function
@@ -238,6 +242,7 @@ public class FutureTest
     try
     {
       ret = fut.get(3, TimeUnit.SECONDS);
+      System.out.println("Got ret");
     } catch (TimeoutException e)
     {
       fail("Call must not timeout");
@@ -252,17 +257,18 @@ public class FutureTest
   @Test
   public void testTimeout() throws InterruptedException, CallError
   {
+    System.out.println("testTimeout...");
     Future<Void> fut = null;
     try
     {
       fut = proxy.call("longReply", "plaf");
-      fut.sync(1, TimeUnit.SECONDS);
+      fut.sync(150, TimeUnit.MILLISECONDS);
     } catch (Exception e)
     {
     }
 
     assertFalse(fut.isDone());
-    fut.sync(500, TimeUnit.MILLISECONDS);
+    fut.sync(150, TimeUnit.MILLISECONDS);
     assertFalse(fut.isDone());
     fut.sync(500, TimeUnit.SECONDS);
     assertTrue(fut.isDone());
