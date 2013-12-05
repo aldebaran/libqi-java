@@ -39,24 +39,29 @@ jlong Java_com_aldebaran_qimessaging_Application_qiApplicationCreate(JNIEnv *env
   return (jlong)app;
 }
 
-void Java_com_aldebaran_qimessaging_Application_qiApplicationDestroy(JNIEnv *,jlong pApplication)
+void Java_com_aldebaran_qimessaging_Application_qiApplicationDestroy(JNIEnv *,jclass, jlong pApplication)
 {
   //qi::Application* app = reinterpret_cast<qi::Application *>(pApplication);
 
   //delete app;
 }
 
-void Java_com_aldebaran_qimessaging_Application_qiApplicationRun(JNIEnv *, jlong pApplication)
+void Java_com_aldebaran_qimessaging_Application_qiApplicationRun(JNIEnv *, jclass, jlong pApplication)
 {
   qi::Application* app = reinterpret_cast<qi::Application *>(pApplication);
 
   app->run();
 }
 
-void Java_com_aldebaran_qimessaging_Application_qiApplicationStop(JNIEnv *, jlong pApplication)
+void Java_com_aldebaran_qimessaging_Application_qiApplicationStop(JNIEnv *, jclass, jlong pApplication)
 {
   qi::Application* app = reinterpret_cast<qi::Application *>(pApplication);
 
   qiLogInfo("qimessaging.jni") << "Stopping qi::Application...";
   app->stop();
+}
+
+void Java_com_aldebaran_qimessaging_Application_setLogCategory(JNIEnv *env, jclass cls, jstring category, jlong verbosity)
+{
+  ::qi::log::setCategory(qi::jni::toString(category), (qi::LogLevel)verbosity, 0);
 }
