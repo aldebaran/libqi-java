@@ -13,8 +13,16 @@
 #include <jnitools.hpp>
 #include "application_jni.hpp"
 
+qiLogCategory("qimessaging.jni");
+
+static qi::Application* app = 0;
 jlong Java_com_aldebaran_qimessaging_Application_qiApplicationCreate(JNIEnv *env, jclass QI_UNUSED(jobj))
 {
+  if (app)
+  {
+    qiLogVerbose() << "Returning already created application.";
+    return (jlong)app;
+  }
   // Emulate empty command line arguments.
   int argc = 1;
   char **argv = new char*[2];
@@ -24,18 +32,18 @@ jlong Java_com_aldebaran_qimessaging_Application_qiApplicationCreate(JNIEnv *env
   ::strcpy(argv[0], "java");
 
   // Call qi_application_create
-  jlong ret = (jlong) new qi::Application(argc, argv);
+  app = new qi::Application(argc, argv);
 
   delete[] argv[0];
   delete[] argv;
-  return ret;
+  return (jlong)app;
 }
 
 void Java_com_aldebaran_qimessaging_Application_qiApplicationDestroy(JNIEnv *,jlong pApplication)
 {
-  qi::Application* app = reinterpret_cast<qi::Application *>(pApplication);
+  //qi::Application* app = reinterpret_cast<qi::Application *>(pApplication);
 
-  delete app;
+  //delete app;
 }
 
 void Java_com_aldebaran_qimessaging_Application_qiApplicationRun(JNIEnv *, jlong pApplication)
