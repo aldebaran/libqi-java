@@ -7,6 +7,8 @@
 */
 
 
+#include <boost/locale.hpp>
+
 #include <qi/log.hpp>
 #include <qitype/signature.hpp>
 #include <qitype/dynamicobjectbuilder.hpp>
@@ -41,6 +43,7 @@ struct toJObject
 
     void visitInt(qi::int64_t value, bool isSigned, int byteSize)
     {
+      qiLogVerbose() << "visitInt " << value << ' ' << byteSize;
       // Clear all remaining exceptions
       env->ExceptionClear();
 
@@ -70,10 +73,18 @@ struct toJObject
       qi::jni::releaseClazz(cls);
     }
 
-    void visitString(char *data, size_t QI_UNUSED(len))
+    void visitString(char *data, size_t len)
     {
+      qiLogVerbose() << "visitString " << len;
       if (data)
-        *result = (jobject) env->NewStringUTF(data);
+      {
+        // It is unclear wether wstring and wchar_t are garanteed 16 bytes,
+        std::basic_string<jchar> conv = boost::locale::conv::utf_to_utf<jchar>(data, data+len);
+        if (conv.empty())
+          *result = (jobject) env->NewStringUTF("");
+        else
+          *result = (jobject) env->NewString(&conv[0], conv.length());
+      }
       else
         *result = (jobject) env->NewStringUTF("");
       checkForError();
@@ -89,6 +100,7 @@ struct toJObject
 
     void visitFloat(double value, int byteSize)
     {
+      qiLogVerbose() << "visitFloat " << value;
       // Clear all remaining exceptions
       env->ExceptionClear();
 
@@ -194,11 +206,13 @@ struct toJObject
 
     void visitDynamic(qi::AnyReference pointee)
     {
+      qiLogVerbose() << "visitDynamic";
       *result = JObject_from_AnyValue(pointee);
     }
 
     void visitRaw(qi::AnyReference value)
     {
+      qiLogVerbose() << "visitRaw";
       qi::Buffer buf = value.as<qi::Buffer>();
 
       // Create a new ByteBuffer and reserve enough space

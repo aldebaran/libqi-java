@@ -99,6 +99,8 @@ qi::AnyReference call_to_java(std::string signature, void* data, const qi::Gener
     jvalue value;
     value.l = JObject_from_AnyValue(*it);
     qiLogVerbose() << "Converted argument " << (it-params.begin()) << it->type()->infoString();
+    if (it->kind() == qi::TypeKind_Dynamic)
+      qiLogVerbose() << "Argument is " << (**it).type()->infoString();
     args[index] = value;
     index++;
   }
