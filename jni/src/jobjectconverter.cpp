@@ -140,6 +140,7 @@ struct toJObject
         jobject result = * (jobject*)converted.first.rawValue();
         delete (jobject*)converted.first.rawValue();
         list.push_back(result);
+        env->DeleteLocalRef(result); // its in the list now
       }
 
       *result = list.object();
@@ -156,6 +157,8 @@ struct toJObject
         value = JObject_from_AnyValue((*it)[1]);
 
         ht.setItem(key, value);
+        env->DeleteLocalRef(key);
+        env->DeleteLocalRef(value);
       }
 
       *result = ht.object();
