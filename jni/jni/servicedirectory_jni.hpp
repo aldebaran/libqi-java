@@ -14,9 +14,9 @@
 extern "C"
 {
   JNIEXPORT jlong   Java_com_aldebaran_qimessaging_ServiceDirectory_qiTestSDCreate(JNIEnv *env, jobject obj);
-  JNIEXPORT void    Java_com_aldebaran_qimessaging_ServiceDirectory_qiTestSDDestroy(jlong pServiceDirectory);
+  JNIEXPORT void    Java_com_aldebaran_qimessaging_ServiceDirectory_qiTestSDDestroy(JNIEnv *env, jobject obj, jlong pServiceDirectory);
   JNIEXPORT jstring Java_com_aldebaran_qimessaging_ServiceDirectory_qiListenUrl(JNIEnv *env, jobject obj, jlong pServiceDirectory);
-  JNIEXPORT void    Java_com_aldebaran_qimessaging_ServiceDirectory_qiTestSDClose(jlong pServiceDirectory);
+  JNIEXPORT void    Java_com_aldebaran_qimessaging_ServiceDirectory_qiTestSDClose(JNIEnv *env, jobject obj, jlong pServiceDirectory);
 
 } // !extern "C"
 
