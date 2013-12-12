@@ -24,6 +24,9 @@ public class Object {
   private static native long     connect(long pObject, String method, java.lang.Object instance, String className, String eventName);
   private static native long     post(long pObject, String name, java.lang.Object[] args);
 
+  public static native java.lang.Object decodeJSON(String str);
+  public static native String encodeJSON(java.lang.Object obj);
+
   /**
    * Object constructor is not public,
    * user must use DynamicObjectBuilder.

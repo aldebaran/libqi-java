@@ -7,6 +7,7 @@
 */
 
 #include <qitype/anyobject.hpp>
+#include <qitype/jsoncodec.hpp>
 
 #include <jnitools.hpp>
 #include <object.hpp>
@@ -203,4 +204,17 @@ void      Java_com_aldebaran_qimessaging_Object_post(JNIEnv *env, jobject QI_UNU
   for(qi::GenericFunctionParameters::iterator it = params.begin(); it != params.end(); ++it)
     (*it).destroy();
   return;
+}
+
+jobject Java_com_aldebaran_qimessaging_Object_decodeJSON(JNIEnv* env, jclass, jstring what)
+{
+  std::string str = qi::jni::toString(what);
+  qi::AnyValue val = qi::decodeJSON(str);
+  return JObject_from_AnyValue(val.asReference());
+}
+
+jstring Java_com_aldebaran_qimessaging_Object_encodeJSON(JNIEnv* env, jclass, jobject what)
+{
+  std::string res = qi::encodeJSON(what);
+  return qi::jni::toJstring(res);
 }
