@@ -22,6 +22,7 @@ public class Object {
   private static native String   printMetaObject(long pObject);
   private static native void     destroy(long pObj);
   private static native long     connect(long pObject, String method, java.lang.Object instance, String className, String eventName);
+  private static native long     disconnect(long pObject, long subscriberId);
   private static native long     post(long pObject, String name, java.lang.Object[] args);
 
   public static native java.lang.Object decodeJSON(String str);
@@ -83,6 +84,7 @@ public class Object {
    * @param eventName Name of the event
    * @param callback Callback name
    * @param object Instance of class implementing callback
+   * @return an unique subscriber id
    * @throws Exception If callback method is not found in object instance.
    */
   public long connect(String eventName, String callback, java.lang.Object object) throws Exception
@@ -102,6 +104,16 @@ public class Object {
     }
 
     throw new Exception("Cannot find " + callback + " in object " + object.toString());
+  }
+
+  /**
+   * Disconnect a previously registered callback.
+   * @param subscriberId id returned by connect()
+   *
+   */
+  public long disconnect(long subscriberId)
+  {
+    return Object.disconnect(_p, subscriberId);
   }
 
   /**

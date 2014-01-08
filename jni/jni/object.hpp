@@ -21,6 +21,8 @@ extern "C"
   JNIEXPORT jstring   Java_com_aldebaran_qimessaging_Object_printMetaObject(JNIEnv* env, jobject jobj, jlong pObj);
   JNIEXPORT void      Java_com_aldebaran_qimessaging_Object_destroy(JNIEnv* env, jobject jobj, jlong pObj);
   JNIEXPORT jlong     Java_com_aldebaran_qimessaging_Object_connect(JNIEnv *env, jobject obj, jlong pObject, jstring method, jobject instance, jstring service, jstring event);
+  JNIEXPORT jlong     Java_com_aldebaran_qimessaging_Object_disconnect(JNIEnv *env, jobject jobj, jlong pObject, jlong subscriberId);
+
   JNIEXPORT void      Java_com_aldebaran_qimessaging_Object_post(JNIEnv *env, jobject obj, jlong pObject, jstring eventName, jobjectArray args);
   JNIEXPORT jobject   Java_com_aldebaran_qimessaging_Object_decodeJSON(JNIEnv* env, jclass cls, jstring str);
   JNIEXPORT jstring   Java_com_aldebaran_qimessaging_Object_encodeJSON(JNIEnv* env, jclass cls, jobject what);

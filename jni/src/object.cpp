@@ -123,6 +123,15 @@ void      Java_com_aldebaran_qimessaging_Object_destroy(JNIEnv* QI_UNUSED(env), 
   delete obj;
 }
 
+
+jlong     Java_com_aldebaran_qimessaging_Object_disconnect(JNIEnv *env, jobject jobj, jlong pObject, jlong subscriberId)
+{
+  qi::AnyObject&             obj = *(reinterpret_cast<qi::AnyObject *>(pObject));
+  obj.disconnect(subscriberId);
+  return 0;
+}
+
+
 jlong     Java_com_aldebaran_qimessaging_Object_connect(JNIEnv *env, jobject jobj, jlong pObject, jstring method, jobject instance, jstring service, jstring eventName)
 {
   qi::AnyObject&             obj = *(reinterpret_cast<qi::AnyObject *>(pObject));
