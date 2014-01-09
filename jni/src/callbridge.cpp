@@ -59,6 +59,17 @@ qi::Future<qi::AnyReference>* call_from_java(JNIEnv *env, qi::AnyObject object, 
   }
 }
 
+namespace {
+  class ScopedDetachCurrentThread
+  {
+  public:
+    ~ScopedDetachCurrentThread()
+    {
+      JVM()->DetachCurrentThread();
+    }
+  };
+}
+
 /**
  * @brief call_to_java Heller function to call Java methods.
  * @param signature qitype signature formated
@@ -83,7 +94,8 @@ qi::AnyReference call_to_java(std::string signature, void* data, const qi::Gener
     throwJavaError(env, "Cannot attach callback thread to Java VM");
     return res;
   }
-
+  // Ensure threads gets detached, which frees local refs
+  ScopedDetachCurrentThread detach = ScopedDetachCurrentThread();
   // Check value of method info structure
   if (info == 0)
   {
