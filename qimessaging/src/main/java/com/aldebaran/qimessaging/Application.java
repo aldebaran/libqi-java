@@ -18,7 +18,10 @@ public class Application
   private static native void qiApplicationRun(long pApp);
   private static native void qiApplicationStop(long pApp);
   private static native void qiApplicationDestroy(long pApplication);
-
+  /**
+  * Crude interface to native log system
+  */
+  public static native void setLogCategory(String category, long verbosity);
   // Members
   long _application;
 

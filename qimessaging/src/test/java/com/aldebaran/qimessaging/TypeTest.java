@@ -9,6 +9,7 @@ import com.aldebaran.qimessaging.ServiceDirectory;
 import com.aldebaran.qimessaging.Session;
 import com.aldebaran.qimessaging.ReplyService;
 import com.aldebaran.qimessaging.Object;
+import com.aldebaran.qimessaging.Application;
 
 import static org.junit.Assert.*;
 
@@ -30,6 +31,7 @@ public class TypeTest
   @Before
   public void setUp() throws Exception
   {
+    //Application.setLogCategory("qimessaging.jni", 6);
     sd = new ServiceDirectory();
     s = new Session();
     client = new Session();
@@ -80,6 +82,7 @@ public class TypeTest
 
     s.close();
     client.close();
+    sd.close();
 
     s = null;
     client = null;
@@ -275,5 +278,64 @@ public class TypeTest
     }
 
     assertTrue(ret);
+  }
+
+  @Test
+  public void testConvert()
+  {
+    java.lang.Object o = Object.decodeJSON("1");
+    System.out.println(o.getClass().getName());
+    assertTrue(o instanceof java.lang.Integer);
+    assertTrue(((Integer)o).equals(1));
+    String str = Object.encodeJSON(o);
+    assertEquals(str, "1");
+
+    o = Object.decodeJSON("1.5");
+    System.out.println(o.getClass().getName());
+    System.out.println(o.toString());
+    assertTrue(o instanceof java.lang.Float);
+    assertTrue(((Float)o).equals(1.5f));
+    str = Object.encodeJSON(o);
+    assertEquals(str, "1.5");
+
+    o = Object.decodeJSON("\"foo\"");
+    assertTrue(o instanceof java.lang.String);
+    assertTrue(((String)o).equals("foo"));
+    str = Object.encodeJSON(o);
+    assertEquals(str, "\"foo\"");
+
+    System.gc(); // just for fun
+
+    o = Object.decodeJSON("[1, 2, 3]");
+    assertTrue(o instanceof List);
+    List l = (List)o;
+    assertEquals(l.size(), 3);
+    assertEquals(l.get(0), 1);
+    assertEquals(l.get(2), 3);
+    str = Object.encodeJSON(o);
+    // be leniant on non-significant formatting
+    assertEquals(str.replace(" ",""), "[1,2,3]");
+  }
+  @Test
+  public void testConvertBig()
+  {
+    System.out.println("big test started");
+    String mega = "[";
+    for (int i=0; i<1000; i++)
+    {
+      mega += Integer.toString(i) + ",";
+      //System.out.println("megamega..." + mega);
+    }
+    mega += "1]";
+    System.out.println("big test decoding");
+    java.lang.Object o = Object.decodeJSON(mega);
+    System.out.println("big test decoded");
+    assertTrue(o instanceof List);
+    List l = (List)o;
+    assertEquals(l.size(), 1001);
+    assertEquals(l.get(100), 100);
+    String str = Object.encodeJSON(o);
+    assertEquals(str.replace(" ",""), mega);
+    System.out.println("big test finished");
   }
 }

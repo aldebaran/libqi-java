@@ -20,6 +20,7 @@ public class ClientTest
   @Test
   public void testConnection()
   {
+    System.out.println("testConnection");
     ServiceDirectory sd = new ServiceDirectory();
     Session s = new Session();
 
@@ -44,6 +45,7 @@ public class ClientTest
   @Test
   public void testDisconnection()
   {
+    System.out.println("testDisconnection");
     ServiceDirectory sd = new ServiceDirectory();
     Session s = new Session();
 
@@ -68,6 +70,7 @@ public class ClientTest
   @Test
   public void testSessionConstructor()
   {
+    System.out.println("testSessionConstructor");
     ServiceDirectory sd = new ServiceDirectory();
     Session s = null;
 

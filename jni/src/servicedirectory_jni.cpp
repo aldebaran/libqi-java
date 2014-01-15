@@ -11,6 +11,8 @@
 #include "jnitools.hpp"
 #include "servicedirectory_jni.hpp"
 
+qiLogCategory("qimessaging.jni");
+
 /**
  * @brief Java_com_aldebaran_qimessaging_ServiceDirectory_qiTestSDCreate
  * @param env JNI environment, mandatory argument.
@@ -30,19 +32,19 @@ jlong   Java_com_aldebaran_qimessaging_ServiceDirectory_qiTestSDCreate(JNIEnv *e
     std::stringstream ss;
 
     ss << "Cannot get test Service Directory: " << fut.error();
-    qiLogError("qimessaging.jni") << ss.str();
+    qiLogError() << ss.str();
     delete sd;
     throwJavaError(env, ss.str().c_str());
     return (jlong) 0;
   }
-
+  qiLogDebug() << "Creating new sd " << sd;
   return (jlong) sd;
 }
 
-void    Java_com_aldebaran_qimessaging_ServiceDirectory_qiTestSDDestroy(jlong pSD)
+void    Java_com_aldebaran_qimessaging_ServiceDirectory_qiTestSDDestroy(JNIEnv*, jobject, jlong pSD)
 {
   qi::Session *sd = reinterpret_cast<qi::Session *>(pSD);
-
+  qiLogDebug() << "Deleting sd " << sd;
   delete sd;
 }
 
@@ -59,7 +61,7 @@ jstring Java_com_aldebaran_qimessaging_ServiceDirectory_qiListenUrl(JNIEnv* QI_U
   return qi::jni::toJstring(sd->endpoints().at(0).str());
 }
 
-void    Java_com_aldebaran_qimessaging_ServiceDirectory_qiTestSDClose(jlong pSD)
+void    Java_com_aldebaran_qimessaging_ServiceDirectory_qiTestSDClose(JNIEnv*, jobject, jlong pSD)
 {
   qi::Session *sd = reinterpret_cast<qi::Session *>(pSD);
 
@@ -68,6 +70,6 @@ void    Java_com_aldebaran_qimessaging_ServiceDirectory_qiTestSDClose(jlong pSD)
     qiLogError("qimessaging.jni") << "Reference to Service Directory is null.";
     return;
   }
-
+  qiLogDebug() << "Closing sd " << sd;
   sd->close();
 }

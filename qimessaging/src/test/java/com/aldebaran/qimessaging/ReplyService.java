@@ -72,11 +72,11 @@ public class ReplyService extends QimessagingService
 
   public String longReply(String str)
   {
-    System.out.println("Sleeping 2s...");
+    System.out.println("Sleeping 500ms...");
 
     try
     {
-      Thread.sleep(2000);
+      Thread.sleep(500);
     } catch (InterruptedException e)
     {
       System.out.println("Cannot sleep anymore : " + e.getMessage());

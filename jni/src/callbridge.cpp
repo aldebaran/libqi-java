@@ -59,6 +59,17 @@ qi::Future<qi::AnyReference>* call_from_java(JNIEnv *env, qi::AnyObject object, 
   }
 }
 
+namespace {
+  class ScopedDetachCurrentThread
+  {
+  public:
+    ~ScopedDetachCurrentThread()
+    {
+      JVM()->DetachCurrentThread();
+    }
+  };
+}
+
 /**
  * @brief call_to_java Heller function to call Java methods.
  * @param signature qitype signature formated
@@ -83,7 +94,8 @@ qi::AnyReference call_to_java(std::string signature, void* data, const qi::Gener
     throwJavaError(env, "Cannot attach callback thread to Java VM");
     return res;
   }
-
+  // Ensure threads gets detached, which frees local refs
+  ScopedDetachCurrentThread detach = ScopedDetachCurrentThread();
   // Check value of method info structure
   if (info == 0)
   {
@@ -98,6 +110,9 @@ qi::AnyReference call_to_java(std::string signature, void* data, const qi::Gener
   {
     jvalue value;
     value.l = JObject_from_AnyValue(*it);
+    qiLogVerbose() << "Converted argument " << (it-params.begin()) << it->type()->infoString();
+    if (it->kind() == qi::TypeKind_Dynamic)
+      qiLogVerbose() << "Argument is " << (**it).type()->infoString();
     args[index] = value;
     index++;
   }
@@ -111,17 +126,21 @@ qi::AnyReference call_to_java(std::string signature, void* data, const qi::Gener
   }
 
   // Find method ID
-  jmethodID mid = env->GetMethodID(cls, sigInfo[1].c_str(), toJavaSignature(signature).c_str());
+  std::string javaSignature = toJavaSignature(signature);
+  qiLogVerbose() << "looking for method " << signature << " -> " << javaSignature;
+  jmethodID mid = env->GetMethodID(cls, sigInfo[1].c_str(), javaSignature.c_str());
   if (!mid)
-    mid = env->GetStaticMethodID(cls, sigInfo[1].c_str(), toJavaSignature(signature).c_str());
+    mid = env->GetStaticMethodID(cls, sigInfo[1].c_str(), javaSignature.c_str());
   if (!mid)
   {
-    qiLogError() << "Cannot find java method " << sigInfo[1] << toJavaSignature(signature).c_str();
+    qiLogError() << "Cannot find java method " << sigInfo[1] << javaSignature.c_str();
     throw std::runtime_error("Cannot find method");
   }
 
   // Call method
+  qiLogVerbose() << "Entering call";
   jobject ret = env->CallObjectMethodA(info->instance, mid, args);
+  qiLogVerbose() << "Finished call";
 
   // Did method thrown ?
   if (env->ExceptionCheck())

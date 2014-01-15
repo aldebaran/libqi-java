@@ -41,6 +41,14 @@ jboolean Java_com_aldebaran_qimessaging_Session_qiSessionIsConnected(JNIEnv* QI_
   return (jboolean) s->isConnected();
 }
 
+static void adaptFuture(qi::Future<void> f, qi::Promise<qi::AnyReference> p)
+{
+  if (f.hasError())
+    p.setError(f.error());
+  else
+    p.setValue(qi::AnyReference(qi::typeOf<void>()));
+}
+
 jlong Java_com_aldebaran_qimessaging_Session_qiSessionConnect(JNIEnv *env, jobject QI_UNUSED(obj), jlong pSession, jstring jurl)
 {
   if (pSession == 0)
@@ -52,12 +60,20 @@ jlong Java_com_aldebaran_qimessaging_Session_qiSessionConnect(JNIEnv *env, jobje
   // After this function return, callbacks are going to be set on new created Future.
   // Save the JVM pointer here to avoid big issues when callbacks will be called.
   JVM(env);
-
+  qi::Future<qi::AnyReference> *fref = new qi::Future<qi::AnyReference>();
+  qi::Promise<qi::AnyReference> promise;
+  *fref = promise.future();
   qi::Session *s = reinterpret_cast<qi::Session*>(pSession);
-  qi::Future<void> *fut = new qi::Future<void>();
-  *fut = s->connect(qi::jni::toString(jurl)).async();
-
-  return (jlong) fut;
+  try
+  {
+    qi::Future<void> f = s->connect(qi::jni::toString(jurl));
+    f.connect(adaptFuture, _1, promise);
+  }
+  catch (const std::exception& e)
+  {
+   promise.setError(e.what());
+  }
+  return (jlong) fref;
 }
 
 void Java_com_aldebaran_qimessaging_Session_qiSessionClose(JNIEnv* QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pSession)

@@ -85,13 +85,14 @@ jobject  Java_com_aldebaran_qimessaging_Future_qiFutureCallGet(JNIEnv *env, jobj
 
 jobject  Java_com_aldebaran_qimessaging_Future_qiFutureCallGetWithTimeout(JNIEnv *env, jobject obj, jlong pFuture, jint timeout)
 {
+  qiLogVerbose() << "Future wait " << timeout;
   qi::Future<qi::AnyReference>* fut = reinterpret_cast<qi::Future<qi::AnyReference>*>(pFuture);
 
   qi::FutureState status = fut->wait(timeout);
-
+  qiLogVerbose() << "Waited, got " << status;
   switch(status) {
   case qi::FutureState_FinishedWithValue:
-    return Java_com_aldebaran_qimessaging_Future_qiFutureCallGetWithTimeout(env, obj, pFuture, 0);
+    return Java_com_aldebaran_qimessaging_Future_qiFutureCallGet(env, obj, pFuture);
   case qi::FutureState_Running:
     return 0;
   default:
