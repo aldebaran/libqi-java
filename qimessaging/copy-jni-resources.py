@@ -40,7 +40,7 @@ def copy_jni_resources(build_worktree):
             sys.exit(1)
 
     jni_proj = build_worktree.get_build_project("qimessaging-jni")
-    java_proj = build_worktree.worktree.get_project("java/qimessaging/qimessaging")
+    java_proj = build_worktree.worktree.get_project("sdk/java/qi/qimessaging")
     if android:
         dest = os.path.join(java_proj.path, "native-android")
     else:
