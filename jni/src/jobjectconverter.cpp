@@ -534,7 +534,8 @@ class JObjectTypeInterface: public qi::DynamicTypeInterface
       JNIEnv *env;
       JVM()->GetEnv((void **) &env, QI_JNI_MIN_VERSION);
       JVM()->AttachCurrentThread((envPtr) &env, (void *) 0);
-      env->NewGlobalRef(*target);
+      //quick ugly leak fix
+      //env->NewGlobalRef(*target);
 
     }
 
@@ -561,7 +562,8 @@ class JObjectTypeInterface: public qi::DynamicTypeInterface
       JNIEnv *env;
       JVM()->GetEnv((void **) &env, QI_JNI_MIN_VERSION);
       JVM()->AttachCurrentThread((envPtr) &env, (void *) 0);
-      env->DeleteGlobalRef(*jobj);
+      //see quick ugly leak fix above
+      //env->DeleteGlobalRef(*jobj);
     }
 
     virtual bool less(void* a, void* b)
