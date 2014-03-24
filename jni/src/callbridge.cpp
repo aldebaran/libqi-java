@@ -106,15 +106,32 @@ qi::AnyReference call_to_java(std::string signature, void* data, const qi::Gener
   // Translate parameters from AnyValues to jobjects
   qi::GenericFunctionParameters::const_iterator it = params.begin();
   qi::GenericFunctionParameters::const_iterator end = params.end();
+  std::vector<qi::TypeInterface*> types;
   for(; it != end; it++)
   {
     jvalue value;
     value.l = JObject_from_AnyValue(*it);
     qiLogVerbose() << "Converted argument " << (it-params.begin()) << it->type()->infoString();
     if (it->kind() == qi::TypeKind_Dynamic)
+    {
       qiLogVerbose() << "Argument is " << (**it).type()->infoString();
+      types.push_back((**it).type());
+    }
+    else
+      types.push_back(it->type());
     args[index] = value;
     index++;
+  }
+
+  // Check if function is callable
+  qi::Signature from = qi::makeTupleSignature(types);
+  qi::Signature to = qi::Signature(sigInfo[2]);
+  if (from.isConvertibleTo(to) == 0)
+  {
+    std::ostringstream ss;
+    ss << "cannot convert parameters from " << from.toString() << " to " << to.toString();
+    qiLogVerbose() << ss;
+    throw std::runtime_error(ss.str());
   }
 
   // Find method class and get methodID
