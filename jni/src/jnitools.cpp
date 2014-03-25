@@ -17,9 +17,18 @@ qiLogCategory("qimessaging.jni");
 
 std::map<std::string, jobject> supportedTypes;
 
+static void emergency()
+{
+  qiLogFatal() << "Emergency, aborting";
+  abort();
+}
+
 JNIEXPORT jint JNICALL JNI_OnLoad (JavaVM* QI_UNUSED(vm), void* QI_UNUSED(reserved))
 {
   qiLogInfo() << "qimessagingjni loaded 2.0.1.";
+  // seems like a good number
+  qi::getEventLoop()->setMaxThreads(8);
+  qi::getEventLoop()->setEmergencyCallback(emergency);
   return QI_JNI_MIN_VERSION;
 }
 
