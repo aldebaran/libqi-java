@@ -350,11 +350,8 @@ std::pair<qi::AnyReference, bool> AnyValue_from_JObject(jobject val)
   if (!val)
     throw std::runtime_error("Unable to convert JObject in AnyValue (Value is null)");
 
-  if (JVM()->GetEnv((void **) &env, QI_JNI_MIN_VERSION) != JNI_OK)
-    throw std::runtime_error("No JNIEnvironment available for conversion.");
-
-  if (JVM()->AttachCurrentThread((envPtr) &env, (void *) 0) != JNI_OK)
-    throw std::runtime_error("Cannot attach current thread to JVM for conversion.");
+  qi::jni::JNIAttach attach;
+  env = attach.get();
 
   jclass stringClass = qi::jni::clazz("String");
   jclass int32Class = qi::jni::clazz("Integer");
@@ -439,7 +436,6 @@ std::pair<qi::AnyReference, bool> AnyValue_from_JObject(jobject val)
     qiLogError() << "Cannot serialize return value: Unable to convert JObject in AnyValue";
     throw std::runtime_error("Cannot serialize return value: Unable to convert JObject in AnyValue");
   }
-
 
   qi::jni::releaseClazz(stringClass);
   qi::jni::releaseClazz(int32Class);
@@ -532,11 +528,11 @@ class JObjectTypeInterface: public qi::DynamicTypeInterface
       JObject_from_AnyValue(src, target);
 
       JNIEnv *env;
-      JVM()->GetEnv((void **) &env, QI_JNI_MIN_VERSION);
-      JVM()->AttachCurrentThread((envPtr) &env, (void *) 0);
+      qi::jni::JNIAttach attach;
+      env = attach.get();
+
       //quick ugly leak fix
       //env->NewGlobalRef(*target);
-
     }
 
     virtual void* clone(void* obj)
@@ -560,8 +556,8 @@ class JObjectTypeInterface: public qi::DynamicTypeInterface
       jobject* jobj = (jobject*) obj;
 
       JNIEnv *env;
-      JVM()->GetEnv((void **) &env, QI_JNI_MIN_VERSION);
-      JVM()->AttachCurrentThread((envPtr) &env, (void *) 0);
+      qi::jni::JNIAttach attach;
+      env = attach.get();
       //see quick ugly leak fix above
       //env->DeleteGlobalRef(*jobj);
     }

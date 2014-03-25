@@ -30,6 +30,8 @@ class JNIObject
   private:
     void build(qi::AnyObject *o);
 
+    qi::jni::JNIAttach attach;
+
     jobject _obj;
     jclass  _cls;
     JNIEnv* _env;

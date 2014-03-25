@@ -11,6 +11,8 @@
 #include <qimessaging/session.hpp>
 #include "jnitools.hpp"
 
+#include <boost/thread/tss.hpp>
+
 qiLogCategory("qimessaging.jni");
 
 std::map<std::string, jobject> supportedTypes;
@@ -278,6 +280,75 @@ std::string propertyBaseSignature(JNIEnv* env, jclass propertyBase)
 
 namespace qi {
   namespace jni {
+
+    namespace {
+      struct JNIHandle
+      {
+        JNIHandle() :
+          lockCount(0),
+          env(0),
+          attached(false)
+        {}
+
+        unsigned int lockCount;
+        JNIEnv* env;
+        bool attached;
+      };
+    }
+
+    static boost::thread_specific_ptr<JNIHandle> ThreadJNI;
+
+    JNIAttach::JNIAttach(JNIEnv* env)
+    {
+      if (!ThreadJNI.get())
+        ThreadJNI.reset(new JNIHandle);
+      if (env)
+      {
+        assert(!ThreadJNI->env || env == ThreadJNI->env);
+        JVM(env);
+        ThreadJNI->env = env;
+      }
+      else if (!ThreadJNI->env)
+      {
+        JavaVM* jvm = JVM();
+        assert(jvm);
+        if (jvm->GetEnv((void**)&ThreadJNI->env, QI_JNI_MIN_VERSION) != JNI_OK ||
+            ThreadJNI->env == 0)
+        {
+          if (JVM()->AttachCurrentThread((envPtr)&ThreadJNI->env, 0) != JNI_OK ||
+              ThreadJNI->env == 0)
+          {
+            qiLogError() << "Cannot attach callback thread to Java VM";
+            throw std::runtime_error("Cannot attach callback thread to Java VM");
+          }
+          ThreadJNI->attached = true;
+        }
+      }
+      ++ThreadJNI->lockCount;
+    }
+
+    JNIAttach::~JNIAttach()
+    {
+      assert(ThreadJNI->lockCount > 0);
+      --ThreadJNI->lockCount;
+
+      if (ThreadJNI->lockCount == 0)
+      {
+        if (ThreadJNI->attached)
+        {
+          JVM()->DetachCurrentThread();
+          ThreadJNI->attached = false;
+        }
+        ThreadJNI->env = 0;
+      }
+    }
+
+    JNIEnv* JNIAttach::get()
+    {
+      assert(ThreadJNI->lockCount > 0);
+      assert(ThreadJNI->env);
+      return ThreadJNI->env;
+    }
 
     // Get JNI environment pointer, valid in current thread.
     JNIEnv*     env()

@@ -19,6 +19,7 @@ qiLogCategory("qimessaging.jni");
 
 JNIObject::JNIObject(const qi::AnyObject& o)
 {
+  // FIXME where is the delete?
   qi::AnyObject* newO = new qi::AnyObject();
   *newO = o;
 
@@ -32,8 +33,7 @@ JNIObject::JNIObject(qi::AnyObject *newO)
 
 JNIObject::JNIObject(jobject value)
 {
-  JVM()->GetEnv((void**) &_env, QI_JNI_MIN_VERSION);
-  JVM()->AttachCurrentThread((envPtr)&_env, (void *) 0);
+  _env = attach.get();
 
   _cls = _env->FindClass(QI_OBJECT_CLASS);
   _obj = value;
@@ -65,7 +65,7 @@ qi::AnyObject      JNIObject::objectPtr()
 
 void JNIObject::build(qi::AnyObject *newO)
 {
-  JVM()->GetEnv((void**) &_env, QI_JNI_MIN_VERSION);
+  _env = attach.get();
 
   _cls = _env->FindClass(QI_OBJECT_CLASS);
   jmethodID mid = _env->GetMethodID(_cls, "<init>", "(J)V");

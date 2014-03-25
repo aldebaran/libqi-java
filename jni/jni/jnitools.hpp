@@ -42,6 +42,15 @@ extern "C"
 namespace qi {
   namespace jni {
 
+    class JNIAttach
+    {
+      public:
+        JNIAttach(JNIEnv* env = 0);
+        ~JNIAttach();
+
+        JNIEnv* get();
+    };
+
     // String conversion
     std::string toString(jstring input);
     jstring     toJstring(const std::string& input);

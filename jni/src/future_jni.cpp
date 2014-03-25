@@ -20,12 +20,8 @@ void      java_future_callback(const qi::Future<qi::AnyReference>& future)
   JNIEnv *env = 0;
   jclass  cls = 0;
 
-  // Attach JNIEnv to current thread to avoid segfault in jni functions. (eventloop dependent)
-  if (JVM()->AttachCurrentThread((envPtr) &env, (void *) 0) != JNI_OK || env == 0)
-  {
-    qiLogError() << "Cannot attach callback thread to Java VM";
-    throw std::runtime_error("Cannot attach callback thread to Java VM");
-  }
+  qi::jni::JNIAttach attach;
+  env = attach.get();
 
   // Get Java information related to Java callback
   qi::CallbackInfo* info = qi::FutureHandler::methodInfo(future);
@@ -122,13 +118,7 @@ jboolean Java_com_aldebaran_qimessaging_Future_qiFutureCallConnect(JNIEnv *env, 
   std::string className = qi::jni::toString(jclassName);
   qi::CallbackInfo* info = 0;
 
-  // Attach JNIEnv to current thread to avoid segfault in jni functions. (eventloop dependent)
-  if (JVM()->AttachCurrentThread((envPtr) &env, (void *) 0) != JNI_OK || env == 0)
-  {
-    qiLogError() << "Cannot attach callback thread to Java VM";
-    throwJavaError(env, "Cannot attach callback thread to Java VM");
-    return false;
-  }
+  qi::jni::JNIAttach attach(env);
 
   info = new qi::CallbackInfo(callback, args, className);
   qi::FutureHandler::addCallbackInfo(fut, info);

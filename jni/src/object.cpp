@@ -42,8 +42,7 @@ jlong   Java_com_aldebaran_qimessaging_Object_property(JNIEnv* env, jobject jobj
 
   qi::Future<qi::AnyReference>* ret = new qi::Future<qi::AnyReference>();
 
-  JVM(env);
-  JVM()->AttachCurrentThread((envPtr) &env, (void*) 0);
+  qi::jni::JNIAttach attach(env);
 
   try
   {
@@ -65,8 +64,7 @@ jlong  Java_com_aldebaran_qimessaging_Object_setProperty(JNIEnv* env, jobject QI
   qi::AnyObject&    obj = *(reinterpret_cast<qi::AnyObject*>(pObj));
   std::string       propName = qi::jni::toString(name);
 
-  JVM(env);
-  JVM()->AttachCurrentThread((envPtr) &env, (void*) 0);
+  qi::jni::JNIAttach attach(env);
 
   qi::Future<qi::AnyReference>* ret = new qi::Future<qi::AnyReference>();
 
@@ -83,9 +81,7 @@ jlong     Java_com_aldebaran_qimessaging_Object_asyncCall(JNIEnv* env, jobject Q
   std::string       method;
   qi::Future<qi::AnyReference>* fut = 0;
 
-  // Init JVM singleton and attach current thread to JVM
-  JVM(env);
-  JVM()->AttachCurrentThread((envPtr) &env, (void*) 0);
+  qi::jni::JNIAttach attach(env);
 
   if (!obj)
   {
@@ -182,13 +178,7 @@ void      Java_com_aldebaran_qimessaging_Object_post(JNIEnv *env, jobject QI_UNU
   jsize size;
   jsize i = 0;
 
-  // Attach JNIEnv to current thread to avoid segfault in jni functions. (eventloop dependent)
-  if (JVM()->AttachCurrentThread((envPtr) &env, (void *) 0) != JNI_OK || env == 0)
-  {
-    qiLogError() << "Cannot attach callback thread to Java VM";
-    throwJavaError(env, "Cannot attach callback thread to Java VM");
-    return;
-  }
+  qi::jni::JNIAttach attach(env);
 
   size = env->GetArrayLength(jargs);
   i = 0;
