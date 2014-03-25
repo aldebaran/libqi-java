@@ -30,10 +30,9 @@ using namespace qi;
 struct toJObject
 {
     toJObject(jobject *result)
-      : result(result), jni_version(QI_JNI_MIN_VERSION)
+      : result(result)
     {
-      if (JVM()->GetEnv((void **) &env, jni_version) != JNI_OK)
-        qiLogFatal("qimessaging.jni") << "Cannot initialize Java environment.";
+      env = attach.get();
     }
 
     void visitUnknown(qi::AnyReference value)
@@ -137,9 +136,10 @@ struct toJObject
       {
         qi::AnyReference arRes = *it;
         std::pair<qi::AnyReference, bool> converted = arRes.convert(qi::typeOf<jobject>());
-        jobject result = * (jobject*)converted.first.rawValue();
-        delete (jobject*)converted.first.rawValue();
+        jobject result = *(jobject*)converted.first.rawValue();
         list.push_back(result);
+        if (converted.second)
+          converted.first.destroy();
         env->DeleteLocalRef(result); // its in the list now
       }
 
@@ -148,17 +148,22 @@ struct toJObject
 
     void visitMap(qi::AnyIterator it, qi::AnyIterator end)
     {
-      jobject key, value;
       JNIHashTable ht;
 
       for (; it != end; ++it)
       {
-        key = JObject_from_AnyValue((*it)[0]);
-        value = JObject_from_AnyValue((*it)[1]);
+        std::pair<qi::AnyReference, bool> keyConv =
+          (*it)[0].convert(qi::typeOf<jobject>());
+        std::pair<qi::AnyReference, bool> valConv =
+          (*it)[1].convert(qi::typeOf<jobject>());
 
-        ht.setItem(key, value);
-        env->DeleteLocalRef(key);
-        env->DeleteLocalRef(value);
+        ht.setItem(*(jobject*)keyConv.first.rawValue(),
+            *(jobject*)valConv.first.rawValue());
+
+        if (keyConv.second)
+          keyConv.first.destroy();
+        if (valConv.second)
+          valConv.first.destroy();
       }
 
       *result = ht.object();
@@ -199,9 +204,10 @@ struct toJObject
       {
         qi::AnyReference arRes = *it;
         std::pair<qi::AnyReference, bool> converted = arRes.convert(qi::typeOf<jobject>());
-        jobject result = * (jobject*)converted.first.rawValue();
-        delete (jobject*)converted.first.rawValue();
+        jobject result = *(jobject*)converted.first.rawValue();
         jtuple.set(i++, result);
+        if (converted.second)
+          converted.first.destroy();
       }
 
       *result = jtuple.object();
@@ -249,8 +255,8 @@ struct toJObject
     }
 
     jobject* result;
-    int      jni_version;
     JNIEnv*  env;
+    qi::jni::JNIAttach attach;
 
 }; // !toJObject
 
@@ -348,7 +354,7 @@ std::pair<qi::AnyReference, bool> AnyValue_from_JObject(jobject val)
   bool copy = false;
 
   if (!val)
-    throw std::runtime_error("Unable to convert JObject in AnyValue (Value is null)");
+    return std::make_pair(qi::AnyReference(), false);
 
   qi::jni::JNIAttach attach;
   env = attach.get();
@@ -478,6 +484,11 @@ class JObjectTypeInterface: public qi::DynamicTypeInterface
     virtual void* initializeStorage(void* ptr = 0)
     {
       // ptr is jobject* (aka _jobject**)
+      if (!ptr)
+      {
+        ptr = new jobject;
+        *(jobject*)ptr = NULL;
+      }
       return ptr;
     }
 
@@ -518,33 +529,37 @@ class JObjectTypeInterface: public qi::DynamicTypeInterface
 
     virtual void set(void** storage, qi::AnyReference src)
     {
-      jobject* &target = *(jobject**)storage;
-      if (!target) // allocate on demand, per the model we should not do that
-        target = new jobject;
-
       // storage is jobject**
-
-      // Giving jobject* to JObject_from_AnyValue
-      JObject_from_AnyValue(src, target);
+      jobject* target = *(jobject**)storage;
 
       JNIEnv *env;
       qi::jni::JNIAttach attach;
       env = attach.get();
 
-      //quick ugly leak fix
-      //env->NewGlobalRef(*target);
+      if (*target)
+        env->DeleteGlobalRef(*target);
+
+      // Giving jobject* to JObject_from_AnyValue
+      JObject_from_AnyValue(src, target);
+
+      if (*target)
+        *target = env->NewGlobalRef(*target);
     }
 
     virtual void* clone(void* obj)
     {
-      jobject*    ginstance = (jobject*) obj;
+      jobject* ginstance = (jobject*)obj;
 
       if (!obj)
         return 0;
 
       jobject* cloned = new jobject;
-      *cloned = JObject_from_AnyValue(qi::AnyReference::from(*ginstance));
-      qiLogDebug() << "Cloning : " << *ginstance << " " << *cloned;
+      *cloned = *ginstance;
+
+      qi::jni::JNIAttach attach;
+      JNIEnv *env = attach.get();
+      *cloned = env->NewGlobalRef(*cloned);
+
       return cloned;
     }
 
@@ -555,11 +570,14 @@ class JObjectTypeInterface: public qi::DynamicTypeInterface
       // void* obj is a jobject
       jobject* jobj = (jobject*) obj;
 
-      JNIEnv *env;
-      qi::jni::JNIAttach attach;
-      env = attach.get();
-      //see quick ugly leak fix above
-      //env->DeleteGlobalRef(*jobj);
+      if (*jobj)
+      {
+        JNIEnv *env;
+        qi::jni::JNIAttach attach;
+        env = attach.get();
+        env->DeleteGlobalRef(*jobj);
+      }
+      delete jobj;
     }
 
     virtual bool less(void* a, void* b)

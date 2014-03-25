@@ -336,7 +336,10 @@ namespace qi {
       {
         if (ThreadJNI->attached)
         {
-          JVM()->DetachCurrentThread();
+          if (JVM()->DetachCurrentThread() != JNI_OK)
+          {
+            qiLogError() << "Cannot detach from current thread";
+          }
           ThreadJNI->attached = false;
         }
         ThreadJNI->env = 0;
