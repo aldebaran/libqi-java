@@ -140,7 +140,6 @@ struct toJObject
         list.push_back(result);
         if (converted.second)
           converted.first.destroy();
-        env->DeleteLocalRef(result); // its in the list now
       }
 
       *result = list.object();
@@ -312,8 +311,6 @@ qi::AnyReference AnyValue_from_JObject_Map(jobject hashtable)
     std::pair<qi::AnyReference, bool> convKey = AnyValue_from_JObject(key);
     std::pair<qi::AnyReference, bool> convValue = AnyValue_from_JObject(value);
     res[qi::AnyValue(convKey.first, !convKey.second, true)] = qi::AnyValue(convValue.first, !convValue.second, true);
-    env->DeleteLocalRef(key);
-    env->DeleteLocalRef(value);
   }
   return qi::AnyReference::from(res);
 }
@@ -572,9 +569,8 @@ class JObjectTypeInterface: public qi::DynamicTypeInterface
 
       if (*jobj)
       {
-        JNIEnv *env;
         qi::jni::JNIAttach attach;
-        env = attach.get();
+        JNIEnv *env = attach.get();
         env->DeleteGlobalRef(*jobj);
       }
       delete jobj;
