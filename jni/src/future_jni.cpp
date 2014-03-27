@@ -62,14 +62,13 @@ jobject  Java_com_aldebaran_qimessaging_Future_qiFutureCallGet(JNIEnv *env, jobj
 
   try
   {
-    // UGLY WORKAROUND
-    // jobject typeinterface has deep-value meaning on the pointed _jobject
-    // but jobject as a C++ type is just _jobject*
-    // so workaround by allocating, and performin only a shallow delete
     qi::AnyReference arRes = fut->value();
     std::pair<qi::AnyReference, bool> converted = arRes.convert(qi::typeOf<jobject>());
     jobject result = * (jobject*)converted.first.rawValue();
-    delete (jobject*)converted.first.rawValue();
+    // keep it alive while we remove the global ref
+    result = env->NewLocalRef(result);
+    if (converted.second)
+      converted.first.destroy();
     return result;
   }
   catch (std::runtime_error &e)
@@ -134,4 +133,14 @@ void  Java_com_aldebaran_qimessaging_Future_qiFutureCallWaitWithTimeout(JNIEnv* 
     fut->wait(timeout);
   else
     fut->wait();
+}
+
+void  Java_com_aldebaran_qimessaging_Future_qiFutureDestroy(JNIEnv* QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pFuture)
+{
+  qi::Future<qi::AnyReference>* fut = reinterpret_cast<qi::Future<qi::AnyReference>*>(pFuture);
+  // UGLY workaround
+  // future only contains values returned from metcall, and these must be freed
+  if (fut->wait(0) == qi::FutureState_FinishedWithValue)
+    const_cast<qi::AnyReference&>(fut->value()).destroy();
+  delete fut;
 }

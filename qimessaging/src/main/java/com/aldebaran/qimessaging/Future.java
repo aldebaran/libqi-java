@@ -33,6 +33,7 @@ public class Future <T>
   private static native boolean qiFutureCallIsDone(long pFuture);
   private static native boolean qiFutureCallConnect(long pFuture, java.lang.Object callback, String className, java.lang.Object[] args);
   private static native void    qiFutureCallWaitWithTimeout(long pFuture, int timeout);
+  private static native void    qiFutureDestroy(long pFuture);
 
   private Future()
   {
@@ -143,6 +144,7 @@ public class Future <T>
   @Override
   protected void finalize() throws Throwable
   {
+    Future.qiFutureDestroy(_fut);
     super.finalize();
   }
 

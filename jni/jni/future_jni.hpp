@@ -23,6 +23,7 @@ extern "C"
   JNIEXPORT jboolean Java_com_aldebaran_qimessaging_Future_qiFutureCallIsDone(JNIEnv *env, jobject obj, jlong pFuture);
   JNIEXPORT jboolean Java_com_aldebaran_qimessaging_Future_qiFutureCallConnect(JNIEnv *env, jobject obj, jlong pFuture, jobject callable, jstring className, jobjectArray args);
   JNIEXPORT void     Java_com_aldebaran_qimessaging_Future_qiFutureCallWaitWithTimeout(JNIEnv *env, jobject obj, jlong pFuture, jint timeout);
+  JNIEXPORT void     Java_com_aldebaran_qimessaging_Future_qiFutureDestroy(JNIEnv* QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pFuture);
 } // !extern "C"
 
 #endif //!_FUTURE_JNI_HPP_
