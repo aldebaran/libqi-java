@@ -60,12 +60,12 @@ namespace qi {
     env->DeleteGlobalRef(fut);
   }
 
-  qi::CallbackInfo* FutureHandler::methodInfo(const qi::Future<qi::AnyReference> &future)
+  qi::CallbackInfo* FutureHandler::methodInfo(const qi::Future<qi::AnyValue> &future)
   {
-    for (std::map<qi::Future<qi::AnyReference>*, qi::CallbackInfo*>::iterator it = globalFutureHandler._map.begin();
+    for (std::map<qi::Future<qi::AnyValue>*, qi::CallbackInfo*>::iterator it = globalFutureHandler._map.begin();
          it != globalFutureHandler._map.end(); ++it)
     {
-      qi::Future<qi::AnyReference> *iterator = (*it).first;
+      qi::Future<qi::AnyValue> *iterator = (*it).first;
 
       if (*iterator == future)
         return (*it).second;
@@ -74,17 +74,17 @@ namespace qi {
     return 0;
   }
 
-  void FutureHandler::addCallbackInfo(qi::Future<AnyReference> *future, qi::CallbackInfo* info)
+  void FutureHandler::addCallbackInfo(qi::Future<AnyValue> *future, qi::CallbackInfo* info)
   {
     globalFutureHandler._map[future] = info;
   }
 
-  void FutureHandler::removeCallbackInfo(const qi::Future<qi::AnyReference>& future)
+  void FutureHandler::removeCallbackInfo(const qi::Future<qi::AnyValue>& future)
   {
-    for (std::map<qi::Future<qi::AnyReference>*, qi::CallbackInfo*>::iterator it = globalFutureHandler._map.begin();
+    for (std::map<qi::Future<qi::AnyValue>*, qi::CallbackInfo*>::iterator it = globalFutureHandler._map.begin();
          it != globalFutureHandler._map.end(); ++it)
     {
-      qi::Future<qi::AnyReference> *iterator = (*it).first;
+      qi::Future<qi::AnyValue> *iterator = (*it).first;
 
       if (*iterator == future)
       {
@@ -97,7 +97,7 @@ namespace qi {
 
   jobject FutureHandler::futurePointer(JNIEnv *env, qi::CallbackInfo* info)
   {
-    for (std::map<qi::Future<qi::AnyReference>*, qi::CallbackInfo*>::iterator it = globalFutureHandler._map.begin();
+    for (std::map<qi::Future<qi::AnyValue>*, qi::CallbackInfo*>::iterator it = globalFutureHandler._map.begin();
          it != globalFutureHandler._map.end(); ++it)
     {
       if ((*it).second == info)

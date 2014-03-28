@@ -21,6 +21,15 @@ qiLogCategory("qimessaging.jni");
 
 MethodInfoHandler gInfoHandler;
 
+static void call_from_java_cont(qi::Future<qi::AnyReference> ret,
+    qi::Promise<qi::AnyValue> promise)
+{
+  if (ret.hasError())
+    promise.setError(ret.error());
+  else
+    promise.setValue(qi::AnyValue(ret.value(), false, true));
+}
+
 /**
  * @brief call_from_java Helper function to call qiMessaging method with Java arguments
  * @param env JNI environment given by JVM.
@@ -29,7 +38,7 @@ MethodInfoHandler gInfoHandler;
  * @param listParams List of Java parameters given for call
  * @return
  */
-qi::Future<qi::AnyReference>* call_from_java(JNIEnv *env, qi::AnyObject object, const std::string& strMethodName, jobjectArray listParams)
+qi::Future<qi::AnyValue>* call_from_java(JNIEnv *env, qi::AnyObject object, const std::string& strMethodName, jobjectArray listParams)
 {
   qi::GenericFunctionParameters params;
   jsize size;
@@ -47,16 +56,23 @@ qi::Future<qi::AnyReference>* call_from_java(JNIEnv *env, qi::AnyObject object, 
     ++i;
   }
   // Create future and start metacall
-  qi::Future<qi::AnyReference> *fut = new qi::Future<qi::AnyReference>();
+  // philippe: must be sync or testCallback is broken (future from metacall is
+  // sync, don't know why)
+  qi::Promise<qi::AnyValue> promise(qi::FutureCallbackType_Sync);
+  qi::Future<qi::AnyValue> *fut = new qi::Future<qi::AnyValue>();
   try
   {
-    *fut = object.metaCall(strMethodName, params);
-    return fut;
+    qi::Future<qi::AnyReference> metfut =
+      object.metaCall(strMethodName, params);
+    metfut.connect(call_from_java_cont, _1, promise);
+    *fut = promise.future();
   } catch (std::runtime_error &e)
   {
+    delete fut;
     throwJavaError(env, e.what());
     return 0;
   }
+  return fut;
 }
 
 /**

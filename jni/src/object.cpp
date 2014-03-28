@@ -18,40 +18,29 @@ qiLogCategory("qimessaging.jni");
 
 extern MethodInfoHandler gInfoHandler;
 
-static void adaptFuture(qi::Future<void> f, qi::Promise<qi::AnyReference> p)
+static void adaptFuture(qi::Future<void> f, qi::Promise<qi::AnyValue> p)
 {
   if (f.hasError())
     p.setError(f.error());
   else
-    p.setValue(qi::AnyReference(qi::typeOf<void>()));
+    p.setValue(qi::AnyValue(qi::typeOf<void>()));
 }
-
-static void adaptFutureValue(qi::Future<qi::AnyValue> f, qi::Promise<qi::AnyReference> p)
-{
-  if (f.hasError())
-    p.setError(f.error());
-  else
-    p.setValue(qi::AnyReference::from(f.value()).clone());
-}
-
 
 jlong   Java_com_aldebaran_qimessaging_Object_property(JNIEnv* env, jobject jobj, jlong pObj, jstring name)
 {
   qi::AnyObject&     obj = *(reinterpret_cast<qi::AnyObject*>(pObj));
   std::string        propName = qi::jni::toString(name);
 
-  qi::Future<qi::AnyReference>* ret = new qi::Future<qi::AnyReference>();
+  qi::Future<qi::AnyValue>* ret = new qi::Future<qi::AnyValue>();
 
   qi::jni::JNIAttach attach(env);
 
   try
   {
-    qi::Future<qi::AnyValue> f = obj.property<qi::AnyValue>(propName);
-    qi::Promise<qi::AnyReference> prom;
-     *ret = prom.future();
-     f.connect(adaptFutureValue, _1, prom);
+    *ret = obj.property<qi::AnyValue>(propName);
   } catch (qi::FutureUserException& e)
   {
+    delete ret;
     throwJavaError(env, e.what());
     return 0;
   }
@@ -66,10 +55,10 @@ jlong  Java_com_aldebaran_qimessaging_Object_setProperty(JNIEnv* env, jobject QI
 
   qi::jni::JNIAttach attach(env);
 
-  qi::Future<qi::AnyReference>* ret = new qi::Future<qi::AnyReference>();
+  qi::Future<qi::AnyValue>* ret = new qi::Future<qi::AnyValue>();
 
   qi::Future<void> f = obj.setProperty(propName, qi::AnyValue::from<jobject>(property)).async();
-  qi::Promise<qi::AnyReference> promise;
+  qi::Promise<qi::AnyValue> promise;
   *ret = promise.future();
   f.connect(adaptFuture, _1, promise);
   return (jlong) ret;
@@ -79,7 +68,7 @@ jlong     Java_com_aldebaran_qimessaging_Object_asyncCall(JNIEnv* env, jobject Q
 {
   qi::AnyObject&    obj = *(reinterpret_cast<qi::AnyObject*>(pObject));
   std::string       method;
-  qi::Future<qi::AnyReference>* fut = 0;
+  qi::Future<qi::AnyValue>* fut = 0;
 
   qi::jni::JNIAttach attach(env);
 

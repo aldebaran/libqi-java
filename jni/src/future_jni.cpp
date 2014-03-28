@@ -15,7 +15,7 @@
 
 qiLogCategory("qimessaging.java");
 
-void      java_future_callback(const qi::Future<qi::AnyReference>& future)
+void      java_future_callback(const qi::Future<qi::AnyValue>& future)
 {
   JNIEnv *env = 0;
   jclass  cls = 0;
@@ -47,7 +47,7 @@ void      java_future_callback(const qi::Future<qi::AnyReference>& future)
 
 jboolean  Java_com_aldebaran_qimessaging_Future_qiFutureCallCancel(JNIEnv *env, jobject obj, jlong pFuture, jboolean mayInterup)
 {
-  qi::Future<qi::AnyReference>* fut = reinterpret_cast<qi::Future<qi::AnyReference>*>(pFuture);
+  qi::Future<qi::AnyValue>* fut = reinterpret_cast<qi::Future<qi::AnyValue>*>(pFuture);
 
   if (fut->isCancelable() == false)
     return false;
@@ -58,11 +58,11 @@ jboolean  Java_com_aldebaran_qimessaging_Future_qiFutureCallCancel(JNIEnv *env, 
 
 jobject  Java_com_aldebaran_qimessaging_Future_qiFutureCallGet(JNIEnv *env, jobject obj, jlong pFuture)
 {
-  qi::Future<qi::AnyReference>* fut = reinterpret_cast<qi::Future<qi::AnyReference>*>(pFuture);
+  qi::Future<qi::AnyValue>* fut = reinterpret_cast<qi::Future<qi::AnyValue>*>(pFuture);
 
   try
   {
-    qi::AnyReference arRes = fut->value();
+    qi::AnyReference arRes = fut->value().asReference();
     std::pair<qi::AnyReference, bool> converted = arRes.convert(qi::typeOf<jobject>());
     jobject result = * (jobject*)converted.first.rawValue();
     // keep it alive while we remove the global ref
@@ -81,7 +81,7 @@ jobject  Java_com_aldebaran_qimessaging_Future_qiFutureCallGet(JNIEnv *env, jobj
 jobject  Java_com_aldebaran_qimessaging_Future_qiFutureCallGetWithTimeout(JNIEnv *env, jobject obj, jlong pFuture, jint timeout)
 {
   qiLogVerbose() << "Future wait " << timeout;
-  qi::Future<qi::AnyReference>* fut = reinterpret_cast<qi::Future<qi::AnyReference>*>(pFuture);
+  qi::Future<qi::AnyValue>* fut = reinterpret_cast<qi::Future<qi::AnyValue>*>(pFuture);
 
   qi::FutureState status = fut->wait(timeout);
   qiLogVerbose() << "Waited, got " << status;
@@ -99,21 +99,21 @@ jobject  Java_com_aldebaran_qimessaging_Future_qiFutureCallGetWithTimeout(JNIEnv
 
 jboolean Java_com_aldebaran_qimessaging_Future_qiFutureCallIsCancelled(JNIEnv *env, jobject obj, jlong pFuture)
 {
-  qi::Future<qi::AnyReference>* fut = reinterpret_cast<qi::Future<qi::AnyReference>*>(pFuture);
+  qi::Future<qi::AnyValue>* fut = reinterpret_cast<qi::Future<qi::AnyValue>*>(pFuture);
 
   return fut->isCanceled();
 }
 
 jboolean Java_com_aldebaran_qimessaging_Future_qiFutureCallIsDone(JNIEnv *env, jobject obj, jlong pFuture)
 {
-  qi::Future<qi::AnyReference>* fut = reinterpret_cast<qi::Future<qi::AnyReference>*>(pFuture);
+  qi::Future<qi::AnyValue>* fut = reinterpret_cast<qi::Future<qi::AnyValue>*>(pFuture);
 
   return fut->isFinished();
 }
 
 jboolean Java_com_aldebaran_qimessaging_Future_qiFutureCallConnect(JNIEnv *env, jobject obj, jlong pFuture, jobject callback, jstring jclassName, jobjectArray args)
 {
-  qi::Future<qi::AnyReference>* fut = reinterpret_cast<qi::Future<qi::AnyReference>*>(pFuture);
+  qi::Future<qi::AnyValue>* fut = reinterpret_cast<qi::Future<qi::AnyValue>*>(pFuture);
   std::string className = qi::jni::toString(jclassName);
   qi::CallbackInfo* info = 0;
 
@@ -127,7 +127,7 @@ jboolean Java_com_aldebaran_qimessaging_Future_qiFutureCallConnect(JNIEnv *env, 
 
 void  Java_com_aldebaran_qimessaging_Future_qiFutureCallWaitWithTimeout(JNIEnv* QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pFuture, jint timeout)
 {
-  qi::Future<qi::AnyReference>* fut = reinterpret_cast<qi::Future<qi::AnyReference>*>(pFuture);
+  qi::Future<qi::AnyValue>* fut = reinterpret_cast<qi::Future<qi::AnyValue>*>(pFuture);
 
   if (timeout)
     fut->wait(timeout);
@@ -137,10 +137,6 @@ void  Java_com_aldebaran_qimessaging_Future_qiFutureCallWaitWithTimeout(JNIEnv* 
 
 void  Java_com_aldebaran_qimessaging_Future_qiFutureDestroy(JNIEnv* QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pFuture)
 {
-  qi::Future<qi::AnyReference>* fut = reinterpret_cast<qi::Future<qi::AnyReference>*>(pFuture);
-  // UGLY workaround
-  // future only contains values returned from metcall, and these must be freed
-  if (fut->wait(0) == qi::FutureState_FinishedWithValue)
-    const_cast<qi::AnyReference&>(fut->value()).destroy();
+  qi::Future<qi::AnyValue>* fut = reinterpret_cast<qi::Future<qi::AnyValue>*>(pFuture);
   delete fut;
 }

@@ -12,7 +12,7 @@
 #include <jni.h>
 #include <qi/future.hpp>
 
-//jobject   newJavaFuture(qi::Future<qi::AnyReference> *fut);
+//jobject   newJavaFuture(qi::Future<qi::AnyValue> *fut);
 
 extern "C"
 {

@@ -376,7 +376,7 @@ std::pair<qi::AnyReference, bool> AnyValue_from_JObject(jobject val)
     const char* data = env->GetStringUTFChars((jstring) val, 0);
     std::string tmp = std::string(data);
     env->ReleaseStringUTFChars((jstring) val, data);
-    res = qi::AnyReference::from(*new std::string(tmp));
+    res = qi::AnyReference::from(tmp).clone();
     copy = true;
   }
   else if (env->IsInstanceOf(val, floatClass))
