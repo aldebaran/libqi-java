@@ -18,7 +18,7 @@ public class EmbeddedTools
 
   public static boolean LOADED_EMBEDDED_LIBRARY = false;
   private static native void initTypeSystem(java.lang.Object str, java.lang.Object i, java.lang.Object f, java.lang.Object d, java.lang.Object l, java.lang.Object m, java.lang.Object al, java.lang.Object t, java.lang.Object o, java.lang.Object b);
-  private static native void initTupleInTypeSystem(java.lang.Object t1, java.lang.Object t2, java.lang.Object t3, java.lang.Object t4, java.lang.Object t5, java.lang.Object t6, java.lang.Object t7, java.lang.Object t8);
+  private static native void initTupleInTypeSystem(java.lang.Object t1, java.lang.Object t2, java.lang.Object t3, java.lang.Object t4, java.lang.Object t5, java.lang.Object t6, java.lang.Object t7, java.lang.Object t8, java.lang.Object t9, java.lang.Object t10, java.lang.Object t11, java.lang.Object t12, java.lang.Object t13, java.lang.Object t14, java.lang.Object t15, java.lang.Object t16, java.lang.Object t17, java.lang.Object t18, java.lang.Object t19, java.lang.Object t20, java.lang.Object t21, java.lang.Object t22, java.lang.Object t23, java.lang.Object t24, java.lang.Object t25, java.lang.Object t26, java.lang.Object t27, java.lang.Object t28, java.lang.Object t29, java.lang.Object t30, java.lang.Object t31, java.lang.Object t32);
 
 
   /**
@@ -54,8 +54,32 @@ public class EmbeddedTools
     Tuple t6 = Tuple.makeTuple(0, 0, 0, 0, 0, 0);
     Tuple t7 = Tuple.makeTuple(0, 0, 0, 0, 0, 0, 0);
     Tuple t8 = Tuple.makeTuple(0, 0, 0, 0, 0, 0, 0, 0);
+    Tuple t9 = Tuple.makeTuple(0, 0, 0, 0, 0, 0, 0, 0, 0);
+    Tuple t10 = Tuple.makeTuple(0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    Tuple t11 = Tuple.makeTuple(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    Tuple t12 = Tuple.makeTuple(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    Tuple t13 = Tuple.makeTuple(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    Tuple t14 = Tuple.makeTuple(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    Tuple t15 = Tuple.makeTuple(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    Tuple t16 = Tuple.makeTuple(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    Tuple t17 = Tuple.makeTuple(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    Tuple t18 = Tuple.makeTuple(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    Tuple t19 = Tuple.makeTuple(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    Tuple t20 = Tuple.makeTuple(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    Tuple t21 = Tuple.makeTuple(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    Tuple t22 = Tuple.makeTuple(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    Tuple t23 = Tuple.makeTuple(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    Tuple t24 = Tuple.makeTuple(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    Tuple t25 = Tuple.makeTuple(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    Tuple t26 = Tuple.makeTuple(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    Tuple t27 = Tuple.makeTuple(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    Tuple t28 = Tuple.makeTuple(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    Tuple t29 = Tuple.makeTuple(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    Tuple t30 = Tuple.makeTuple(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    Tuple t31 = Tuple.makeTuple(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    Tuple t32 = Tuple.makeTuple(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
     // Initialize tuple
-    EmbeddedTools.initTupleInTypeSystem(t1, t2, t3, t4, t5, t6, t7, t8);
+    EmbeddedTools.initTupleInTypeSystem(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24, t25, t26, t27, t28, t29, t30, t31, t32);
     return true;
   }
 

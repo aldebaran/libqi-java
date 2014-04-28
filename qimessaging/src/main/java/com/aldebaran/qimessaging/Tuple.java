@@ -37,6 +37,54 @@ public abstract class Tuple
       return new Tuple7(objs[0], objs[1], objs[2], objs[3], objs[4], objs[5], objs[6]);
     case 8:
       return new Tuple8(objs[0], objs[1], objs[2], objs[3], objs[4], objs[5], objs[6], objs[7]);
+    case 9:
+      return new Tuple9(objs[0], objs[1], objs[2], objs[3], objs[4], objs[5], objs[6], objs[7], objs[8]);
+    case 10:
+      return new Tuple10(objs[0], objs[1], objs[2], objs[3], objs[4], objs[5], objs[6], objs[7], objs[8], objs[9]);
+    case 11:
+      return new Tuple11(objs[0], objs[1], objs[2], objs[3], objs[4], objs[5], objs[6], objs[7], objs[8], objs[9], objs[10]);
+    case 12:
+      return new Tuple12(objs[0], objs[1], objs[2], objs[3], objs[4], objs[5], objs[6], objs[7], objs[8], objs[9], objs[10], objs[11]);
+    case 13:
+      return new Tuple13(objs[0], objs[1], objs[2], objs[3], objs[4], objs[5], objs[6], objs[7], objs[8], objs[9], objs[10], objs[11], objs[12]);
+    case 14:
+      return new Tuple14(objs[0], objs[1], objs[2], objs[3], objs[4], objs[5], objs[6], objs[7], objs[8], objs[9], objs[10], objs[11], objs[12], objs[13]);
+    case 15:
+      return new Tuple15(objs[0], objs[1], objs[2], objs[3], objs[4], objs[5], objs[6], objs[7], objs[8], objs[9], objs[10], objs[11], objs[12], objs[13], objs[14]);
+    case 16:
+      return new Tuple16(objs[0], objs[1], objs[2], objs[3], objs[4], objs[5], objs[6], objs[7], objs[8], objs[9], objs[10], objs[11], objs[12], objs[13], objs[14], objs[15]);
+    case 17:
+      return new Tuple17(objs[0], objs[1], objs[2], objs[3], objs[4], objs[5], objs[6], objs[7], objs[8], objs[9], objs[10], objs[11], objs[12], objs[13], objs[14], objs[15], objs[16]);
+    case 18:
+      return new Tuple18(objs[0], objs[1], objs[2], objs[3], objs[4], objs[5], objs[6], objs[7], objs[8], objs[9], objs[10], objs[11], objs[12], objs[13], objs[14], objs[15], objs[16], objs[17]);
+    case 19:
+      return new Tuple19(objs[0], objs[1], objs[2], objs[3], objs[4], objs[5], objs[6], objs[7], objs[8], objs[9], objs[10], objs[11], objs[12], objs[13], objs[14], objs[15], objs[16], objs[17], objs[18]);
+    case 20:
+      return new Tuple20(objs[0], objs[1], objs[2], objs[3], objs[4], objs[5], objs[6], objs[7], objs[8], objs[9], objs[10], objs[11], objs[12], objs[13], objs[14], objs[15], objs[16], objs[17], objs[18], objs[19]);
+    case 21:
+      return new Tuple21(objs[0], objs[1], objs[2], objs[3], objs[4], objs[5], objs[6], objs[7], objs[8], objs[9], objs[10], objs[11], objs[12], objs[13], objs[14], objs[15], objs[16], objs[17], objs[18], objs[19], objs[20]);
+    case 22:
+      return new Tuple22(objs[0], objs[1], objs[2], objs[3], objs[4], objs[5], objs[6], objs[7], objs[8], objs[9], objs[10], objs[11], objs[12], objs[13], objs[14], objs[15], objs[16], objs[17], objs[18], objs[19], objs[20], objs[21]);
+    case 23:
+      return new Tuple23(objs[0], objs[1], objs[2], objs[3], objs[4], objs[5], objs[6], objs[7], objs[8], objs[9], objs[10], objs[11], objs[12], objs[13], objs[14], objs[15], objs[16], objs[17], objs[18], objs[19], objs[20], objs[21], objs[22]);
+    case 24:
+      return new Tuple24(objs[0], objs[1], objs[2], objs[3], objs[4], objs[5], objs[6], objs[7], objs[8], objs[9], objs[10], objs[11], objs[12], objs[13], objs[14], objs[15], objs[16], objs[17], objs[18], objs[19], objs[20], objs[21], objs[22], objs[23]);
+    case 25:
+      return new Tuple25(objs[0], objs[1], objs[2], objs[3], objs[4], objs[5], objs[6], objs[7], objs[8], objs[9], objs[10], objs[11], objs[12], objs[13], objs[14], objs[15], objs[16], objs[17], objs[18], objs[19], objs[20], objs[21], objs[22], objs[23], objs[24]);
+    case 26:
+      return new Tuple26(objs[0], objs[1], objs[2], objs[3], objs[4], objs[5], objs[6], objs[7], objs[8], objs[9], objs[10], objs[11], objs[12], objs[13], objs[14], objs[15], objs[16], objs[17], objs[18], objs[19], objs[20], objs[21], objs[22], objs[23], objs[24], objs[25]);
+    case 27:
+      return new Tuple27(objs[0], objs[1], objs[2], objs[3], objs[4], objs[5], objs[6], objs[7], objs[8], objs[9], objs[10], objs[11], objs[12], objs[13], objs[14], objs[15], objs[16], objs[17], objs[18], objs[19], objs[20], objs[21], objs[22], objs[23], objs[24], objs[25], objs[26]);
+    case 28:
+      return new Tuple28(objs[0], objs[1], objs[2], objs[3], objs[4], objs[5], objs[6], objs[7], objs[8], objs[9], objs[10], objs[11], objs[12], objs[13], objs[14], objs[15], objs[16], objs[17], objs[18], objs[19], objs[20], objs[21], objs[22], objs[23], objs[24], objs[25], objs[26], objs[27]);
+    case 29:
+      return new Tuple29(objs[0], objs[1], objs[2], objs[3], objs[4], objs[5], objs[6], objs[7], objs[8], objs[9], objs[10], objs[11], objs[12], objs[13], objs[14], objs[15], objs[16], objs[17], objs[18], objs[19], objs[20], objs[21], objs[22], objs[23], objs[24], objs[25], objs[26], objs[27], objs[28]);
+    case 30:
+      return new Tuple30(objs[0], objs[1], objs[2], objs[3], objs[4], objs[5], objs[6], objs[7], objs[8], objs[9], objs[10], objs[11], objs[12], objs[13], objs[14], objs[15], objs[16], objs[17], objs[18], objs[19], objs[20], objs[21], objs[22], objs[23], objs[24], objs[25], objs[26], objs[27], objs[28], objs[29]);
+    case 31:
+      return new Tuple31(objs[0], objs[1], objs[2], objs[3], objs[4], objs[5], objs[6], objs[7], objs[8], objs[9], objs[10], objs[11], objs[12], objs[13], objs[14], objs[15], objs[16], objs[17], objs[18], objs[19], objs[20], objs[21], objs[22], objs[23], objs[24], objs[25], objs[26], objs[27], objs[28], objs[29], objs[30]);
+    case 32:
+      return new Tuple32(objs[0], objs[1], objs[2], objs[3], objs[4], objs[5], objs[6], objs[7], objs[8], objs[9], objs[10], objs[11], objs[12], objs[13], objs[14], objs[15], objs[16], objs[17], objs[18], objs[19], objs[20], objs[21], objs[22], objs[23], objs[24], objs[25], objs[26], objs[27], objs[28], objs[29], objs[30], objs[31]);
     }
 
     return null;

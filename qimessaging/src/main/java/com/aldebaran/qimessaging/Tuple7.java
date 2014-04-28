@@ -1,37 +1,4 @@
-package com.aldebaran.qimessaging;
-
-public class Tuple7 <A,B,C,D,E,F,G> extends Tuple
-{
-  public A var1;
-  public B var2;
-  public C var3;
-  public D var4;
-  public E var5;
-  public F var6;
-  public G var7;
-
-  public Tuple7()
-  {
-    var1 = null;
-    var2 = null;
-    var3 = null;
-    var4 = null;
-    var5 = null;
-    var6 = null;
-    var7 = null;
-  }
-
-  public Tuple7(A a, B b, C c, D d, E e, F f, G g)
-  {
-    var1 = a;
-    var2 = b;
-    var3 = c;
-    var4 = d;
-    var5 = e;
-    var6 = f;
-    var7 = g;
-  }
-
+package com.aldebaran.qimessaging;public class Tuple7 <T0, T1, T2, T3, T4, T5, T6> extends Tuple {public T0 var0;public T1 var1;public T2 var2;public T3 var3;public T4 var4;public T5 var5;public T6 var6;public Tuple7() {var0 = null;var1 = null;var2 = null;var3 = null;var4 = null;var5 = null;var6 = null;}public Tuple7(T0 arg0, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6) {var0 = arg0;var1 = arg1;var2 = arg2;var3 = arg3;var4 = arg4;var5 = arg5;var6 = arg6;}
   public <T> T get(int i) throws IndexOutOfBoundsException, ClassCastException, IllegalArgumentException, IllegalAccessException
   {
     return super.get(i);

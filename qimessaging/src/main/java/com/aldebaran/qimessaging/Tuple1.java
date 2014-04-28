@@ -1,19 +1,4 @@
-package com.aldebaran.qimessaging;
-
-public class Tuple1 <A> extends Tuple
-{
-  public A var1;
-
-  public Tuple1()
-  {
-    var1 = null;
-  }
-
-  public Tuple1(A a)
-  {
-    var1 = a;
-  }
-
+package com.aldebaran.qimessaging;public class Tuple1 <T0> extends Tuple {public T0 var0;public Tuple1() {var0 = null;}public Tuple1(T0 arg0) {var0 = arg0;}
   public <T> T get(int i) throws IndexOutOfBoundsException, ClassCastException, IllegalArgumentException, IllegalAccessException
   {
     return super.get(i);
