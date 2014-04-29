@@ -175,17 +175,14 @@ struct toJObject
 
     void visitAnyObject(qi::AnyObject o)
     {
-
       try
       {
         JNIObject obj(o);
         *result = obj.object();
-
-      } catch (std::exception&)
-      {
-        return;
       }
-
+      catch (std::exception&)
+      {
+      }
     }
 
     void visitPointer(qi::AnyReference pointee)
@@ -540,7 +537,14 @@ class JObjectTypeInterface: public qi::DynamicTypeInterface
       JObject_from_AnyValue(src, target);
 
       if (*target)
+      {
+        // create a global ref to keep the object alive until we decide it may
+        // die, but delete the local ref because they are limited to 512 in
+        // android and we should not trash them
+        jobject local = *target;
         *target = env->NewGlobalRef(*target);
+        env->DeleteLocalRef(local);
+      }
     }
 
     virtual void* clone(void* obj)
