@@ -159,7 +159,20 @@ qi::AnyReference call_to_java(std::string signature, void* data, const qi::Gener
 
   // Call method
   qiLogVerbose() << "Entering call";
-  jobject ret = env->CallObjectMethodA(info->instance, mid, args);
+  if (sigInfo[0] == "" || sigInfo[0] == "v")
+  {
+    env->CallVoidMethodA(info->instance, mid, args);
+    res = qi::AnyReference(qi::typeOf<void>());
+  }
+  else
+  {
+    jobject ret = env->CallObjectMethodA(info->instance, mid, args);
+    if (!env->ExceptionCheck())
+    {
+      res = AnyValue_from_JObject(ret).first;
+      qi::jni::releaseObject(ret);
+    }
+  }
   qiLogVerbose() << "Finished call";
 
   // Did method thrown ?
@@ -178,13 +191,6 @@ qi::AnyReference call_to_java(std::string signature, void* data, const qi::Gener
     qi::jni::releaseObject(args[index].l);
   delete[] args;
 
-  // If method return signature is void, return here
-  if (sigInfo[0] == "" || sigInfo[0] == "v")
-    return qi::AnyReference(qi::typeOf<void>());
-
-  // Convert return value in AnyValue
-  res = AnyValue_from_JObject(ret).first;
-  qi::jni::releaseObject(ret);
   return res;
 }
 
