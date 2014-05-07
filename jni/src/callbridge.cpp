@@ -145,8 +145,12 @@ qi::AnyReference call_to_java(std::string signature, void* data, const qi::Gener
   std::string javaSignature = toJavaSignature(signature);
   qiLogVerbose() << "looking for method " << signature << " -> " << javaSignature;
   jmethodID mid = env->GetMethodID(cls, sigInfo[1].c_str(), javaSignature.c_str());
+  if (env->ExceptionCheck()) // NoSuchMethodError
+    env->ExceptionClear();
   if (!mid)
     mid = env->GetStaticMethodID(cls, sigInfo[1].c_str(), javaSignature.c_str());
+  if (env->ExceptionCheck()) // NoSuchMethodError
+    env->ExceptionClear();
   if (!mid)
   {
     qiLogError() << "Cannot find java method " << sigInfo[1] << javaSignature.c_str();
