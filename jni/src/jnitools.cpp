@@ -348,7 +348,9 @@ namespace qi {
         if (jvm->GetEnv((void**)&ThreadJNI->env, QI_JNI_MIN_VERSION) != JNI_OK ||
             ThreadJNI->env == 0)
         {
-          if (JVM()->AttachCurrentThread((envPtr)&ThreadJNI->env, 0) != JNI_OK ||
+          char threadName[] = "qimessaging-thread";
+          JavaVMAttachArgs args = { JNI_VERSION_1_6, threadName, 0 };
+          if (JVM()->AttachCurrentThread((envPtr)&ThreadJNI->env, &args) != JNI_OK ||
               ThreadJNI->env == 0)
           {
             qiLogError() << "Cannot attach callback thread to Java VM";
