@@ -64,7 +64,7 @@ def copy_or_link(src, dest):
 
 def main():
     parser = argparse.ArgumentParser()
-    qibuild.parsers.build_parser(parser)
+    qibuild.parsers.cmake_build_parser(parser)
     args = parser.parse_args()
     build_worktree = qibuild.parsers.get_build_worktree(args)
     ui.info("Copying jni libraries as resources ...")
