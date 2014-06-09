@@ -20,7 +20,11 @@ std::map<std::string, jobject> supportedTypes;
 static void emergency()
 {
   qiLogFatal() << "Emergency, aborting";
+#ifdef unix
+  kill(getpid(), SIGQUIT);
+#else
   abort();
+#endif
 }
 
 JNIEXPORT jint JNICALL JNI_OnLoad (JavaVM* QI_UNUSED(vm), void* QI_UNUSED(reserved))
