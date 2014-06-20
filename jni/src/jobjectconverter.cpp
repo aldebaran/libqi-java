@@ -244,6 +244,11 @@ struct toJObject
       visitUnknown(v);
     }
 
+    void visitVarArgs(qi::AnyIterator begin, qi::AnyIterator end)
+    {
+      throw std::runtime_error("var args is not supported");
+    }
+
     void checkForError()
     {
       if (result == NULL)
