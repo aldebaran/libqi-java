@@ -9,6 +9,8 @@
 #include <qi/log.hpp>
 #include <qitype/signature.hpp>
 #include <qimessaging/session.hpp>
+#include <sys/types.h>
+#include <signal.h>
 #include "jnitools.hpp"
 
 #include <boost/thread/tss.hpp>
