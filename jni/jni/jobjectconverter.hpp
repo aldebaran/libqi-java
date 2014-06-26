@@ -11,7 +11,7 @@
 #define _JOBJECTCONVERTER_HPP_
 
 #include <jni.h>
-#include <qitype/typeinterface.hpp>
+#include <qi/type/typeinterface.hpp>
 
 jobject JObject_from_AnyValue(qi::AnyReference val);
 void JObject_from_AnyValue(qi::AnyReference val, jobject* target);

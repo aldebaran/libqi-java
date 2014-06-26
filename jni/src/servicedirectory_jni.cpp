@@ -7,7 +7,7 @@
 */
 
 #include <qi/log.hpp>
-#include <qimessaging/session.hpp>
+#include <qi/session.hpp>
 #include "jnitools.hpp"
 #include "servicedirectory_jni.hpp"
 

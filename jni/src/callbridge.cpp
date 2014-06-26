@@ -9,9 +9,9 @@
 #include <qi/log.hpp>
 #include <qi/future.hpp>
 
-#include <qitype/anyobject.hpp>
-#include <qitype/dynamicobjectbuilder.hpp>
-#include <qitype/anyfunction.hpp>
+#include <qi/anyobject.hpp>
+#include <qi/type/dynamicobjectbuilder.hpp>
+#include <qi/anyfunction.hpp>
 
 #include <callbridge.hpp>
 #include <jobjectconverter.hpp>

@@ -11,7 +11,7 @@
 
 #include <jni.h>
 
-#include <qitype/anyobject.hpp>
+#include <qi/anyobject.hpp>
 
 /**
  * @brief The JNIObject class Helper for conversion between qi::AnyObject and com.aldebaran.qimessaging.Object
