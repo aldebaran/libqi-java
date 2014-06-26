@@ -63,5 +63,5 @@ void Java_com_aldebaran_qimessaging_Application_qiApplicationStop(JNIEnv *, jcla
 
 void Java_com_aldebaran_qimessaging_Application_setLogCategory(JNIEnv *env, jclass cls, jstring category, jlong verbosity)
 {
-  ::qi::log::setCategory(qi::jni::toString(category), (qi::LogLevel)verbosity, 0);
+  ::qi::log::addFilter(qi::jni::toString(category), (qi::LogLevel)verbosity, 0);
 }
