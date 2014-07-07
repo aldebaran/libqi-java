@@ -14,7 +14,7 @@
 #include <qi/type/dynamicobjectbuilder.hpp>
 #include <qi/anyobject.hpp>
 #include <qi/anyvalue.hpp>
-#include <qitype/type/dispatcher.hpp>
+#include <qi/type/typedispatcher.hpp>
 #include <qi/type/typeinterface.hpp>
 
 #include <jnitools.hpp>

@@ -50,4 +50,4 @@ set(SOURCE
    )
 
 # Compile qimessaging java compatibility layer using jni
-qi_create_lib(qimessagingjni ${SOURCE} SHARED DEPENDS QIMESSAGING)
+qi_create_lib(qimessagingjni ${SOURCE} SHARED DEPENDS QI)
