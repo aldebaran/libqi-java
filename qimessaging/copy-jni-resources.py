@@ -22,8 +22,6 @@ def copy_jni_resources(build_worktree):
     libs = list()
     proj_to_lib = [
             ("libqi",          "qi"),
-            ("libqitype",      "qitype"),
-            ("libqimessaging", "qimessaging"),
             ("qimessaging-jni", "qimessagingjni")]
     if android:
         proj_to_lib.append(
@@ -40,7 +38,7 @@ def copy_jni_resources(build_worktree):
             sys.exit(1)
 
     jni_proj = build_worktree.get_build_project("qimessaging-jni")
-    java_proj = build_worktree.worktree.get_project("sdk/java/qi/qimessaging")
+    java_proj = build_worktree.worktree.get_project("sdk/libqi-java/qimessaging")
     if android:
         dest = os.path.join(java_proj.path, "native-android")
     else:
