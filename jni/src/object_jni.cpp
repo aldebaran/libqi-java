@@ -10,7 +10,7 @@
 #include <sstream>
 
 #include <qi/log.hpp>
-#include <qitype/dynamicobject.hpp>
+#include <qi/type/dynamicobject.hpp>
 
 #include <jnitools.hpp>
 #include <object_jni.hpp>

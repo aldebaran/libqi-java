@@ -10,8 +10,8 @@
 
 #include <qi/log.hpp>
 #include <qi/api.hpp>
-#include <qitype/anyfunction.hpp>
-#include <qimessaging/session.hpp>
+#include <qi/anyfunction.hpp>
+#include <qi/session.hpp>
 
 #include <jni.h>
 #include <jnitools.hpp>

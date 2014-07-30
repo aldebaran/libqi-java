@@ -6,8 +6,8 @@
 ** Copyright (C) 2012, 2013 Aldebaran Robotics
 */
 
-#include <qitype/anyobject.hpp>
-#include <qitype/jsoncodec.hpp>
+#include <qi/anyobject.hpp>
+#include <qi/jsoncodec.hpp>
 
 #include <jnitools.hpp>
 #include <object.hpp>

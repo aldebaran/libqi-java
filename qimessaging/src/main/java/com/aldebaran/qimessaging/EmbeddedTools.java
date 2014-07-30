@@ -108,8 +108,6 @@ public class EmbeddedTools
     SharedLibrary.loadLib("gnustl_shared");
 
     if (SharedLibrary.loadLib("qi") == false
-            || SharedLibrary.loadLib("qitype") == false
-            || SharedLibrary.loadLib("qimessaging") == false
             || SharedLibrary.loadLib("qimessagingjni") == false) {
         LOADED_EMBEDDED_LIBRARY = false;
         return false;

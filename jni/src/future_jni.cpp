@@ -6,7 +6,7 @@
 ** Copyright (C) 2012, 2013 Aldebaran Robotics
 */
 
-#include <qitype/anyvalue.hpp>
+#include <qi/anyvalue.hpp>
 
 #include <jnitools.hpp>
 #include <futurehandler.hpp>
