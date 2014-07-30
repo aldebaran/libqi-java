@@ -1,3 +1,3 @@
 project = 'qimessaging-java'
 master_doc = 'index'
-version = '2.0.1 alpha'
+version = '2.1.1 alpha'
