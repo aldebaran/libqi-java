@@ -6,9 +6,9 @@ package com.aldebaran.qimessaging;
  */
 public abstract class QimessagingService {
 
-  protected Object self;
+  protected AnyObject self;
 
-  public void init(Object self)
+  public void init(AnyObject self)
   {
     this.self = self;
   }

@@ -2,7 +2,7 @@ package com.aldebaran;
 
 import com.aldebaran.qimessaging.CallError;
 import com.aldebaran.qimessaging.Application;
-import com.aldebaran.qimessaging.Object;
+import com.aldebaran.qimessaging.AnyObject;
 import com.aldebaran.qimessaging.Session;
 import android.app.Activity;
 import android.content.Context;
@@ -61,7 +61,7 @@ public class HelloAndroidActivity extends Activity
     }
 
     Log.v("com.aldebaran.RobotTalk.connectSD", "Trying to get a proxy on serviceTest");
-    Object proxy;
+    AnyObject proxy;
     try {
       proxy = session.service("ALTextToSpeech");
     } catch (Exception e1) {

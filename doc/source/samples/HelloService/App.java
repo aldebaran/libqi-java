@@ -1,5 +1,5 @@
 import com.aldebaran.qimessaging.*;
-import com.aldebaran.qimessaging.Object;
+import com.aldebaran.qimessaging.AnyObject;
 
 public class App
 {
@@ -11,7 +11,7 @@ public class App
 		QimessagingService service = new HelloService();
 		DynamicObjectBuilder objectBuilder = new DynamicObjectBuilder();
 		objectBuilder.advertiseMethod("greet::s(s)", service, "Greet the caller");
-		Object object = objectBuilder.object();
+		AnyObject object = objectBuilder.object();
 		service.init(object);
 
 		System.out.println("Connecting to: " + address);

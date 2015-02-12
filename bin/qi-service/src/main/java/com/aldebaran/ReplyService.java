@@ -7,14 +7,14 @@ import java.util.Map;
 
 import com.aldebaran.qimessaging.DynamicObjectBuilder;
 import com.aldebaran.qimessaging.QimessagingService;
-import com.aldebaran.qimessaging.Object;
+import com.aldebaran.qimessaging.AnyObject;
 import com.aldebaran.qimessaging.Tuple;
 import com.aldebaran.qimessaging.Tuple3;
 
 public class ReplyService extends QimessagingService
 {
 
-  public Object createObject()
+  public AnyObject createObject()
   {
     DynamicObjectBuilder ob = new DynamicObjectBuilder();
 
@@ -33,7 +33,7 @@ public class ReplyService extends QimessagingService
       return null;
     }
 
-    Object ro = ob.object();
+    AnyObject ro = ob.object();
 
     try {
       ro.setProperty("name", "foo");

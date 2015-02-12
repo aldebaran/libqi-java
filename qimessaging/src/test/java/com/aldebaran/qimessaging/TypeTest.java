@@ -8,7 +8,7 @@ import java.util.Map;
 import com.aldebaran.qimessaging.ServiceDirectory;
 import com.aldebaran.qimessaging.Session;
 import com.aldebaran.qimessaging.ReplyService;
-import com.aldebaran.qimessaging.Object;
+import com.aldebaran.qimessaging.AnyObject;
 import com.aldebaran.qimessaging.Application;
 
 import static org.junit.Assert.*;
@@ -22,8 +22,8 @@ import org.junit.Test;
  */
 public class TypeTest
 {
-  public Object           proxy = null;
-  public Object           obj = null;
+  public AnyObject           proxy = null;
+  public AnyObject           obj = null;
   public Session          s = null;
   public Session          client = null;
   public ServiceDirectory sd = null;
@@ -283,36 +283,36 @@ public class TypeTest
   @Test
   public void testConvert()
   {
-    java.lang.Object o = Object.decodeJSON("1");
+    Object o = AnyObject.decodeJSON("1");
     System.out.println(o.getClass().getName());
     assertTrue(o instanceof java.lang.Integer);
     assertTrue(((Integer)o).equals(1));
-    String str = Object.encodeJSON(o);
+    String str = AnyObject.encodeJSON(o);
     assertEquals(str, "1");
 
-    o = Object.decodeJSON("1.5");
+    o = AnyObject.decodeJSON("1.5");
     System.out.println(o.getClass().getName());
     System.out.println(o.toString());
     assertTrue(o instanceof java.lang.Float);
     assertTrue(((Float)o).equals(1.5f));
-    str = Object.encodeJSON(o);
+    str = AnyObject.encodeJSON(o);
     assertEquals(str, "1.5");
 
-    o = Object.decodeJSON("\"foo\"");
+    o = AnyObject.decodeJSON("\"foo\"");
     assertTrue(o instanceof java.lang.String);
     assertTrue(((String)o).equals("foo"));
-    str = Object.encodeJSON(o);
+    str = AnyObject.encodeJSON(o);
     assertEquals(str, "\"foo\"");
 
     System.gc(); // just for fun
 
-    o = Object.decodeJSON("[1, 2, 3]");
+    o = AnyObject.decodeJSON("[1, 2, 3]");
     assertTrue(o instanceof List);
     List l = (List)o;
     assertEquals(l.size(), 3);
     assertEquals(l.get(0), 1);
     assertEquals(l.get(2), 3);
-    str = Object.encodeJSON(o);
+    str = AnyObject.encodeJSON(o);
     // be leniant on non-significant formatting
     assertEquals(str.replace(" ",""), "[1,2,3]");
   }
@@ -328,13 +328,13 @@ public class TypeTest
     }
     mega += "1]";
     System.out.println("big test decoding");
-    java.lang.Object o = Object.decodeJSON(mega);
+    Object o = AnyObject.decodeJSON(mega);
     System.out.println("big test decoded");
     assertTrue(o instanceof List);
     List l = (List)o;
     assertEquals(l.size(), 1001);
     assertEquals(l.get(100), 100);
-    String str = Object.encodeJSON(o);
+    String str = AnyObject.encodeJSON(o);
     assertEquals(str.replace(" ",""), mega);
     System.out.println("big test finished");
   }

@@ -8,10 +8,10 @@ import org.junit.Test;
 
 public class ObjectTest
 {
-  public Object     proxy = null;
-  public Object     proxyts = null;
-  public Object     obj = null;
-  public Object     objts = null;
+  public AnyObject     proxy = null;
+  public AnyObject     proxyts = null;
+  public AnyObject     obj = null;
+  public AnyObject     objts = null;
   public Session          s = null;
   public Session          client = null;
   public ServiceDirectory sd = null;
@@ -111,11 +111,11 @@ public class ObjectTest
   public void getObject()
   {
     boolean ok;
-    Object ro = null;
+    AnyObject ro = null;
 
     try
     {
-      ro = proxy.<Object>call("createObject").get();
+      ro = proxy.<AnyObject>call("createObject").get();
     } catch (Exception e)
     {
       fail("Call must not fail: " + e.getMessage());

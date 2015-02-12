@@ -27,11 +27,11 @@ public class Future <T>
 
   // Native C API object functions
   private static native boolean qiFutureCallCancel(long pFuture);
-  private static native java.lang.Object  qiFutureCallGet(long pFuture);
-  private static native java.lang.Object  qiFutureCallGetWithTimeout(long pFuture, int timeout);
+  private static native Object  qiFutureCallGet(long pFuture);
+  private static native Object  qiFutureCallGetWithTimeout(long pFuture, int timeout);
   private static native boolean qiFutureCallIsCancelled(long pFuture);
   private static native boolean qiFutureCallIsDone(long pFuture);
-  private static native boolean qiFutureCallConnect(long pFuture, java.lang.Object callback, String className, java.lang.Object[] args);
+  private static native boolean qiFutureCallConnect(long pFuture, Object callback, String className, Object[] args);
   private static native void    qiFutureCallWaitWithTimeout(long pFuture, int timeout);
   private static native void    qiFutureDestroy(long pFuture);
 
@@ -62,7 +62,7 @@ public class Future <T>
    * @return true on success.
    * @since 1.20
    */
-  public boolean addCallback(Callback<?> callback, java.lang.Object ... args)
+  public boolean addCallback(Callback<?> callback, Object ... args)
   {
     String className = callback.getClass().toString();
     className = className.substring(6); // Remove "class "
@@ -81,7 +81,7 @@ public class Future <T>
   public T get() throws InterruptedException, CallError
   {
 
-    java.lang.Object ret = null;
+    Object ret = null;
 
     try
     {
@@ -102,7 +102,7 @@ public class Future <T>
   ExecutionException, TimeoutException
   {
 
-    java.lang.Object ret = null;
+    Object ret = null;
     int timeoutms = (int) unit.toMillis(timeout);
 
     try

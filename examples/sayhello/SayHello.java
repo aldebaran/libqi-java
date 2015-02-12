@@ -9,7 +9,7 @@ public class SayHello {
 			fut.wait(1000);
 		}
 
-		com.aldebaran.qimessaging.Object tts = null;
+		com.aldebaran.qimessaging.AnyObject tts = null;
 		tts = session.service("ALTextToSpeech");
 
 

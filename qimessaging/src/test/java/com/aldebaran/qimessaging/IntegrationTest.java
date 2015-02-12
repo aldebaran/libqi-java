@@ -3,7 +3,7 @@ package com.aldebaran.qimessaging;
 import com.aldebaran.qimessaging.ServiceDirectory;
 import com.aldebaran.qimessaging.Session;
 import com.aldebaran.qimessaging.ReplyService;
-import com.aldebaran.qimessaging.Object;
+import com.aldebaran.qimessaging.AnyObject;
 
 import static org.junit.Assert.*;
 
@@ -16,8 +16,8 @@ import org.junit.Test;
  */
 public class IntegrationTest
 {
-  public Object           proxy = null;
-  public Object           obj = null;
+  public AnyObject           proxy = null;
+  public AnyObject           obj = null;
   public Session          s = null;
   public Session          client = null;
   public ServiceDirectory sd = null;

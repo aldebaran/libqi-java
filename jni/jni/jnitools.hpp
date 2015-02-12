@@ -26,7 +26,7 @@
 // Define JNI minimum version used by qimessaging bindings
 #define QI_JNI_MIN_VERSION JNI_VERSION_1_6
 // QI_OBJECT_CLASS defines complete name of java generic object class
-#define QI_OBJECT_CLASS "com/aldebaran/qimessaging/Object"
+#define QI_OBJECT_CLASS "com/aldebaran/qimessaging/AnyObject"
 
 // JNI utils
 extern "C"

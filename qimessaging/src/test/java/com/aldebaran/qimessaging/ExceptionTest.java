@@ -9,8 +9,8 @@ import org.junit.Test;
 public class ExceptionTest {
 
   public Boolean    exceptionThrown = false;
-  public Object     proxy = null;
-  public Object     obj = null;
+  public AnyObject     proxy = null;
+  public AnyObject     obj = null;
   public Session          s = null;
   public Session          client = null;
   public ServiceDirectory sd = null;

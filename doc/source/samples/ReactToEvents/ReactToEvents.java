@@ -1,23 +1,23 @@
 import com.aldebaran.qimessaging.Application;
 import com.aldebaran.qimessaging.CallError;
 import com.aldebaran.qimessaging.Future;
-import com.aldebaran.qimessaging.Object;
+import com.aldebaran.qimessaging.AnyObject;
 import com.aldebaran.qimessaging.Session;
 
 public class ReactToEvents {
 
-	private Object tts;
-	private Object memory;
+	private AnyObject tts;
+	private AnyObject memory;
 	private CallBack callback;
 
 	public class CallBack {
-		private Object tts;
+		private AnyObject tts;
 
-		public CallBack(Object tts) {
+		public CallBack(AnyObject tts) {
 			this.tts = tts;
 		}
 
-		public void onTouch(java.lang.Object value) {
+		public void onTouch(Object value) {
 			float data = (Float) value;
 			if (data == 1.0) {
 				try {
@@ -44,7 +44,7 @@ public class ReactToEvents {
 		tts = session.service("ALTextToSpeech");
 		callback = new CallBack(tts);
 		memory = session.service("ALMemory");
-		Object subscriber = (Object) memory.call("subscriber",
+		AnyObject subscriber = (AnyObject) memory.call("subscriber",
 				"FrontTactilTouched").get();
 		subscriber.connect("signal::(m)", "onTouch::(m)", callback);
 		application.run();

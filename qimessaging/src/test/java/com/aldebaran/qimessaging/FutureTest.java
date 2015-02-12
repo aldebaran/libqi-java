@@ -6,7 +6,7 @@ import java.util.concurrent.TimeoutException;
 import com.aldebaran.qimessaging.ServiceDirectory;
 import com.aldebaran.qimessaging.Session;
 import com.aldebaran.qimessaging.ReplyService;
-import com.aldebaran.qimessaging.Object;
+import com.aldebaran.qimessaging.AnyObject;
 
 import static org.junit.Assert.*;
 
@@ -20,8 +20,8 @@ import org.junit.Test;
 public class FutureTest
 {
   static public Application      app = null;
-  public Object           proxy = null;
-  public Object           obj = null;
+  public AnyObject           proxy = null;
+  public AnyObject           obj = null;
   public Session          s = null;
   public Session          client = null;
   public ServiceDirectory sd = null;
@@ -93,7 +93,7 @@ public class FutureTest
   @Test
   public void testCallback()
   {
-    Object proxy = null;
+    AnyObject proxy = null;
     Future<String> fut = null;
 
 
@@ -112,19 +112,19 @@ public class FutureTest
       fut = proxy.call("longReply", "plaf");
       fut.addCallback(new Callback<String>() {
 
-        public void onSuccess(Future<String> future, java.lang.Object[] args)
+        public void onSuccess(Future<String> future, Object[] args)
         {
           onSuccessCalled = true;
           assertEquals(1, args[0]);
           assertEquals(2, args[1]);
         }
 
-        public void onFailure(Future<String> future, java.lang.Object[] args)
+        public void onFailure(Future<String> future, Object[] args)
         {
           fail("onFailure must not be called");
         }
 
-        public void onComplete(Future<String> future, java.lang.Object[] args)
+        public void onComplete(Future<String> future, Object[] args)
         {
           onCompleteCalled = true;
           assertEquals(1, args[0]);

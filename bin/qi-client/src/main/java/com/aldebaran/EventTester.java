@@ -1,7 +1,7 @@
 package com.aldebaran;
 
 import com.aldebaran.qimessaging.CallError;
-import com.aldebaran.qimessaging.Object;
+import com.aldebaran.qimessaging.AnyObject;
 
 public class EventTester {
 
@@ -10,7 +10,7 @@ public class EventTester {
     System.out.println("onFire !");
   }
 
-  public void testEvent(Object proxy)
+  public void testEvent(AnyObject proxy)
   {
     try {
       proxy.connect("fire", "onFire", this);

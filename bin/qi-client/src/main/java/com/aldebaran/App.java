@@ -6,14 +6,14 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import com.aldebaran.qimessaging.CallError;
-import com.aldebaran.qimessaging.Object;
+import com.aldebaran.qimessaging.AnyObject;
 import com.aldebaran.qimessaging.Session;
 import com.aldebaran.qimessaging.Application;
 
 public class App
 {
 
-  public static void testFloat(Object proxy)
+  public static void testFloat(AnyObject proxy)
   {
     Float answer = null;
 
@@ -33,7 +33,7 @@ public class App
     System.out.println("AnswerFloat : " + answer);
   }
 
-  public static void testInteger(Object proxy)
+  public static void testInteger(AnyObject proxy)
   {
     Integer answer = null;
 
@@ -52,7 +52,7 @@ public class App
       System.out.println("AnswerInteger : " + answer);
   }
 
-  public static void testBoolean(Object proxy)
+  public static void testBoolean(AnyObject proxy)
   {
     Boolean answer = null;
 
@@ -68,7 +68,7 @@ public class App
     System.out.println("AnswerBool : " + answer);
   }
 
-  public static void testAdd(Object proxy)
+  public static void testAdd(AnyObject proxy)
   {
     Integer answer = null;
 
@@ -84,7 +84,7 @@ public class App
     System.out.println("add : " + answer);
   }
 
-  public static void testMap(Object proxy)
+  public static void testMap(AnyObject proxy)
   {
     Map<Integer, Boolean> abacus = new Hashtable<Integer, Boolean>();
     Map<Integer, Boolean> answer = null;
@@ -106,7 +106,7 @@ public class App
     System.out.println("abacus : " + answer);
   }
 
-  public static void testList(Object proxy)
+  public static void testList(AnyObject proxy)
   {
     ArrayList<Integer> positions = new ArrayList<Integer>();
     ArrayList<Integer> answer = null;
@@ -128,7 +128,7 @@ public class App
     System.out.println("list : " + answer);
   }
 
-  public static void testString(Object proxy)
+  public static void testString(AnyObject proxy)
   {
     String  str = null;
 
@@ -144,12 +144,12 @@ public class App
     System.out.println("AnswerString : " + str);
   }
 
-  public static void testObject(Object proxy) throws InterruptedException, ExecutionException
+  public static void testObject(AnyObject proxy) throws InterruptedException, ExecutionException
   {
-    Object ro = null;
+    AnyObject ro = null;
     try
     {
-      ro = proxy.<Object>call("createObject").get();
+      ro = proxy.<AnyObject>call("createObject").get();
     } catch (Exception e)
     {
       System.out.println("Call failed: " + e.getMessage());
@@ -179,7 +179,7 @@ public class App
       return;
     }
 
-    Object proxy = null;
+    AnyObject proxy = null;
     try {
       proxy = client.service("serviceTest");
     } catch (Exception e) {

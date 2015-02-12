@@ -18,8 +18,8 @@ public class DynamicObjectBuilder {
 
   private static native long   create();
   private static native void   destroy(long pObject);
-  private static native java.lang.Object object(long pObjectBuilder);
-  private static native long   advertiseMethod(long pObjectBuilder, String method, java.lang.Object instance, String className, String description);
+  private static native Object object(long pObjectBuilder);
+  private static native long   advertiseMethod(long pObjectBuilder, String method, Object instance, String className, String description);
   private static native long   advertiseSignal(long pObjectBuilder, String eventSignature);
   private static native long   advertiseProperty(long pObjectBuilder, String name, Class<?> propertyBase);
   private static native long   advertiseThreadSafeness(long pObjectBuilder, boolean isThreadSafe);
@@ -27,9 +27,9 @@ public class DynamicObjectBuilder {
   /// Possible thread models for an object
   public enum ObjectThreadingModel
   {
-    /// Object is not thread safe, all method calls must occur in the same thread
+    /// AnyObject is not thread safe, all method calls must occur in the same thread
     SingleThread,
-    /// Object is thread safe, multiple calls can occur in different threads in parallel
+    /// AnyObject is thread safe, multiple calls can occur in different threads in parallel
     MultiThread
   }
 
@@ -46,7 +46,7 @@ public class DynamicObjectBuilder {
    */
   public void advertiseMethod(String methodSignature, QimessagingService service, String description) throws QimessagingException
   {
-    Class<?extends java.lang.Object> c = service.getClass();
+    Class<?extends Object> c = service.getClass();
     Method[] methods = c.getDeclaredMethods();
 
     if (_p == 0)
@@ -105,13 +105,13 @@ public class DynamicObjectBuilder {
   }
 
   /**
-   * Instantiate new Object after builder template.
-   * @see Object
-   * @return Object
+   * Instantiate new AnyObject after builder template.
+   * @see AnyObject
+   * @return AnyObject
    */
-  public Object object()
+  public AnyObject object()
   {
-    return (Object) DynamicObjectBuilder.object(_p);
+    return (AnyObject) DynamicObjectBuilder.object(_p);
   }
 
   /**
