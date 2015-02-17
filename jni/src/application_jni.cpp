@@ -9,14 +9,15 @@
 #include <cstring>
 
 #include <qi/log.hpp>
-#include <qi/application.hpp>
+#include <qi/applicationsession.hpp>
 #include <jnitools.hpp>
 #include "application_jni.hpp"
 
 qiLogCategory("qimessaging.jni");
 
 static qi::Application* app = 0;
-jlong Java_com_aldebaran_qimessaging_Application_qiApplicationCreate(JNIEnv *env, jclass QI_UNUSED(jobj), jobjectArray jargs)
+
+jlong createApplication(JNIEnv* env, jobjectArray jargs, const boost::function<qi::Application*(int& argc, char**& argv)>& fn)
 {
   if (app)
   {
@@ -42,18 +43,45 @@ jlong Java_com_aldebaran_qimessaging_Application_qiApplicationCreate(JNIEnv *env
     env->ReleaseStringUTFChars(jarg, argchars);
   }
 
+  ++argc; // account for the first argument that we push_front()ed
   int cargc = argc;
   char** cargv = new char*[cargc];
   memcpy(cargv, argv, argc * sizeof(*argv));
 
-  app = new qi::Application(cargc, cargv);
+  app = fn(cargc, cargv);
 
-  for (int i = 0; i < argc+1; ++i)
+  for (int i = 0; i < argc; ++i)
     delete[] argv[i];
   delete[] argv;
   delete[] cargv;
 
   return (jlong)app;
+}
+
+qi::Application* newApplicationSession(JNIEnv* env, jstring jdefaultUrl, jboolean listen, int& cargc, char**& cargv)
+{
+  if (jdefaultUrl)
+  {
+    const char* cdefurl = env->GetStringUTFChars(jdefaultUrl, NULL);
+    std::string defaultUrl(cdefurl);
+    env->ReleaseStringUTFChars(jdefaultUrl, cdefurl);
+
+    return new qi::ApplicationSession(cargc, cargv, 0, defaultUrl);
+  }
+  else
+    return new qi::ApplicationSession(cargc, cargv);
+}
+
+jlong Java_com_aldebaran_qimessaging_Application_qiApplicationCreate(JNIEnv *env, jclass QI_UNUSED(jobj), jobjectArray jargs, jstring jdefaultUrl, jboolean listen)
+{
+  return createApplication(env, jargs, boost::bind(newApplicationSession, env, jdefaultUrl, listen, _1, _2));
+}
+
+jlong Java_com_aldebaran_qimessaging_Application_qiApplicationGetSession(JNIEnv *,jclass, jlong pApplication)
+{
+  qi::ApplicationSession* app = reinterpret_cast<qi::ApplicationSession*>(pApplication);
+
+  return (jlong)app->session().get();
 }
 
 void Java_com_aldebaran_qimessaging_Application_qiApplicationDestroy(JNIEnv *,jclass, jlong pApplication)
@@ -63,18 +91,38 @@ void Java_com_aldebaran_qimessaging_Application_qiApplicationDestroy(JNIEnv *,jc
   //delete app;
 }
 
-void Java_com_aldebaran_qimessaging_Application_qiApplicationRun(JNIEnv *, jclass, jlong pApplication)
+void Java_com_aldebaran_qimessaging_Application_qiApplicationStart(JNIEnv *env, jclass, jlong pApplication)
 {
-  qi::Application* app = reinterpret_cast<qi::Application *>(pApplication);
+  qi::ApplicationSession* app = reinterpret_cast<qi::ApplicationSession*>(pApplication);
 
-  app->run();
+  try
+  {
+    app->start();
+  }
+  catch (std::exception& e)
+  {
+    throwJavaError(env, e.what());
+  }
+}
+
+void Java_com_aldebaran_qimessaging_Application_qiApplicationRun(JNIEnv *env, jclass, jlong pApplication)
+{
+  qi::ApplicationSession* app = reinterpret_cast<qi::ApplicationSession*>(pApplication);
+
+  try
+  {
+    app->run();
+  }
+  catch (std::exception& e)
+  {
+    throwJavaError(env, e.what());
+  }
 }
 
 void Java_com_aldebaran_qimessaging_Application_qiApplicationStop(JNIEnv *, jclass, jlong pApplication)
 {
-  qi::Application* app = reinterpret_cast<qi::Application *>(pApplication);
+  qi::ApplicationSession* app = reinterpret_cast<qi::ApplicationSession*>(pApplication);
 
-  qiLogInfo("qimessaging.jni") << "Stopping qi::Application...";
   app->stop();
 }
 

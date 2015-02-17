@@ -18,6 +18,7 @@ include_directories("jni")
 set(SOURCE
    jni/session_jni.hpp
    jni/application_jni.hpp
+   jni/rawapplication_jni.hpp
    jni/callbridge.hpp
    jni/servicedirectory_jni.hpp
    jni/objectbuilder.hpp
@@ -34,6 +35,7 @@ set(SOURCE
 
    src/session_jni.cpp
    src/application_jni.cpp
+   src/rawapplication_jni.cpp
    src/callbridge.cpp
    src/servicedirectory_jni.cpp
    src/objectbuilder.cpp

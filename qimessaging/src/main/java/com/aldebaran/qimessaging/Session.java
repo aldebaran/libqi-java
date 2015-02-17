@@ -26,6 +26,7 @@ public class Session
 
   // Members
   private long _session;
+  private boolean _destroy;
 
   /**
    * Create session and try to connect to given address.
@@ -36,6 +37,7 @@ public class Session
   {
     _session = Session.qiSessionCreate();
     this.connect(sdAddr).sync();
+    _destroy = true;
   }
 
   /**
@@ -44,6 +46,13 @@ public class Session
   public Session()
   {
     _session = Session.qiSessionCreate();
+    _destroy = true;
+  }
+
+  protected Session(long session)
+  {
+    _session = session;
+    _destroy = false;
   }
 
   /**
@@ -94,7 +103,8 @@ public class Session
   @Override
   protected void finalize() throws Throwable
   {
-    //Session.qiSessionDestroy(_session);
+    //if (_destroy)
+    //  Session.qiSessionDestroy(_session);
     super.finalize();
   }
 
