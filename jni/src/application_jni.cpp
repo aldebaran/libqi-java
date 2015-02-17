@@ -16,26 +16,43 @@
 qiLogCategory("qimessaging.jni");
 
 static qi::Application* app = 0;
-jlong Java_com_aldebaran_qimessaging_Application_qiApplicationCreate(JNIEnv *env, jclass QI_UNUSED(jobj))
+jlong Java_com_aldebaran_qimessaging_Application_qiApplicationCreate(JNIEnv *env, jclass QI_UNUSED(jobj), jobjectArray jargs)
 {
   if (app)
   {
     qiLogVerbose() << "Returning already created application.";
     return (jlong)app;
   }
-  // Emulate empty command line arguments.
-  int argc = 1;
-  char **argv = new char*[2];
 
-  // Fill first argument with jvm name. FIXME : seriously....
-  argv[0] = new char[10];
-  ::strcpy(argv[0], "java");
+  int argc = env->GetArrayLength(jargs);
+  char **argv = new char*[argc + 1];
 
-  // Call qi_application_create
-  app = new qi::Application(argc, argv);
+  // can we do something about this?
+  argv[0] = new char[5];
+  memcpy(argv[0], "java", 5);
 
-  delete[] argv[0];
+  for (int i = 0; i < argc; ++i)
+  {
+    jstring jarg = (jstring)env->GetObjectArrayElement(jargs, i);
+    jsize arglen = env->GetStringUTFLength(jarg);
+    argv[i+1] = new char[arglen+1];
+    const char* argchars = env->GetStringUTFChars(jarg, NULL);
+    memcpy(argv[i+1], argchars, arglen);
+    argv[i+1][arglen] = '\0';
+    env->ReleaseStringUTFChars(jarg, argchars);
+  }
+
+  int cargc = argc;
+  char** cargv = new char*[cargc];
+  memcpy(cargv, argv, argc * sizeof(*argv));
+
+  app = new qi::Application(cargc, cargv);
+
+  for (int i = 0; i < argc+1; ++i)
+    delete[] argv[i];
   delete[] argv;
+  delete[] cargv;
+
   return (jlong)app;
 }
 

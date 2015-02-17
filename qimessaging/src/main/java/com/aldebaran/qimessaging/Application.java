@@ -14,7 +14,7 @@ public class Application
   }
 
   // Native function
-  private static native long qiApplicationCreate();
+  private static native long qiApplicationCreate(String[] args);
   private static native void qiApplicationRun(long pApp);
   private static native void qiApplicationStop(long pApp);
   private static native void qiApplicationDestroy(long pApplication);
@@ -27,19 +27,14 @@ public class Application
 
   /**
    * Application constructor.
-   */
-  public Application() {
-    _application = Application.qiApplicationCreate();
-  }
-
-  /**
-   * Application constructor.
    * @param args Arguments given to main() function. (unused !)
    * @since 1.20
    */
   public Application(String[] args)
   {
-    _application = Application.qiApplicationCreate();
+    if (args == null)
+      throw new RuntimeException("Creating application with null args");
+    _application = Application.qiApplicationCreate(args);
   }
 
   /**

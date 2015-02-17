@@ -21,7 +21,7 @@ public class ExceptionTest {
   {
     exceptionThrown = false;
     if (app == null)
-      app = new Application(null);
+      app = new Application(new String[0]);
     sd = new ServiceDirectory();
     s = new Session();
     client = new Session();
