@@ -1,17 +1,14 @@
 import com.aldebaran.qimessaging.*;
+
 public class SayHello {
 
 	public static void main(String[] args) throws Exception {
 		Application app = new Application(args);
-		Session session = new Session();
-		Future<Void> fut = session.connect("tcp://127.0.0.1:9559");
-		synchronized(fut) {
-			fut.wait(1000);
-		}
+		app.start(); // will throw if connection fails
 
-		com.aldebaran.qimessaging.AnyObject tts = null;
-		tts = session.service("ALTextToSpeech");
+		Session session = app.session();
 
+		AnyObject tts = session.service("ALTextToSpeech");
 
 		boolean ping = tts.<Boolean>call("ping").get();
 		if (!ping) {
@@ -22,7 +19,6 @@ public class SayHello {
 
 		System.out.println("Calling say");
 		tts.call("say", "Hello, world");
-
 	}
 
 }

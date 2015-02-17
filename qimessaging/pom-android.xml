@@ -20,7 +20,7 @@
     </properties>
 
     <!-- Packaging is defined as 'apklib' -->
-    <packaging>apklib</packaging>
+    <packaging>jar</packaging>
 
     <dependencies>
       <dependency>
