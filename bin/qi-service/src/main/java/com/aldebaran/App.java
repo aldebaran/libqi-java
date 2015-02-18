@@ -3,7 +3,7 @@ package com.aldebaran;
 import com.aldebaran.qimessaging.Application;
 import com.aldebaran.qimessaging.DynamicObjectBuilder;
 import com.aldebaran.qimessaging.QimessagingException;
-import com.aldebaran.qimessaging.Object;
+import com.aldebaran.qimessaging.AnyObject;
 import com.aldebaran.qimessaging.Session;
 import com.aldebaran.qimessaging.QimessagingService;
 
@@ -53,7 +53,7 @@ public class App
       System.out.println("Cannot advertise event : " + e.getMessage());
     }
 
-    Object obj = ob.object();
+    AnyObject obj = ob.object();
     service.init(obj);
 
     try {

@@ -10,8 +10,8 @@ public class EventTest
 {
   private boolean         callbackCalled = false;
   private int             callbackParam = 0;
-  public Object           proxy = null;
-  public Object           obj = null;
+  public AnyObject           proxy = null;
+  public AnyObject           obj = null;
   public Session          s = null;
   public Session          client = null;
   public ServiceDirectory sd = null;
@@ -79,7 +79,7 @@ public class EventTest
   {
 
     @SuppressWarnings("unused")
-    java.lang.Object callback = new java.lang.Object() {
+    Object callback = new Object() {
       public void fireCallback(Integer i)
       {
         callbackCalled = true;

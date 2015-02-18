@@ -11,8 +11,8 @@ import org.junit.Test;
 
 public class TupleTest
 {
-  public Object           proxy = null;
-  public Object           obj = null;
+  public AnyObject           proxy = null;
+  public AnyObject           obj = null;
   public Session          s = null;
   public Session          client = null;
   public ServiceDirectory sd = null;
@@ -186,7 +186,7 @@ public class TupleTest
 
   public void testIllegalArgumentException() throws IndexOutOfBoundsException, ClassCastException, IllegalArgumentException, IllegalAccessException
   {
-    Tuple tuple = new Tuple3<String, Session, Map<Object, Session>>("42", new Session(), new Hashtable<Object, Session>());
+    Tuple tuple = new Tuple3<String, Session, Map<AnyObject, Session>>("42", new Session(), new Hashtable<AnyObject, Session>());
 
     tuple.<Long>set(0, new Long(1234567890));
     tuple.<Long>set(1, new Long(1234567890));

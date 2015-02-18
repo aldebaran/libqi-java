@@ -19,10 +19,10 @@ public class Session
   private static native long    qiSessionConnect(long pSession, String url);
   private static native boolean qiSessionIsConnected(long pSession);
   private static native void    qiSessionClose(long pSession);
-  private static native Object  service(long pSession, String name);
-  private static native int     registerService(long pSession, String name, Object obj);
+  private static native AnyObject  service(long pSession, String name);
+  private static native int     registerService(long pSession, String name, AnyObject obj);
   private static native void    unregisterService(long pSession, int idx);
-  private static native void    onDisconnected(long pSession, String callback, java.lang.Object obj);
+  private static native void    onDisconnected(long pSession, String callback, Object obj);
 
   // Members
   private long _session;
@@ -74,9 +74,9 @@ public class Session
    * @param name Name of service.
    * @return Proxy on remote service on success, null on error.
    */
-  public Object  service(String name) throws Exception
+  public AnyObject  service(String name) throws Exception
   {
-    return (Object) Session.service(_session, name);
+    return (AnyObject) Session.service(_session, name);
   }
 
   /**
@@ -104,7 +104,7 @@ public class Session
    * @param object Instance of service
    * @return
    */
-  public int registerService(String name, Object object)
+  public int registerService(String name, AnyObject object)
   {
     return Session.registerService(_session, name, object);
   }
@@ -119,7 +119,7 @@ public class Session
     Session.unregisterService(_session, idx);
   }
 
-  public void onDisconnected(String callback, java.lang.Object object)
+  public void onDisconnected(String callback, Object object)
   {
     Session.onDisconnected(_session, callback, object);
   }

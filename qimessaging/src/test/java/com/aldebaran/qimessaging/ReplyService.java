@@ -13,16 +13,16 @@ public class ReplyService extends QimessagingService
     throw new Exception("Expected Failure");
   }
 
-  public Boolean generic(java.lang.Object obj)
+  public Boolean generic(Object obj)
   {
     if (obj == null)
       return false;
 
-    System.out.println("Object received : " + obj);
+    System.out.println("AnyObject received : " + obj);
     return true;
   }
 
-  public Object createObject()
+  public AnyObject createObject()
   {
     DynamicObjectBuilder ob = new DynamicObjectBuilder();
 
@@ -41,7 +41,7 @@ public class ReplyService extends QimessagingService
       return null;
     }
 
-    Object ro = ob.object();
+    AnyObject ro = ob.object();
 
     try {
       ro.setProperty("name", "foo");

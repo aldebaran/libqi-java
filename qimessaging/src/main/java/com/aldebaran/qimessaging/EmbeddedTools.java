@@ -17,8 +17,8 @@ public class EmbeddedTools
   private File tmpDir = null;
 
   public static boolean LOADED_EMBEDDED_LIBRARY = false;
-  private static native void initTypeSystem(java.lang.Object str, java.lang.Object i, java.lang.Object f, java.lang.Object d, java.lang.Object l, java.lang.Object m, java.lang.Object al, java.lang.Object t, java.lang.Object o, java.lang.Object b);
-  private static native void initTupleInTypeSystem(java.lang.Object t1, java.lang.Object t2, java.lang.Object t3, java.lang.Object t4, java.lang.Object t5, java.lang.Object t6, java.lang.Object t7, java.lang.Object t8, java.lang.Object t9, java.lang.Object t10, java.lang.Object t11, java.lang.Object t12, java.lang.Object t13, java.lang.Object t14, java.lang.Object t15, java.lang.Object t16, java.lang.Object t17, java.lang.Object t18, java.lang.Object t19, java.lang.Object t20, java.lang.Object t21, java.lang.Object t22, java.lang.Object t23, java.lang.Object t24, java.lang.Object t25, java.lang.Object t26, java.lang.Object t27, java.lang.Object t28, java.lang.Object t29, java.lang.Object t30, java.lang.Object t31, java.lang.Object t32);
+  private static native void initTypeSystem(Object str, Object i, Object f, Object d, Object l, Object m, Object al, Object t, Object o, Object b);
+  private static native void initTupleInTypeSystem(Object t1, Object t2, Object t3, Object t4, Object t5, Object t6, Object t7, Object t8, Object t9, Object t10, Object t11, Object t12, Object t13, Object t14, Object t15, Object t16, Object t17, Object t18, Object t19, Object t20, Object t21, Object t22, Object t23, Object t24, Object t25, Object t26, Object t27, Object t28, Object t29, Object t30, Object t31, Object t32);
 
 
   /**
@@ -34,14 +34,14 @@ public class EmbeddedTools
     Float   f   = new Float(0);
     Double  d   = new Double(0);
     Long    l   = new Long(0);
-    Tuple   t   = new Tuple1<java.lang.Object>();
+    Tuple   t   = new Tuple1<Object>();
     Boolean b   = new Boolean(true);
 
     DynamicObjectBuilder ob = new DynamicObjectBuilder();
-    Object obj  = ob.object();
+    AnyObject obj  = ob.object();
 
-    Map<java.lang.Object, java.lang.Object> m  = new Hashtable<java.lang.Object, java.lang.Object>();
-    ArrayList<java.lang.Object>             al = new ArrayList<java.lang.Object>();
+    Map<Object, Object> m  = new Hashtable<Object, Object>();
+    ArrayList<Object>             al = new ArrayList<Object>();
 
     // Initialize generic type system
     EmbeddedTools.initTypeSystem(str, i, f, d, l, m, al, t, obj, b);

@@ -17,7 +17,7 @@ public abstract class Tuple
    * @return an implemented tuple behind Tuple interface.
    */
   @SuppressWarnings({ "rawtypes", "unchecked" })
-  public static Tuple makeTuple(java.lang.Object ... objs)
+  public static Tuple makeTuple(Object ... objs)
   {
     switch (objs.length)
     {
@@ -106,7 +106,7 @@ public abstract class Tuple
 
     if (index < fields.length)
     {
-      java.lang.Object t = fields[index].get(this);
+      Object t = fields[index].get(this);
       return (T) t;
     }
 
@@ -147,7 +147,7 @@ public abstract class Tuple
     String ret = "(";
     while (index < fields.length)
     {
-      java.lang.Object t;
+      Object t;
       try
       {
         t = fields[index].get(this);

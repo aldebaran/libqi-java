@@ -55,21 +55,21 @@ public class App
     try
     {
       fut = proxy.asyncCall("longReply", "plaf");
-      fut.addCallback(new Callback<Object>() {
+      fut.addCallback(new Callback<AnyObject>() {
 
-        public void onComplete(Future<Object> arg0, Object[] args)
+        public void onComplete(Future<AnyObject> arg0, AnyObject[] args)
         {
           System.out.println("On Complete !");
           System.out.println("Args : " + args[0] + ", size " + args.length);
         }
 
-        public void onFailure(Future<Object> arg0, Object[] args)
+        public void onFailure(Future<AnyObject> arg0, AnyObject[] args)
         {
           System.out.println("On Failure !");
           System.out.println("Args : " + args[0] + ", size " + args.length);
         }
 
-        public void onSuccess(Future<Object> arg0, Object[] args) {
+        public void onSuccess(Future<AnyObject> arg0, AnyObject[] args) {
           String ret = null;
 
           try
