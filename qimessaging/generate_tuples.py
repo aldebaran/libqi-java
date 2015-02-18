@@ -1,6 +1,6 @@
 def generate_tuple(n):
     output = ''
-    output += 'package com.aldebaran.qimessaging;'
+    output += 'package com.aldebaran.qi;'
     output += 'public class Tuple%d <' % n
     output += ', '.join(['T' + str(i) for i in xrange(n)])
     output += '> extends Tuple {'

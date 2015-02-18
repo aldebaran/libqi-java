@@ -1,11 +1,11 @@
 package com.aldebaran;
 
-import com.aldebaran.qimessaging.Application;
-import com.aldebaran.qimessaging.DynamicObjectBuilder;
-import com.aldebaran.qimessaging.QimessagingException;
-import com.aldebaran.qimessaging.AnyObject;
-import com.aldebaran.qimessaging.Session;
-import com.aldebaran.qimessaging.QimessagingService;
+import com.aldebaran.qi.Application;
+import com.aldebaran.qi.DynamicObjectBuilder;
+import com.aldebaran.qi.QimessagingException;
+import com.aldebaran.qi.AnyObject;
+import com.aldebaran.qi.Session;
+import com.aldebaran.qi.QimessagingService;
 
 public class App
 {

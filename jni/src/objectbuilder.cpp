@@ -18,7 +18,7 @@
 #include <callbridge.hpp>
 #include <objectbuilder.hpp>
 
-jlong   Java_com_aldebaran_qimessaging_GenericObject_qiObjectBuilderCreate(JNIEnv* env, jobject QI_UNUSED(jobj))
+jlong   Java_com_aldebaran_qi_GenericObject_qiObjectBuilderCreate(JNIEnv* env, jobject QI_UNUSED(jobj))
 {
   // Keep a pointer on JavaVM singleton if not already set.
   JVM(env);
@@ -27,7 +27,7 @@ jlong   Java_com_aldebaran_qimessaging_GenericObject_qiObjectBuilderCreate(JNIEn
   return (jlong) ob;
 }
 
-jlong   Java_com_aldebaran_qimessaging_GenericObject_qiObjectBuilderGetObject(JNIEnv *env, jobject jobj, jlong pObjectBuilder)
+jlong   Java_com_aldebaran_qi_GenericObject_qiObjectBuilderGetObject(JNIEnv *env, jobject jobj, jlong pObjectBuilder)
 {
   qi::DynamicObjectBuilder *ob = reinterpret_cast<qi::DynamicObjectBuilder *>(pObjectBuilder);
   qi::AnyObject *obj = new qi::AnyObject();
@@ -37,19 +37,19 @@ jlong   Java_com_aldebaran_qimessaging_GenericObject_qiObjectBuilderGetObject(JN
   return (jlong) obj;
 }
 
-void   Java_com_aldebaran_qimessaging_GenericObject_qiObjectBuilderDestroy(long pObjectBuilder)
+void   Java_com_aldebaran_qi_GenericObject_qiObjectBuilderDestroy(long pObjectBuilder)
 {
   qi::DynamicObjectBuilder *ob = reinterpret_cast<qi::DynamicObjectBuilder *>(pObjectBuilder);
   delete ob;
 }
 
-jlong   Java_com_aldebaran_qimessaging_DynamicObjectBuilder_create()
+jlong   Java_com_aldebaran_qi_DynamicObjectBuilder_create()
 {
   qi::DynamicObjectBuilder *ob = new qi::DynamicObjectBuilder();
   return (jlong) ob;
 }
 
-jobject Java_com_aldebaran_qimessaging_DynamicObjectBuilder_object(JNIEnv* env, jobject QI_UNUSED(jobj), jlong pObjectBuilder)
+jobject Java_com_aldebaran_qi_DynamicObjectBuilder_object(JNIEnv* env, jobject QI_UNUSED(jobj), jlong pObjectBuilder)
 {
   qi::DynamicObjectBuilder *ob = reinterpret_cast<qi::DynamicObjectBuilder *>(pObjectBuilder);
   qi::AnyObject *obj = new qi::AnyObject();
@@ -62,13 +62,13 @@ jobject Java_com_aldebaran_qimessaging_DynamicObjectBuilder_object(JNIEnv* env, 
   return jobj.object();
 }
 
-void    Java_com_aldebaran_qimessaging_DynamicObjectBuilder_destroy(JNIEnv *env, jobject jobj, jlong pObjectBuilder)
+void    Java_com_aldebaran_qi_DynamicObjectBuilder_destroy(JNIEnv *env, jobject jobj, jlong pObjectBuilder)
 {
   qi::DynamicObjectBuilder *ob = reinterpret_cast<qi::DynamicObjectBuilder *>(pObjectBuilder);
   delete ob;
 }
 
-jlong   Java_com_aldebaran_qimessaging_DynamicObjectBuilder_advertiseMethod(JNIEnv *env, jobject jobj, jlong pObjectBuilder, jstring method, jobject instance, jstring className, jstring desc)
+jlong   Java_com_aldebaran_qi_DynamicObjectBuilder_advertiseMethod(JNIEnv *env, jobject jobj, jlong pObjectBuilder, jstring method, jobject instance, jstring className, jstring desc)
 {
   extern MethodInfoHandler   gInfoHandler;
   qi::DynamicObjectBuilder  *ob = reinterpret_cast<qi::DynamicObjectBuilder *>(pObjectBuilder);
@@ -99,7 +99,7 @@ jlong   Java_com_aldebaran_qimessaging_DynamicObjectBuilder_advertiseMethod(JNIE
   return (jlong) ret;
 }
 
-jlong   Java_com_aldebaran_qimessaging_DynamicObjectBuilder_advertiseSignal(JNIEnv *env, jobject obj, jlong pObjectBuilder, jstring eventSignature)
+jlong   Java_com_aldebaran_qi_DynamicObjectBuilder_advertiseSignal(JNIEnv *env, jobject obj, jlong pObjectBuilder, jstring eventSignature)
 {
   qi::DynamicObjectBuilder  *ob = reinterpret_cast<qi::DynamicObjectBuilder *>(pObjectBuilder);
   std::vector<std::string>   sigInfo = qi::signatureSplit(qi::jni::toString(eventSignature));
@@ -109,7 +109,7 @@ jlong   Java_com_aldebaran_qimessaging_DynamicObjectBuilder_advertiseSignal(JNIE
   return (jlong) ob->xAdvertiseSignal(event, callbackSignature);
 }
 
-jlong   Java_com_aldebaran_qimessaging_DynamicObjectBuilder_advertiseProperty(JNIEnv *env, jobject QI_UNUSED(obj), jlong pObjectBuilder, jstring jname, jclass propertyBase)
+jlong   Java_com_aldebaran_qi_DynamicObjectBuilder_advertiseProperty(JNIEnv *env, jobject QI_UNUSED(obj), jlong pObjectBuilder, jstring jname, jclass propertyBase)
 {
   qi::DynamicObjectBuilder  *ob = reinterpret_cast<qi::DynamicObjectBuilder *>(pObjectBuilder);
   std::string                name = qi::jni::toString(jname);
@@ -119,7 +119,7 @@ jlong   Java_com_aldebaran_qimessaging_DynamicObjectBuilder_advertiseProperty(JN
 }
 
 
-jlong Java_com_aldebaran_qimessaging_DynamicObjectBuilder_advertiseThreadSafeness(JNIEnv *env, jobject obj, jlong pObjectBuilder, jboolean isThreadSafe)
+jlong Java_com_aldebaran_qi_DynamicObjectBuilder_advertiseThreadSafeness(JNIEnv *env, jobject obj, jlong pObjectBuilder, jboolean isThreadSafe)
 {
   qi::DynamicObjectBuilder  *ob = reinterpret_cast<qi::DynamicObjectBuilder *>(pObjectBuilder);
   ob->setThreadingModel(isThreadSafe?qi::ObjectThreadingModel_MultiThread:qi::ObjectThreadingModel_SingleThread);

@@ -28,7 +28,7 @@ namespace qi
     std::string  className;
     std::string  interfaceName;
 
-    CallbackInfo(jobject instance, jobjectArray args, const std::string& className, const std::string& interfaceName = "com/aldebaran/qimessaging/Callback")
+    CallbackInfo(jobject instance, jobjectArray args, const std::string& className, const std::string& interfaceName = "com/aldebaran/qi/Callback")
     {
       JNIEnv* env = 0;
       JVM()->GetEnv((void**) &env, QI_JNI_MIN_VERSION);

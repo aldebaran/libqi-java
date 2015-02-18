@@ -5,11 +5,11 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 
-import com.aldebaran.qimessaging.DynamicObjectBuilder;
-import com.aldebaran.qimessaging.QimessagingService;
-import com.aldebaran.qimessaging.AnyObject;
-import com.aldebaran.qimessaging.Tuple;
-import com.aldebaran.qimessaging.Tuple3;
+import com.aldebaran.qi.DynamicObjectBuilder;
+import com.aldebaran.qi.QimessagingService;
+import com.aldebaran.qi.AnyObject;
+import com.aldebaran.qi.Tuple;
+import com.aldebaran.qi.Tuple3;
 
 public class ReplyService extends QimessagingService
 {

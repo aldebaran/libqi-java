@@ -20,10 +20,10 @@ namespace qi {
 
   void FutureHandler::onSuccess(JNIEnv *env, jclass cls, qi::CallbackInfo *info)
   {
-    jmethodID mid = env->GetMethodID(cls, "onSuccess", "(Lcom/aldebaran/qimessaging/Future;[Ljava/lang/Object;)V");
+    jmethodID mid = env->GetMethodID(cls, "onSuccess", "(Lcom/aldebaran/qi/Future;[Ljava/lang/Object;)V");
     if (mid == 0)
     {
-      qiLogError("qimessaging.jni") << "onSuccess method of com.aldebaran.qimessaging.Callback is not implemented";
+      qiLogError("qimessaging.jni") << "onSuccess method of com.aldebaran.qi.Callback is not implemented";
       return;
     }
 
@@ -34,10 +34,10 @@ namespace qi {
 
   void FutureHandler::onFailure(JNIEnv *env, jclass cls, qi::CallbackInfo *info)
   {
-    jmethodID mid = env->GetMethodID(cls, "onFailure", "(Lcom/aldebaran/qimessaging/Future;[Ljava/lang/Object;)V");
+    jmethodID mid = env->GetMethodID(cls, "onFailure", "(Lcom/aldebaran/qi/Future;[Ljava/lang/Object;)V");
     if (mid == 0)
     {
-      qiLogError("qimessaging.jni") << "onFailure method of com.aldebaran.qimessaging.Callback is not implemented";
+      qiLogError("qimessaging.jni") << "onFailure method of com.aldebaran.qi.Callback is not implemented";
       return;
     }
 
@@ -48,10 +48,10 @@ namespace qi {
 
   void FutureHandler::onComplete(JNIEnv *env, jclass cls, qi::CallbackInfo *info)
   {
-    jmethodID mid = env->GetMethodID(cls, "onComplete", "(Lcom/aldebaran/qimessaging/Future;[Ljava/lang/Object;)V");
+    jmethodID mid = env->GetMethodID(cls, "onComplete", "(Lcom/aldebaran/qi/Future;[Ljava/lang/Object;)V");
     if (mid == 0)
     {
-      qiLogError("qimessaging.jni") << "onComplete method of com.aldebaran.qimessaging.Callback is not implemented";
+      qiLogError("qimessaging.jni") << "onComplete method of com.aldebaran.qi.Callback is not implemented";
       return;
     }
 
@@ -105,15 +105,15 @@ namespace qi {
         jclass futureCls = 0;
         jmethodID init = 0;
 
-        if ((futureCls = env->FindClass("com/aldebaran/qimessaging/Future")) == 0)
+        if ((futureCls = env->FindClass("com/aldebaran/qi/Future")) == 0)
         {
-          qiLogError("qimessaging.jni") << "Cannot find com.aldebaran.qimessaging.Future class";
+          qiLogError("qimessaging.jni") << "Cannot find com.aldebaran.qi.Future class";
           return 0;
         }
 
         if ((init = env->GetMethodID(futureCls, "<init>", "(J)V")) == 0)
         {
-          qiLogError("qimessaging.jni") << "Cannot find com.aldebaran.qimessaging.Future.<init>(J) constructor";
+          qiLogError("qimessaging.jni") << "Cannot find com.aldebaran.qi.Future.<init>(J) constructor";
           return 0;
         }
 

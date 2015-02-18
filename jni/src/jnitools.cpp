@@ -43,7 +43,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad (JavaVM* QI_UNUSED(vm), void* QI_UNUSED(reserv
  * Unfortunately, call template cannot be retrieve on native android thread, that is why
  * type instance are stored in supportedTypes map.
  */
-void Java_com_aldebaran_qimessaging_EmbeddedTools_initTypeSystem(JNIEnv* env, jobject QI_UNUSED(jobj), jobject str, jobject i, jobject f, jobject d, jobject l, jobject m, jobject al, jobject tuple, jobject obj, jobject b)
+void Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(JNIEnv* env, jobject QI_UNUSED(jobj), jobject str, jobject i, jobject f, jobject d, jobject l, jobject m, jobject al, jobject tuple, jobject obj, jobject b)
 {
   JVM(env);
 
@@ -65,7 +65,7 @@ void Java_com_aldebaran_qimessaging_EmbeddedTools_initTypeSystem(JNIEnv* env, jo
   }
 }
 
-void Java_com_aldebaran_qimessaging_EmbeddedTools_initTupleInTypeSystem(JNIEnv* env, jobject QI_UNUSED(jobj), jobject t1, jobject t2, jobject t3, jobject t4, jobject t5, jobject t6, jobject t7, jobject t8, jobject t9, jobject t10, jobject t11, jobject t12, jobject t13, jobject t14, jobject t15, jobject t16, jobject t17, jobject t18, jobject t19, jobject t20, jobject t21, jobject t22, jobject t23, jobject t24, jobject t25, jobject t26, jobject t27, jobject t28, jobject t29, jobject t30, jobject t31, jobject t32)
+void Java_com_aldebaran_qi_EmbeddedTools_initTupleInTypeSystem(JNIEnv* env, jobject QI_UNUSED(jobj), jobject t1, jobject t2, jobject t3, jobject t4, jobject t5, jobject t6, jobject t7, jobject t8, jobject t9, jobject t10, jobject t11, jobject t12, jobject t13, jobject t14, jobject t15, jobject t16, jobject t17, jobject t18, jobject t19, jobject t20, jobject t21, jobject t22, jobject t23, jobject t24, jobject t25, jobject t26, jobject t27, jobject t28, jobject t29, jobject t30, jobject t31, jobject t32)
 {
   JVM(env);
 
@@ -176,7 +176,7 @@ void getJavaSignature(std::string &sig, const std::string& sigInfo)
     }
     case qi::Signature::Type_Tuple:
     {
-      sig.append("Lcom/aldebaran/qimessaging/Tuple;");
+      sig.append("Lcom/aldebaran/qi/Tuple;");
       while (i < sigInfo.size() && sigInfo[i] != qi::Signature::Type_Tuple_End)
         i++;
       break;

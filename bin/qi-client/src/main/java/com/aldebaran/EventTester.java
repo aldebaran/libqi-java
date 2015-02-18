@@ -1,7 +1,7 @@
 package com.aldebaran;
 
-import com.aldebaran.qimessaging.CallError;
-import com.aldebaran.qimessaging.AnyObject;
+import com.aldebaran.qi.CallError;
+import com.aldebaran.qi.AnyObject;
 
 public class EventTester {
 

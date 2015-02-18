@@ -1,5 +1,5 @@
-import com.aldebaran.qimessaging.*;
-import com.aldebaran.qimessaging.AnyObject;
+import com.aldebaran.qi.*;
+import com.aldebaran.qi.AnyObject;
 
 public class App
 {

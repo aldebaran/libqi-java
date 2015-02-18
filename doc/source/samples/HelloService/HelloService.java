@@ -1,4 +1,4 @@
-import com.aldebaran.qimessaging.*;
+import com.aldebaran.qi.*;
 
 public class HelloService extends QimessagingService
 {

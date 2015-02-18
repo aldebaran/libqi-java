@@ -14,13 +14,13 @@
 extern "C"
 {
 
-  JNIEXPORT jlong   Java_com_aldebaran_qimessaging_DynamicObjectBuilder_create();
-  JNIEXPORT jobject Java_com_aldebaran_qimessaging_DynamicObjectBuilder_object(JNIEnv *env, jobject jobj, jlong pObjectBuilder);
-  JNIEXPORT void    Java_com_aldebaran_qimessaging_DynamicObjectBuilder_destroy(JNIEnv *env, jobject jobj, jlong pObjectBuilder);
-  JNIEXPORT jlong   Java_com_aldebaran_qimessaging_DynamicObjectBuilder_advertiseMethod(JNIEnv *env, jobject obj, jlong pObjectBuilder, jstring method, jobject instance, jstring service, jstring desc);
-  JNIEXPORT jlong   Java_com_aldebaran_qimessaging_DynamicObjectBuilder_advertiseSignal(JNIEnv *env, jobject obj, jlong pObjectBuilder, jstring eventSignature);
-  JNIEXPORT jlong   Java_com_aldebaran_qimessaging_DynamicObjectBuilder_advertiseProperty(JNIEnv *env, jobject obj, jlong pObjectBuilder, jstring name, jclass propertyBase);
-  JNIEXPORT jlong   Java_com_aldebaran_qimessaging_DynamicObjectBuilder_advertiseThreadSafeness(JNIEnv *env, jobject obj, jlong pObjectBuilder, jboolean isThreadSafe);
+  JNIEXPORT jlong   Java_com_aldebaran_qi_DynamicObjectBuilder_create();
+  JNIEXPORT jobject Java_com_aldebaran_qi_DynamicObjectBuilder_object(JNIEnv *env, jobject jobj, jlong pObjectBuilder);
+  JNIEXPORT void    Java_com_aldebaran_qi_DynamicObjectBuilder_destroy(JNIEnv *env, jobject jobj, jlong pObjectBuilder);
+  JNIEXPORT jlong   Java_com_aldebaran_qi_DynamicObjectBuilder_advertiseMethod(JNIEnv *env, jobject obj, jlong pObjectBuilder, jstring method, jobject instance, jstring service, jstring desc);
+  JNIEXPORT jlong   Java_com_aldebaran_qi_DynamicObjectBuilder_advertiseSignal(JNIEnv *env, jobject obj, jlong pObjectBuilder, jstring eventSignature);
+  JNIEXPORT jlong   Java_com_aldebaran_qi_DynamicObjectBuilder_advertiseProperty(JNIEnv *env, jobject obj, jlong pObjectBuilder, jstring name, jclass propertyBase);
+  JNIEXPORT jlong   Java_com_aldebaran_qi_DynamicObjectBuilder_advertiseThreadSafeness(JNIEnv *env, jobject obj, jlong pObjectBuilder, jboolean isThreadSafe);
 
 
 } // !extern "C"

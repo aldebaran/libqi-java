@@ -4,12 +4,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import com.aldebaran.qimessaging.Application;
-import com.aldebaran.qimessaging.CallError;
-import com.aldebaran.qimessaging.Callback;
-import com.aldebaran.qimessaging.Future;
-import com.aldebaran.qimessaging.GenericObject;
-import com.aldebaran.qimessaging.Session;
+import com.aldebaran.qi.Application;
+import com.aldebaran.qi.CallError;
+import com.aldebaran.qi.Callback;
+import com.aldebaran.qi.Future;
+import com.aldebaran.qi.GenericObject;
+import com.aldebaran.qi.Session;
 
 /**
  * Hello Future!

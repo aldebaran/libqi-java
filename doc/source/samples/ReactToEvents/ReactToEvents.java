@@ -1,8 +1,8 @@
-import com.aldebaran.qimessaging.Application;
-import com.aldebaran.qimessaging.CallError;
-import com.aldebaran.qimessaging.Future;
-import com.aldebaran.qimessaging.AnyObject;
-import com.aldebaran.qimessaging.Session;
+import com.aldebaran.qi.Application;
+import com.aldebaran.qi.CallError;
+import com.aldebaran.qi.Future;
+import com.aldebaran.qi.AnyObject;
+import com.aldebaran.qi.Session;
 
 public class ReactToEvents {
 

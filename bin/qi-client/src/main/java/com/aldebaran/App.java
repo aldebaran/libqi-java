@@ -5,10 +5,10 @@ import java.util.Hashtable;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-import com.aldebaran.qimessaging.CallError;
-import com.aldebaran.qimessaging.AnyObject;
-import com.aldebaran.qimessaging.Session;
-import com.aldebaran.qimessaging.Application;
+import com.aldebaran.qi.CallError;
+import com.aldebaran.qi.AnyObject;
+import com.aldebaran.qi.Session;
+import com.aldebaran.qi.Application;
 
 public class App
 {

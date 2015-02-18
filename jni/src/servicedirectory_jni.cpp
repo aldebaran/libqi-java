@@ -14,14 +14,14 @@
 qiLogCategory("qimessaging.jni");
 
 /**
- * @brief Java_com_aldebaran_qimessaging_ServiceDirectory_qiTestSDCreate
+ * @brief Java_com_aldebaran_qi_ServiceDirectory_qiTestSDCreate
  * @param env JNI environment, mandatory argument.
  * @param obj JNI environment, mandatory argument.
  * @return a pointer on C++ ServiceDirectory instance
  *
  * This class only exists for tests purpose. That is why addresse is not customisable.
  */
-jlong   Java_com_aldebaran_qimessaging_ServiceDirectory_qiTestSDCreate(JNIEnv *env, jobject obj)
+jlong   Java_com_aldebaran_qi_ServiceDirectory_qiTestSDCreate(JNIEnv *env, jobject obj)
 {
   qi::Session *sd = new qi::Session();
 
@@ -41,14 +41,14 @@ jlong   Java_com_aldebaran_qimessaging_ServiceDirectory_qiTestSDCreate(JNIEnv *e
   return (jlong) sd;
 }
 
-void    Java_com_aldebaran_qimessaging_ServiceDirectory_qiTestSDDestroy(JNIEnv*, jobject, jlong pSD)
+void    Java_com_aldebaran_qi_ServiceDirectory_qiTestSDDestroy(JNIEnv*, jobject, jlong pSD)
 {
   qi::Session *sd = reinterpret_cast<qi::Session *>(pSD);
   qiLogDebug() << "Deleting sd " << sd;
   delete sd;
 }
 
-jstring Java_com_aldebaran_qimessaging_ServiceDirectory_qiListenUrl(JNIEnv* QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pSD)
+jstring Java_com_aldebaran_qi_ServiceDirectory_qiListenUrl(JNIEnv* QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pSD)
 {
   qi::Session *sd = reinterpret_cast<qi::Session *>(pSD);
 
@@ -61,7 +61,7 @@ jstring Java_com_aldebaran_qimessaging_ServiceDirectory_qiListenUrl(JNIEnv* QI_U
   return qi::jni::toJstring(sd->endpoints().at(0).str());
 }
 
-void    Java_com_aldebaran_qimessaging_ServiceDirectory_qiTestSDClose(JNIEnv*, jobject, jlong pSD)
+void    Java_com_aldebaran_qi_ServiceDirectory_qiTestSDClose(JNIEnv*, jobject, jlong pSD)
 {
   qi::Session *sd = reinterpret_cast<qi::Session *>(pSD);
 

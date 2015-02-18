@@ -72,26 +72,26 @@ qi::Application* newApplicationSession(JNIEnv* env, jstring jdefaultUrl, jboolea
     return new qi::ApplicationSession(cargc, cargv);
 }
 
-jlong Java_com_aldebaran_qimessaging_Application_qiApplicationCreate(JNIEnv *env, jclass QI_UNUSED(jobj), jobjectArray jargs, jstring jdefaultUrl, jboolean listen)
+jlong Java_com_aldebaran_qi_Application_qiApplicationCreate(JNIEnv *env, jclass QI_UNUSED(jobj), jobjectArray jargs, jstring jdefaultUrl, jboolean listen)
 {
   return createApplication(env, jargs, boost::bind(newApplicationSession, env, jdefaultUrl, listen, _1, _2));
 }
 
-jlong Java_com_aldebaran_qimessaging_Application_qiApplicationGetSession(JNIEnv *,jclass, jlong pApplication)
+jlong Java_com_aldebaran_qi_Application_qiApplicationGetSession(JNIEnv *,jclass, jlong pApplication)
 {
   qi::ApplicationSession* app = reinterpret_cast<qi::ApplicationSession*>(pApplication);
 
   return (jlong)app->session().get();
 }
 
-void Java_com_aldebaran_qimessaging_Application_qiApplicationDestroy(JNIEnv *,jclass, jlong pApplication)
+void Java_com_aldebaran_qi_Application_qiApplicationDestroy(JNIEnv *,jclass, jlong pApplication)
 {
   //qi::Application* app = reinterpret_cast<qi::Application *>(pApplication);
 
   //delete app;
 }
 
-void Java_com_aldebaran_qimessaging_Application_qiApplicationStart(JNIEnv *env, jclass, jlong pApplication)
+void Java_com_aldebaran_qi_Application_qiApplicationStart(JNIEnv *env, jclass, jlong pApplication)
 {
   qi::ApplicationSession* app = reinterpret_cast<qi::ApplicationSession*>(pApplication);
 
@@ -105,7 +105,7 @@ void Java_com_aldebaran_qimessaging_Application_qiApplicationStart(JNIEnv *env, 
   }
 }
 
-void Java_com_aldebaran_qimessaging_Application_qiApplicationRun(JNIEnv *env, jclass, jlong pApplication)
+void Java_com_aldebaran_qi_Application_qiApplicationRun(JNIEnv *env, jclass, jlong pApplication)
 {
   qi::ApplicationSession* app = reinterpret_cast<qi::ApplicationSession*>(pApplication);
 
@@ -119,14 +119,14 @@ void Java_com_aldebaran_qimessaging_Application_qiApplicationRun(JNIEnv *env, jc
   }
 }
 
-void Java_com_aldebaran_qimessaging_Application_qiApplicationStop(JNIEnv *, jclass, jlong pApplication)
+void Java_com_aldebaran_qi_Application_qiApplicationStop(JNIEnv *, jclass, jlong pApplication)
 {
   qi::ApplicationSession* app = reinterpret_cast<qi::ApplicationSession*>(pApplication);
 
   app->stop();
 }
 
-void Java_com_aldebaran_qimessaging_Application_setLogCategory(JNIEnv *env, jclass cls, jstring category, jlong verbosity)
+void Java_com_aldebaran_qi_Application_setLogCategory(JNIEnv *env, jclass cls, jstring category, jlong verbosity)
 {
   ::qi::log::addFilter(qi::jni::toString(category), (qi::LogLevel)verbosity, 0);
 }

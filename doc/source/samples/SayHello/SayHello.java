@@ -1,4 +1,4 @@
-import com.aldebaran.qimessaging.*;
+import com.aldebaran.qi.*;
 public class SayHello {
 
 	public static void main(String[] args) throws Exception {
@@ -9,7 +9,7 @@ public class SayHello {
 			fut.wait(1000);
 		}
 
-		com.aldebaran.qimessaging.AnyObject tts = null;
+		com.aldebaran.qi.AnyObject tts = null;
 		tts = session.service("ALTextToSpeech");
 
 
