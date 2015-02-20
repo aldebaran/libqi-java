@@ -129,7 +129,7 @@ qi::AnyReference call_to_java(std::string signature, void* data, const qi::Gener
   {
     std::ostringstream ss;
     ss << "cannot convert parameters from " << from.toString() << " to " << to.toString();
-    qiLogVerbose() << ss;
+    qiLogVerbose() << ss.str();
     throw std::runtime_error(ss.str());
   }
 
