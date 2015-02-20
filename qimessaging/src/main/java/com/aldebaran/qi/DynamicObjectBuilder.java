@@ -44,13 +44,13 @@ public class DynamicObjectBuilder {
    * @param service Service implementing method.
    * @throws Exception on error.
    */
-  public void advertiseMethod(String methodSignature, QimessagingService service, String description) throws QimessagingException
+  public void advertiseMethod(String methodSignature, QiService service, String description) throws QiException
   {
     Class<?extends Object> c = service.getClass();
     Method[] methods = c.getDeclaredMethods();
 
     if (_p == 0)
-      throw new QimessagingException("Invalid object.\n");
+      throw new QiException("Invalid object.\n");
 
     for (Method method : methods)
     {
@@ -62,7 +62,7 @@ public class DynamicObjectBuilder {
       if (methodSignature.contains(method.getName()) == true)
       {
         if (DynamicObjectBuilder.advertiseMethod(_p, methodSignature, service, className, description) == 0)
-          throw new QimessagingException("Cannot register method " + methodSignature);
+          throw new QiException("Cannot register method " + methodSignature);
         return;
       }
     }
@@ -80,12 +80,12 @@ public class DynamicObjectBuilder {
     DynamicObjectBuilder.advertiseSignal(_p, signalSignature);
   }
 
-  public void advertiseProperty(String name, Class<?> propertyBase) throws QimessagingException
+  public void advertiseProperty(String name, Class<?> propertyBase) throws QiException
   {
     if (_p == 0)
-      throw new QimessagingException("Invalid object");
+      throw new QiException("Invalid object");
     if (DynamicObjectBuilder.advertiseProperty(_p, name, propertyBase) <= 0)
-      throw new QimessagingException("Cannot advertise " + name + " property");
+      throw new QiException("Cannot advertise " + name + " property");
   }
 
   /**
@@ -97,10 +97,10 @@ public class DynamicObjectBuilder {
    *        If false, qimessaging will use a per-instance mutex
    *        to prevent multiple calls at the same time.
    */
-  public void setThreadingModel(ObjectThreadingModel threadModel) throws QimessagingException
+  public void setThreadingModel(ObjectThreadingModel threadModel) throws QiException
   {
     if (_p == 0)
-      throw new QimessagingException("Invalid object");
+      throw new QiException("Invalid object");
     DynamicObjectBuilder.advertiseThreadSafeness(_p, threadModel == ObjectThreadingModel.MultiThread);
   }
 

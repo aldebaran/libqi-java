@@ -30,7 +30,7 @@ public class EventTest
     DynamicObjectBuilder ob = new DynamicObjectBuilder();
 
     // Get instance of ReplyService
-    QimessagingService reply = new ReplyService();
+    QiService reply = new ReplyService();
 
     // Register event 'Fire'
     ob.advertiseSignal("fire::(i)");

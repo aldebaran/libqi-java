@@ -5,7 +5,7 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 
-public class ReplyService extends QimessagingService
+public class ReplyService extends QiService
 {
   private int storedValue = 0;
   public Boolean iWillThrow() throws Exception

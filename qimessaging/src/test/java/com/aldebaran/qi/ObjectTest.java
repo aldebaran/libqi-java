@@ -33,7 +33,7 @@ public class ObjectTest
     DynamicObjectBuilder ob = new DynamicObjectBuilder();
 
     // Get instance of ReplyService
-    QimessagingService reply = new ReplyService();
+    QiService reply = new ReplyService();
 
     // Register event 'Fire'
     ob.advertiseSignal("fire::(i)");
@@ -50,7 +50,7 @@ public class ObjectTest
     ob.advertiseMethod("setStored::v(i)", reply, "Set stored value");
     ob.advertiseMethod("waitAndAddToStored::i(ii)", reply, "Wait given time, and return stored + val");
 
-    QimessagingService replyts = new ReplyService();
+    QiService replyts = new ReplyService();
     DynamicObjectBuilder obts = new DynamicObjectBuilder();
     obts.advertiseMethod("setStored::v(i)", replyts, "Set stored value");
     obts.advertiseMethod("waitAndAddToStored::i(ii)", replyts, "Wait given time, and return stored + val");

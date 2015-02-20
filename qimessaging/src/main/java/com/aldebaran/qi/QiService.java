@@ -4,7 +4,7 @@ package com.aldebaran.qi;
  * @since 1.20
  * Implement this interface to create a Qimessaging service.
  */
-public abstract class QimessagingService {
+public abstract class QiService {
 
   protected AnyObject self;
 
