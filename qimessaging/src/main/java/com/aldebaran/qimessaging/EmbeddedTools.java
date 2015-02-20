@@ -107,6 +107,15 @@ public class EmbeddedTools
     // Only present on android
     SharedLibrary.loadLib("gnustl_shared");
 
+    // Not present on android
+    SharedLibrary.loadLib("boost_system");
+    SharedLibrary.loadLib("boost_thread");
+    SharedLibrary.loadLib("boost_chrono");
+    SharedLibrary.loadLib("boost_locale");
+    SharedLibrary.loadLib("boost_filesystem");
+    SharedLibrary.loadLib("boost_program_options");
+    SharedLibrary.loadLib("boost_regex");
+
     if (SharedLibrary.loadLib("qi") == false
             || SharedLibrary.loadLib("qimessagingjni") == false) {
         LOADED_EMBEDDED_LIBRARY = false;
