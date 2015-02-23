@@ -5,6 +5,7 @@ to the project
 
 import argparse
 import os
+import platform
 import sys
 
 from qisys import ui
@@ -36,8 +37,20 @@ def copy_jni_resources(build_worktree):
             ui.error(e)
             ui.error("Make sure qimessaging-jni has been built")
             sys.exit(1)
+    toolchain = build_worktree.toolchain
+    boost = toolchain.get_package("boost")
+    if platform.system() == "Windows":
+        boost_lib = os.path.join(boost.path, "bin")
+    else:
+        boost_lib = os.path.join(boost.path, "lib")
 
-    jni_proj = build_worktree.get_build_project("qimessaging-jni")
+    boost_lib_files = [os.path.join(boost_lib, f) for f in os.listdir(boost_lib)
+        if os.path.isfile(os.path.join(boost_lib, f))]
+    libs_to_keep = ("chrono", "filesystem", "locale" "thread", "regex",
+        "program_options")
+    boost_lib_files = [f for f in boost_lib_files if any(lib in f for lib in libs_to_keep)]
+    libs.extend(boost_lib_files)
+
     java_proj = build_worktree.worktree.get_project("sdk/libqi-java/qimessaging")
     if android:
         dest = os.path.join(java_proj.path, "native-android")
