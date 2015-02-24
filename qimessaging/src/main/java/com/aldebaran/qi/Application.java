@@ -35,17 +35,14 @@ public class Application
    * @param args Arguments given to main() function.
    * @param defaultUrl Default url to connect to if none was provided in the
    * program arguments
-   * @param listen If no argument was provided, will start a listening session
-   * with a ServiceDirectory (this argument is ignored for the moment)
    */
-  public Application(String[] args, String defaultUrl, boolean listen)
+  public Application(String[] args, String defaultUrl)
   {
     if (args == null)
       throw new NullPointerException("Creating application with null args");
     if (defaultUrl == null)
       throw new NullPointerException("Creating application with null defaultUrl");
-    _application = Application.qiApplicationCreate(args, defaultUrl, listen);
-    _session = new Session(Application.qiApplicationGetSession(_application));
+    init(args, defaultUrl, false);
   }
 
   /**
@@ -56,7 +53,12 @@ public class Application
   {
     if (args == null)
       throw new RuntimeException("Creating application with null args");
-    _application = Application.qiApplicationCreate(args, null, false);
+    init(args, null, false);
+  }
+
+  private void init(String[] args, String defaultUrl, boolean listen)
+  {
+    _application = Application.qiApplicationCreate(args, defaultUrl, listen);
     _session = new Session(Application.qiApplicationGetSession(_application));
   }
 
