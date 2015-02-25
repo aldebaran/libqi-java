@@ -46,7 +46,7 @@ def copy_jni_resources(build_worktree):
 
     boost_lib_files = [os.path.join(boost_lib, f) for f in os.listdir(boost_lib)
         if os.path.isfile(os.path.join(boost_lib, f))]
-    libs_to_keep = ("chrono", "system", "filesystem", "locale" "thread",
+    libs_to_keep = ("chrono", "system", "filesystem", "locale", "thread",
     "regex", "program_options")
     boost_lib_files = [f for f in boost_lib_files if any(lib in f for lib in libs_to_keep)]
     boost_lib_files = [f for f in boost_lib_files if f.endswith(".so") or f.endswith(".dylib") or f.endswith(".dll")]
