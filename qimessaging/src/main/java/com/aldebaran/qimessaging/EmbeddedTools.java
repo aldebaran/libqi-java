@@ -109,6 +109,7 @@ public class EmbeddedTools
 
     // Not present on android
     SharedLibrary.loadLib("boost_atomic");
+    SharedLibrary.loadLib("boost_date_time");
     SharedLibrary.loadLib("boost_system");
     SharedLibrary.loadLib("boost_thread");
     SharedLibrary.loadLib("boost_chrono");
