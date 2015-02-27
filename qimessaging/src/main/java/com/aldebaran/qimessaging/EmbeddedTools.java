@@ -108,6 +108,7 @@ public class EmbeddedTools
     SharedLibrary.loadLib("gnustl_shared");
 
     // Not present on android
+    SharedLibrary.loadLib("boost_atomic");
     SharedLibrary.loadLib("boost_system");
     SharedLibrary.loadLib("boost_thread");
     SharedLibrary.loadLib("boost_chrono");
