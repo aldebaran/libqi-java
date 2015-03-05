@@ -4,6 +4,7 @@
 **  - Pierre ROULLON <proullon@aldebaran-robotics.com>
 **
 ** Copyright (C) 2013 Aldebaran Robotics
+** See COPYING for the license
 */
 
 #include <stdexcept>

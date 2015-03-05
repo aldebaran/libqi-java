@@ -4,6 +4,7 @@
 **  - Philippe Daouadi <pdaouadi@aldebaran.com>
 **
 ** Copyright (C) 2015 Aldebaran Robotics
+** See COPYING for the license
 */
 
 #ifndef _JAVA_JNI_RAW_APPLICATION_HPP_

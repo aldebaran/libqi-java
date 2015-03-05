@@ -1,3 +1,7 @@
+/*
+**  Copyright (C) 2015 Aldebaran Robotics
+**  See COPYING for the license
+*/
 import com.aldebaran.qi.Application;
 import com.aldebaran.qi.CallError;
 import com.aldebaran.qi.Future;

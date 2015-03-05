@@ -1,3 +1,7 @@
+/*
+**  Copyright (C) 2015 Aldebaran Robotics
+**  See COPYING for the license
+*/
 import com.aldebaran.qi.*;
 import com.aldebaran.qi.AnyObject;
 
