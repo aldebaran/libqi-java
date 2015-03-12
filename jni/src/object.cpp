@@ -113,7 +113,12 @@ void      Java_com_aldebaran_qi_AnyObject_destroy(JNIEnv* QI_UNUSED(env), jobjec
 jlong     Java_com_aldebaran_qi_AnyObject_disconnect(JNIEnv *env, jobject jobj, jlong pObject, jlong subscriberId)
 {
   qi::AnyObject&             obj = *(reinterpret_cast<qi::AnyObject *>(pObject));
-  obj.disconnect(subscriberId);
+  try {
+    obj.disconnect(subscriberId);
+  } catch (std::exception& e)
+  {
+    throwJavaError(env, e.what());
+  }
   return 0;
 }
 
