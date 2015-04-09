@@ -23,7 +23,6 @@ import org.junit.Test;
  */
 public class FutureTest
 {
-  static public RawApplication      app = null;
   public AnyObject           proxy = null;
   public AnyObject           obj = null;
   public Session          s = null;
@@ -38,8 +37,6 @@ public class FutureTest
     System.out.println("Setup...");
     onSuccessCalled = false;
     onCompleteCalled = false;
-    if (app==null)
-      app = new RawApplication(new String[0]);
     sd = new ServiceDirectory();
     s = new Session();
     client = new Session();

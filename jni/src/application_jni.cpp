@@ -16,14 +16,14 @@
 
 qiLogCategory("qimessaging.jni");
 
-static qi::Application* app = 0;
+static jlong app = 0;
 
-jlong createApplication(JNIEnv* env, jobjectArray jargs, const boost::function<qi::Application*(int& argc, char**& argv)>& fn)
+jlong createApplication(JNIEnv* env, jobjectArray jargs, const boost::function<jlong(int& argc, char**& argv)>& fn)
 {
   if (app)
   {
-    qiLogVerbose() << "Returning already created application.";
-    return (jlong)app;
+    throwJavaError(env, "Tried to create more than one application");
+    return 0;
   }
 
   int argc = env->GetArrayLength(jargs);
@@ -56,10 +56,10 @@ jlong createApplication(JNIEnv* env, jobjectArray jargs, const boost::function<q
   delete[] argv;
   delete[] cargv;
 
-  return (jlong)app;
+  return app;
 }
 
-qi::Application* newApplicationSession(JNIEnv* env, jstring jdefaultUrl, jboolean listen, int& cargc, char**& cargv)
+jlong newApplicationSession(JNIEnv* env, jstring jdefaultUrl, jboolean listen, int& cargc, char**& cargv)
 {
   if (jdefaultUrl)
   {
@@ -67,10 +67,10 @@ qi::Application* newApplicationSession(JNIEnv* env, jstring jdefaultUrl, jboolea
     std::string defaultUrl(cdefurl);
     env->ReleaseStringUTFChars(jdefaultUrl, cdefurl);
 
-    return new qi::ApplicationSession(cargc, cargv, 0, defaultUrl);
+    return (jlong)new qi::ApplicationSession(cargc, cargv, 0, defaultUrl);
   }
   else
-    return new qi::ApplicationSession(cargc, cargv);
+    return (jlong)new qi::ApplicationSession(cargc, cargv);
 }
 
 jlong Java_com_aldebaran_qi_Application_qiApplicationCreate(JNIEnv *env, jclass QI_UNUSED(jobj), jobjectArray jargs, jstring jdefaultUrl, jboolean listen)
@@ -87,9 +87,9 @@ jlong Java_com_aldebaran_qi_Application_qiApplicationGetSession(JNIEnv *,jclass,
 
 void Java_com_aldebaran_qi_Application_qiApplicationDestroy(JNIEnv *,jclass, jlong pApplication)
 {
-  //qi::Application* app = reinterpret_cast<qi::Application *>(pApplication);
+  qi::Application* app = reinterpret_cast<qi::Application *>(pApplication);
 
-  //delete app;
+  delete app;
 }
 
 void Java_com_aldebaran_qi_Application_qiApplicationStart(JNIEnv *env, jclass, jlong pApplication)

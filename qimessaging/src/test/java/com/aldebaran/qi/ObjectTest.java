@@ -19,13 +19,10 @@ public class ObjectTest
   public Session          s = null;
   public Session          client = null;
   public ServiceDirectory sd = null;
-  static public RawApplication app = null;
 
   @Before
   public void setUp() throws Exception
   {
-    if (app == null)
-      app = new RawApplication(new String[0]);
     sd = new ServiceDirectory();
     s = new Session();
     client = new Session();

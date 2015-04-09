@@ -12,7 +12,7 @@
 
 #include <jni.h>
 
-jlong createApplication(JNIEnv* env, jobjectArray jargs, const boost::function<qi::Application*(int& argc, char**& argv)>& fn);
+jlong createApplication(JNIEnv* env, jobjectArray jargs, const boost::function<jlong(int& argc, char**& argv)>& fn);
 
 extern "C"
 {

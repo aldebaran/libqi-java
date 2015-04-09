@@ -17,9 +17,9 @@
 
 qiLogCategory("qimessaging.jni");
 
-qi::Application* newApplication(int& cargc, char**& cargv)
+jlong newApplication(int& cargc, char**& cargv)
 {
-  return new qi::Application(cargc, cargv);
+  return (jlong)new qi::Application(cargc, cargv);
 }
 
 jlong Java_com_aldebaran_qi_RawApplication_qiApplicationCreate(JNIEnv *env, jclass QI_UNUSED(jobj), jobjectArray jargs, jstring jdefaultUrl, jboolean listen)
@@ -36,9 +36,9 @@ jlong Java_com_aldebaran_qi_RawApplication_qiApplicationGetSession(JNIEnv *,jcla
 
 void Java_com_aldebaran_qi_RawApplication_qiApplicationDestroy(JNIEnv *,jclass, jlong pApplication)
 {
-  //qi::Application* app = reinterpret_cast<qi::Application *>(pApplication);
+  qi::Application* app = reinterpret_cast<qi::Application *>(pApplication);
 
-  //delete app;
+  delete app;
 }
 
 void Java_com_aldebaran_qi_RawApplication_qiApplicationRun(JNIEnv *, jclass, jlong pApplication)
