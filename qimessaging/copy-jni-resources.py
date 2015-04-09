@@ -18,7 +18,7 @@ def copy_jni_resources(build_worktree):
     dependencies from the build dirs to the resource folder
 
     """
-    android = "android" in (build_worktree.build_config.active_config or "")
+    android = "android" in (build_worktree.build_config.active_build_config.name or "")
     # FIXME: boost when using a toolchain on linux ?
     libs = list()
     proj_to_lib = [
