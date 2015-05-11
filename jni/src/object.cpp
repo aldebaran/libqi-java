@@ -158,7 +158,6 @@ jlong     Java_com_aldebaran_qi_AnyObject_connect(JNIEnv *env, jobject jobj, jlo
     return link;
   } catch (std::exception& e)
   {
-    qiLogError() << e.what();
     throwJavaError(env, e.what());
     return 0;
   }
@@ -191,7 +190,12 @@ void      Java_com_aldebaran_qi_AnyObject_post(JNIEnv *env, jobject QI_UNUSED(jo
     signature += params[i].signature(true).toString();
   signature += ")";
 
-  obj.metaPost(event, params);
+  try {
+    obj.metaPost(event, params);
+  } catch (std::exception& e)
+  {
+    throwJavaError(env, e.what());
+  }
 
   // Destroy arguments
   i = 0;
