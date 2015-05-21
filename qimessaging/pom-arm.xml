@@ -4,8 +4,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
                               http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.aldebaran</groupId> <!-- Qimessaging Java bindings properties -->
-    <artifactId>qimessaging-arm</artifactId>
+    <groupId>com.aldebaran</groupId>
+    <artifactId>libqi-java-arm</artifactId>
     <version>2.1.1-SNAPSHOT</version>
     <name>qi Java bindings for ARM</name>
 
