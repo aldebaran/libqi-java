@@ -8,7 +8,7 @@
   <version>2.1.1-SNAPSHOT</version>
   <packaging>jar</packaging>
 
-  <name>qimessaging</name> <!-- Project name -->
+  <name>libqi-java</name> <!-- Project name -->
   <url>http://aldebaran-robotics.com</url>
   <description>
     The QiMessaging library extends C++ object connecting and calls over network.
