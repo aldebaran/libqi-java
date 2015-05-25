@@ -3,11 +3,45 @@
   <modelVersion>4.0.0</modelVersion>
 
 
-  <groupId>com.aldebaran</groupId> <!-- QiMessaging Java bindings properties -->
-  <artifactId>libqi-java</artifactId>
+  <groupId>com.aldebaran</groupId>
+  <artifactId>libqi-java-${rp.build.platform}</artifactId>
   <version>2.1.1-SNAPSHOT</version>
   <packaging>jar</packaging>
   <name>libqi-java</name>
+
+  <profiles>
+    <profile>
+      <id>atom</id>
+      <properties>
+        <rp.build.platform>atom</rp.build.platform>
+      </properties>
+    </profile>
+    <profile>
+      <id>linux32</id>
+      <properties>
+        <rp.build.platform>linux32</rp.build.platform>
+      </properties>
+    </profile>
+    <profile>
+      <id>linux64</id>
+      <properties>
+        <rp.build.platform>linux64</rp.build.platform>
+      </properties>
+    </profile>
+    <profile>
+      <id>mac64</id>
+      <properties>
+        <rp.build.platform>mac64</rp.build.platform>
+      </properties>
+    </profile>
+    <profile>
+      <id>win32-vs2010</id>
+      <properties>
+        <rp.build.platform>win32</rp.build.platform>
+      </properties>
+    </profile>
+  </profiles>
+
 
   <distributionManagement>
     <repository>
