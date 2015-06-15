@@ -178,7 +178,7 @@ void      Java_com_aldebaran_qi_AnyObject_post(JNIEnv *env, jobject QI_UNUSED(jo
   i = 0;
   while (i < size)
   {
-    jobject current = env->NewGlobalRef(env->GetObjectArrayElement(jargs, i));
+    jobject current = env->GetObjectArrayElement(jargs, i);
     qi::AnyReference val = qi::AnyReference(AnyValue_from_JObject(current).first);
     params.push_back(val);
     i++;
