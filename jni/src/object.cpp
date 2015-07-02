@@ -154,7 +154,7 @@ jlong     Java_com_aldebaran_qi_AnyObject_connect(JNIEnv *env, jobject jobj, jlo
     qi::SignalLink link =obj.connect(event,
                         qi::SignalSubscriber(
                           qi::AnyFunction::fromDynamicFunction(
-                            boost::bind(&event_callback_to_java, (void*) data, _1))).setCallType(qi::MetaCallType_Direct));
+                            boost::bind(&event_callback_to_java, (void*) data, _1))));
     return link;
   } catch (std::exception& e)
   {
