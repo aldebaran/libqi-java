@@ -113,7 +113,7 @@ public class ObjectTest
   public void callThrow() throws Exception
   {
     Future<Integer> v0 = proxyts.<Integer>call("throwUp");
-    assertEquals(v0.getError(), "Remote method thrown exception");
+    assertEquals(v0.getError(), "I has faild");
   }
 
   @Test(expected=Exception.class)
