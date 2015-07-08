@@ -33,6 +33,7 @@ public class Future <T>
   private static native boolean qiFutureCallCancel(long pFuture);
   private static native Object  qiFutureCallGet(long pFuture);
   private static native Object  qiFutureCallGetWithTimeout(long pFuture, int timeout);
+  private static native String  qiFutureCallGetError(long pFuture);
   private static native boolean qiFutureCallIsCancelled(long pFuture);
   private static native boolean qiFutureCallIsDone(long pFuture);
   private static native boolean qiFutureCallConnect(long pFuture, Object callback, String className, Object[] args);
@@ -82,7 +83,7 @@ public class Future <T>
   }
 
   @SuppressWarnings("unchecked")
-  public T get() throws InterruptedException, CallError
+  public T get() throws InterruptedException
   {
 
     Object ret = null;
@@ -92,7 +93,7 @@ public class Future <T>
       ret = Future.qiFutureCallGet(_fut);
     } catch (Exception e)
     {
-      throw new CallError(e.getMessage());
+      throw new RuntimeException(e.getMessage());
     }
 
     if (isCancelled())
@@ -102,8 +103,7 @@ public class Future <T>
   }
 
   @SuppressWarnings("unchecked")
-  public T get(long timeout, TimeUnit unit) throws InterruptedException,
-  ExecutionException, TimeoutException
+  public T get(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException
   {
 
     Object ret = null;
@@ -114,13 +114,18 @@ public class Future <T>
       ret = Future.qiFutureCallGetWithTimeout(_fut, timeoutms);
     } catch (Exception e)
     {
-      throw new ExecutionException(e.getCause());
+      throw new RuntimeException(e.getMessage());
     }
 
     if (ret == null)
       throw new TimeoutException();
 
     return (T) ret;
+  }
+
+  public String getError()
+  {
+    return Future.qiFutureCallGetError(_fut);
   }
 
   public boolean isCancelled()

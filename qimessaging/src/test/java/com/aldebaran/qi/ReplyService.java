@@ -36,6 +36,7 @@ public class ReplyService extends QiService
       ob.advertiseMethod("reply::s(s)", this, "Concatenate given parameter with 'bim !'");
       ob.advertiseMethod("answer::s()", this, "return '42 !'");
       ob.advertiseMethod("add::i(iii)", this, "Sum given parameters and return computed value");
+      ob.advertiseMethod("throwUp::v()", this, "Throws");
 
       ob.advertiseProperty("name", String.class);
       ob.advertiseProperty("uid", Integer.class);
@@ -174,5 +175,9 @@ public class ReplyService extends QiService
       Thread.sleep(msDelay);
     } catch(Exception e) {}
     return v + storedValue;
+  }
+  public void throwUp()
+  {
+    throw new RuntimeException("I has faild");
   }
 }
