@@ -55,6 +55,7 @@ public class ObjectTest
     DynamicObjectBuilder obts = new DynamicObjectBuilder();
     obts.advertiseMethod("setStored::v(i)", replyts, "Set stored value");
     obts.advertiseMethod("waitAndAddToStored::i(ii)", replyts, "Wait given time, and return stored + val");
+    obts.advertiseMethod("throwUp::v()", replyts, "Throws");
     obts.setThreadingModel(DynamicObjectBuilder.ObjectThreadingModel.MultiThread);
 
     // Connect session to Service Directory
@@ -106,6 +107,20 @@ public class ObjectTest
     Thread.sleep(10);
     Future<Void> v1 = proxyts.<Void>call("setStored", 42);
     assertEquals(v0.get(), new Integer(42));
+  }
+
+  @Test
+  public void callThrow() throws Exception
+  {
+    Future<Integer> v0 = proxyts.<Integer>call("throwUp");
+    assertEquals(v0.getError(), "I has faild");
+  }
+
+  @Test(expected=Exception.class)
+  public void getErrorOnSuccess() throws Exception
+  {
+    Future<Void> v0 = proxyts.<Void>call("setStored", 18);
+    v0.getError();
   }
 
   @Test

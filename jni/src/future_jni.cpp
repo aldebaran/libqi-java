@@ -79,6 +79,24 @@ jobject  Java_com_aldebaran_qi_Future_qiFutureCallGet(JNIEnv *env, jobject obj, 
   }
 }
 
+jstring Java_com_aldebaran_qi_Future_qiFutureCallGetError(JNIEnv *env, jobject obj, jlong pFuture)
+{
+  qi::Future<qi::AnyValue>* fut = reinterpret_cast<qi::Future<qi::AnyValue>*>(pFuture);
+
+  try
+  {
+    return env->NewStringUTF(fut->error().c_str());
+  }
+  catch (std::exception& e)
+  {
+    throwJavaError(env, e.what());
+    return 0;
+  }
+
+  throwJavaError(env, "Unknown error");
+  return 0;
+}
+
 jobject  Java_com_aldebaran_qi_Future_qiFutureCallGetWithTimeout(JNIEnv *env, jobject obj, jlong pFuture, jint timeout)
 {
   qiLogVerbose() << "Future wait " << timeout;
