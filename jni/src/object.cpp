@@ -98,7 +98,7 @@ jstring   Java_com_aldebaran_qi_AnyObject_printMetaObject(JNIEnv* env, jobject Q
   qi::AnyObject&    obj = *(reinterpret_cast<qi::AnyObject*>(pObject));
   std::stringstream ss;
 
-  qi::details::printMetaObject(ss, obj.metaObject());
+  qi::detail::printMetaObject(ss, obj.metaObject());
   return qi::jni::toJstring(ss.str());
 }
 
