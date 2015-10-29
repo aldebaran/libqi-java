@@ -32,7 +32,6 @@ static void emergency()
 
 JNIEXPORT jint JNICALL JNI_OnLoad (JavaVM* QI_UNUSED(vm), void* QI_UNUSED(reserved))
 {
-  qiLogInfo() << "qimessagingjni loaded 2.1.1.";
   // seems like a good number
   qi::getEventLoop()->setMaxThreads(8);
   qi::getEventLoop()->setEmergencyCallback(emergency);
