@@ -112,9 +112,9 @@ public class EmbeddedTools
     SharedLibrary.loadLib("gnustl_shared");
 
     // Not present on android
-    SharedLibrary.loadLib("libicudata"); // deps for boost_regexp.so
-    SharedLibrary.loadLib("libicuuc");
-    SharedLibrary.loadLib("libicui18n");
+    SharedLibrary.loadLib("icudata"); // deps for boost_regexp.so
+    SharedLibrary.loadLib("icuuc");
+    SharedLibrary.loadLib("icui18n");
     SharedLibrary.loadLib("boost_atomic");
     SharedLibrary.loadLib("boost_date_time");
     SharedLibrary.loadLib("boost_system");
