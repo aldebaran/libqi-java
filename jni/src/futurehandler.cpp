@@ -29,7 +29,7 @@ namespace qi {
     }
 
     jobject fut = FutureHandler::futurePointer(env, info);
-    env->CallObjectMethod(info->instance, mid, fut, info->args);
+    env->CallVoidMethod(info->instance, mid, fut, info->args);
     env->DeleteGlobalRef(fut);
   }
 
@@ -43,7 +43,7 @@ namespace qi {
     }
 
     jobject fut = FutureHandler::futurePointer(env, info);
-    env->CallObjectMethod(info->instance, mid, fut, info->args);
+    env->CallVoidMethod(info->instance, mid, fut, info->args);
     env->DeleteGlobalRef(fut);
   }
 
@@ -57,7 +57,7 @@ namespace qi {
     }
 
     jobject fut = FutureHandler::futurePointer(env, info);
-    env->CallObjectMethod(info->instance, mid, fut, info->args);
+    env->CallVoidMethod(info->instance, mid, fut, info->args);
     env->DeleteGlobalRef(fut);
   }
 
@@ -106,7 +106,8 @@ namespace qi {
         jclass futureCls = 0;
         jmethodID init = 0;
 
-        if ((futureCls = env->FindClass("com/aldebaran/qi/Future")) == 0)
+        futureCls = qi::jni::clazz("Future");
+        if (!futureCls)
         {
           qiLogError("qimessaging.jni") << "Cannot find com.aldebaran.qi.Future class";
           return 0;
@@ -121,8 +122,7 @@ namespace qi {
         // Create a new Future class.
         // Add a new global ref to object to avoid destruction before entry into Java code.
         jobject future = env->NewObject(futureCls, init, (*it).first);
-        env->NewGlobalRef(future);
-        return future;
+        return env->NewGlobalRef(future);
       }
     }
 

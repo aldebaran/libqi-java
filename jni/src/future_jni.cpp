@@ -24,13 +24,8 @@ void      java_future_callback(const qi::Future<qi::AnyValue>& future)
   qi::jni::JNIAttach attach;
   env = attach.get();
 
-  // Get Java information related to Java callback
   qi::CallbackInfo* info = qi::FutureHandler::methodInfo(future);
-  if ((cls = env->FindClass(info->className.c_str())) == 0)
-  {
-    qiLogError() << "Cannot find com.aldebaran.qimessaging.Callback implementation";
-    throw new std::runtime_error("Cannot find com.aldebaran.qimessaging.Callback interface");
-  }
+  cls =  info->clazz;
 
   if (future.hasError()) // Call onFailure
     qi::FutureHandler::onFailure(env, cls, info);
@@ -43,7 +38,6 @@ void      java_future_callback(const qi::Future<qi::AnyValue>& future)
 
   // Only called once, so remove and delete info
   qi::FutureHandler::removeCallbackInfo(future);
-  env->DeleteLocalRef(cls);
 }
 
 jboolean  Java_com_aldebaran_qi_Future_qiFutureCallCancel(JNIEnv *env, jobject obj, jlong pFuture, jboolean mayInterup)
@@ -137,8 +131,8 @@ jboolean Java_com_aldebaran_qi_Future_qiFutureCallConnect(JNIEnv *env, jobject o
   qi::CallbackInfo* info = 0;
 
   qi::jni::JNIAttach attach(env);
-
-  info = new qi::CallbackInfo(callback, args, className);
+  jclass clazz = env->FindClass(className.c_str());
+  info = new qi::CallbackInfo(callback, args, clazz);
   qi::FutureHandler::addCallbackInfo(fut, info);
   fut->connect(boost::bind(&java_future_callback, _1));
   return true;

@@ -43,7 +43,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad (JavaVM* QI_UNUSED(vm), void* QI_UNUSED(reserv
  * Unfortunately, call template cannot be retrieve on native android thread, that is why
  * type instance are stored in supportedTypes map.
  */
-void Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(JNIEnv* env, jobject QI_UNUSED(jobj), jobject str, jobject i, jobject f, jobject d, jobject l, jobject m, jobject al, jobject tuple, jobject obj, jobject b)
+void Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(JNIEnv* env, jobject QI_UNUSED(jobj), jobject str, jobject i, jobject f, jobject d, jobject l, jobject m, jobject al, jobject tuple, jobject obj, jobject b, jobject fut)
 {
   JVM(env);
 
@@ -57,6 +57,7 @@ void Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(JNIEnv* env, jobject QI_
   supportedTypes["Tuple"] = env->NewGlobalRef(tuple);
   supportedTypes["Object"] = env->NewGlobalRef(obj);
   supportedTypes["Boolean"] = env->NewGlobalRef(b);
+  supportedTypes["Future"] = env->NewGlobalRef(fut);
 
   for (std::map<std::string, jobject>::iterator it = supportedTypes.begin(); it != supportedTypes.end(); ++it)
   {
@@ -101,6 +102,7 @@ void Java_com_aldebaran_qi_EmbeddedTools_initTupleInTypeSystem(JNIEnv* env, jobj
   supportedTypes["Tuple30"] = env->NewGlobalRef(t30);
   supportedTypes["Tuple31"] = env->NewGlobalRef(t31);
   supportedTypes["Tuple32"] = env->NewGlobalRef(t32);
+
 
   for (std::map<std::string, jobject>::iterator it = supportedTypes.begin(); it != supportedTypes.end(); ++it)
   {
