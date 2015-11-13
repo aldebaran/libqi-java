@@ -5,6 +5,9 @@ bin/pom.xml
 *.so
 *.a
 
+# ignore QtCreator generated files
+*.user
+
 # Ignore compilation folder
 qimessaging/target/
 bin/*/target/
