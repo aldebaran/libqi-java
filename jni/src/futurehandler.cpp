@@ -122,7 +122,12 @@ namespace qi {
         // Create a new Future class.
         // Add a new global ref to object to avoid destruction before entry into Java code.
         jobject future = env->NewObject(futureCls, init, (*it).first);
+#ifdef ANDROID
         return env->NewGlobalRef(future);
+#else
+        env->NewGlobalRef(future);
+        return future;
+#endif
       }
     }
 
