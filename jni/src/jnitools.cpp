@@ -290,6 +290,7 @@ std::string propertyBaseSignature(JNIEnv* env, jclass propertyBase)
   {
     sig = static_cast<char>(qi::Signature::Type_Map);
     sig += static_cast<char>(qi::Signature::Type_Dynamic);
+    sig += static_cast<char>(qi::Signature::Type_Dynamic);
     sig += static_cast<char>(qi::Signature::Type_Map_End);
   }
   if (env->IsAssignableFrom(propertyBase, listClass) == true)
