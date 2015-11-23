@@ -19,3 +19,7 @@ bin/*/target/
 *.classpath
 *.project
 *.settings
+
+# ignore AndroidStudio generated files
+.idea
+*.iml
