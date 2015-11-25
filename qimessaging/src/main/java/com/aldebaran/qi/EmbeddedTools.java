@@ -109,27 +109,35 @@ public class EmbeddedTools
       return true;
     }
 
-    // Only present on android
-    SharedLibrary.loadLib("gnustl_shared");
+    String javaVendor = System.getProperty("java.vendor");
+    if (javaVendor.contains("Android"))
+    {
+      // Only need to call loadLibrary(qimessagingjni),
+      // dependencies in lib/<arch> will be automatically
+      // found
+      System.loadLibrary("qimessagingjni");
+    }
+    else
+    {
+      SharedLibrary.loadLib("icudata"); // deps for boost_regexp.so
+      SharedLibrary.loadLib("icuuc");
+      SharedLibrary.loadLib("icui18n");
+      SharedLibrary.loadLib("boost_atomic");
+      SharedLibrary.loadLib("boost_date_time");
+      SharedLibrary.loadLib("boost_system");
+      SharedLibrary.loadLib("boost_thread");
+      SharedLibrary.loadLib("boost_chrono");
+      SharedLibrary.loadLib("boost_locale");
+      SharedLibrary.loadLib("boost_filesystem");
+      SharedLibrary.loadLib("boost_program_options");
+      SharedLibrary.loadLib("boost_regex");
 
-    // Not present on android
-    SharedLibrary.loadLib("icudata"); // deps for boost_regexp.so
-    SharedLibrary.loadLib("icuuc");
-    SharedLibrary.loadLib("icui18n");
-    SharedLibrary.loadLib("boost_atomic");
-    SharedLibrary.loadLib("boost_date_time");
-    SharedLibrary.loadLib("boost_system");
-    SharedLibrary.loadLib("boost_thread");
-    SharedLibrary.loadLib("boost_chrono");
-    SharedLibrary.loadLib("boost_locale");
-    SharedLibrary.loadLib("boost_filesystem");
-    SharedLibrary.loadLib("boost_program_options");
-    SharedLibrary.loadLib("boost_regex");
-
-    if (SharedLibrary.loadLib("qi") == false
-            || SharedLibrary.loadLib("qimessagingjni") == false) {
+      if (SharedLibrary.loadLib("qi") == false
+              || SharedLibrary.loadLib("qimessagingjni") == false)
+      {
         LOADED_EMBEDDED_LIBRARY = false;
         return false;
+      }
     }
 
     System.out.printf("Libraries loaded. Initializing type system...\n");
