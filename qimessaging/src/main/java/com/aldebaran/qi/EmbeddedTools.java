@@ -112,9 +112,10 @@ public class EmbeddedTools
     String javaVendor = System.getProperty("java.vendor");
     if (javaVendor.contains("Android"))
     {
-      // Only need to call loadLibrary(qimessagingjni),
-      // dependencies in lib/<arch> will be automatically
-      // found
+      // Using System.loadLibrary will find the libraries automatically depending on the platform,
+      // but we still need to load the dependencies manually and in the correct order.
+      System.loadLibrary("gnustl_shared");
+      System.loadLibrary("qi");
       System.loadLibrary("qimessagingjni");
     }
     else
