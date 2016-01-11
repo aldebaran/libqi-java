@@ -120,6 +120,8 @@ public class EmbeddedTools
     }
     else
     {
+      SharedLibrary.loadLib("crypto");
+      SharedLibrary.loadLib("ssl");
       SharedLibrary.loadLib("icudata"); // deps for boost_regexp.so
       SharedLibrary.loadLib("icuuc");
       SharedLibrary.loadLib("icui18n");
