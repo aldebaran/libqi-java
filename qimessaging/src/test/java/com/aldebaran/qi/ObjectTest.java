@@ -10,6 +10,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Hashtable;
+import java.util.Map;
+
 public class ObjectTest
 {
   public AnyObject     proxy = null;
@@ -143,6 +146,23 @@ public class ObjectTest
     } catch (Exception e1) {
       fail("Property must not fail");
     }
+
+    Map<Object, Object> settings = new Hashtable<Object, Object>();
+    settings.put("foo", true);
+    settings.put("bar", "This is bar");
+    try {
+      ro.setProperty("settings", settings);
+    } catch (Exception e) {
+      fail("Call must succeed: " + e.getMessage());
+    }
+    Map<Object, Object> readSettings = null;
+    try {
+      readSettings = ro.<Map<Object, Object>>property("settings").get();
+    } catch (InterruptedException e) {
+      fail("Call must not be interrupted: " + e.getMessage());
+    }
+    assertEquals(readSettings.get("foo"), true);
+    assertEquals(readSettings.get("bar"), "This is bar");
 
     String ret = null;
     try {

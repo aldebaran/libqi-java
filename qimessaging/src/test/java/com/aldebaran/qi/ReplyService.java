@@ -40,6 +40,7 @@ public class ReplyService extends QiService
 
       ob.advertiseProperty("name", String.class);
       ob.advertiseProperty("uid", Integer.class);
+      ob.advertiseProperty("settings", Hashtable.class);
 
     } catch (Exception e1) {
       System.out.println("Cannot advertise methods and signals : " + e1.getMessage());

@@ -5,6 +5,9 @@ bin/pom.xml
 *.so
 *.a
 
+# ignore QtCreator generated files
+*.user
+
 # Ignore compilation folder
 qimessaging/target/
 bin/*/target/
@@ -16,3 +19,7 @@ bin/*/target/
 *.classpath
 *.project
 *.settings
+
+# ignore AndroidStudio generated files
+.idea
+*.iml

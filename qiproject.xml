@@ -1,4 +1,5 @@
 <project version="3">
+  <maintainer email="jlamotte@aldebaran.com">Joël Lamotte</maintainer>
   <!-- qibuild project in c++ for the jni shared library -->
   <project src="jni" />
   <!-- standalone maven project -->

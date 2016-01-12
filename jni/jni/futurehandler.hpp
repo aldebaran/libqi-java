@@ -22,14 +22,15 @@ namespace qi
   /**
    * @brief The CallbackInfo struct Container used by FutureHandler
    */
-  struct CallbackInfo
+  struct CallbackInfo : boost::noncopyable
   {
     jobject      instance;
     jobjectArray args;
-    std::string  className;
+    jclass  clazz;
     std::string  interfaceName;
 
-    CallbackInfo(jobject instance, jobjectArray args, const std::string& className, const std::string& interfaceName = "com/aldebaran/qi/Callback")
+
+    CallbackInfo(jobject instance, jobjectArray args, jclass clazz, const std::string& interfaceName = "com/aldebaran/qi/Callback")
     {
       JNIEnv* env = 0;
       JVM()->GetEnv((void**) &env, QI_JNI_MIN_VERSION);
@@ -47,7 +48,7 @@ namespace qi
 
       this->instance = env->NewGlobalRef(instance);
       this->args = array;
-      this->className = className;
+      this->clazz = (jclass) env->NewGlobalRef(clazz);
       this->interfaceName = interfaceName;
     }
 
@@ -68,6 +69,7 @@ namespace qi
 
       env->DeleteGlobalRef(this->args);
       env->DeleteGlobalRef(this->instance);
+      env->DeleteGlobalRef(this->clazz);
     }
   };
 

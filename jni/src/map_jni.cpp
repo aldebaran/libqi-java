@@ -58,7 +58,7 @@ bool JNIHashTable::setItem(jobject key, jobject value)
     throw std::runtime_error("JNIHashTable::setItem() : Cannot call put");
   }
 
-  _env->CallVoidMethod(_obj, mid, key, value);
+  _env->CallObjectMethod(_obj, mid, key, value);
   return true;
 }
 

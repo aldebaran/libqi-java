@@ -21,7 +21,7 @@ public class EmbeddedTools
   private File tmpDir = null;
 
   public static boolean LOADED_EMBEDDED_LIBRARY = false;
-  private static native void initTypeSystem(Object str, Object i, Object f, Object d, Object l, Object m, Object al, Object t, Object o, Object b);
+  private static native void initTypeSystem(Object str, Object i, Object f, Object d, Object l, Object m, Object al, Object t, Object o, Object b, Object fut);
   private static native void initTupleInTypeSystem(Object t1, Object t2, Object t3, Object t4, Object t5, Object t6, Object t7, Object t8, Object t9, Object t10, Object t11, Object t12, Object t13, Object t14, Object t15, Object t16, Object t17, Object t18, Object t19, Object t20, Object t21, Object t22, Object t23, Object t24, Object t25, Object t26, Object t27, Object t28, Object t29, Object t30, Object t31, Object t32);
 
 
@@ -40,6 +40,7 @@ public class EmbeddedTools
     Long    l   = new Long(0);
     Tuple   t   = new Tuple1<Object>();
     Boolean b   = new Boolean(true);
+    Future<Object> fut = new Future<Object>(0);
 
     DynamicObjectBuilder ob = new DynamicObjectBuilder();
     AnyObject obj  = ob.object();
@@ -48,7 +49,7 @@ public class EmbeddedTools
     ArrayList<Object>             al = new ArrayList<Object>();
 
     // Initialize generic type system
-    EmbeddedTools.initTypeSystem(str, i, f, d, l, m, al, t, obj, b);
+    EmbeddedTools.initTypeSystem(str, i, f, d, l, m, al, t, obj, b, fut);
 
     Tuple t1 = Tuple.makeTuple(0);
     Tuple t2 = Tuple.makeTuple(0, 0);
@@ -108,24 +109,38 @@ public class EmbeddedTools
       return true;
     }
 
-    // Only present on android
-    SharedLibrary.loadLib("gnustl_shared");
+    String javaVendor = System.getProperty("java.vendor");
+    if (javaVendor.contains("Android"))
+    {
+      // Using System.loadLibrary will find the libraries automatically depending on the platform,
+      // but we still need to load the dependencies manually and in the correct order.
+      System.loadLibrary("gnustl_shared");
+      System.loadLibrary("qi");
+      System.loadLibrary("qimessagingjni");
+    }
+    else
+    {
+      SharedLibrary.loadLib("crypto");
+      SharedLibrary.loadLib("ssl");
+      SharedLibrary.loadLib("icudata"); // deps for boost_regexp.so
+      SharedLibrary.loadLib("icuuc");
+      SharedLibrary.loadLib("icui18n");
+      SharedLibrary.loadLib("boost_atomic");
+      SharedLibrary.loadLib("boost_date_time");
+      SharedLibrary.loadLib("boost_system");
+      SharedLibrary.loadLib("boost_thread");
+      SharedLibrary.loadLib("boost_chrono");
+      SharedLibrary.loadLib("boost_locale");
+      SharedLibrary.loadLib("boost_filesystem");
+      SharedLibrary.loadLib("boost_program_options");
+      SharedLibrary.loadLib("boost_regex");
 
-    // Not present on android
-    SharedLibrary.loadLib("boost_atomic");
-    SharedLibrary.loadLib("boost_date_time");
-    SharedLibrary.loadLib("boost_system");
-    SharedLibrary.loadLib("boost_thread");
-    SharedLibrary.loadLib("boost_chrono");
-    SharedLibrary.loadLib("boost_locale");
-    SharedLibrary.loadLib("boost_filesystem");
-    SharedLibrary.loadLib("boost_program_options");
-    SharedLibrary.loadLib("boost_regex");
-
-    if (SharedLibrary.loadLib("qi") == false
-            || SharedLibrary.loadLib("qimessagingjni") == false) {
+      if (SharedLibrary.loadLib("qi") == false
+              || SharedLibrary.loadLib("qimessagingjni") == false)
+      {
         LOADED_EMBEDDED_LIBRARY = false;
         return false;
+      }
     }
 
     System.out.printf("Libraries loaded. Initializing type system...\n");
