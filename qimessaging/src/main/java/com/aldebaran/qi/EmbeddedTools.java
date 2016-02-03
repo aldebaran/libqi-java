@@ -109,6 +109,8 @@ public class EmbeddedTools
       return true;
     }
 
+    String osName = System.getProperty("os.name");
+
     String javaVendor = System.getProperty("java.vendor");
     if (javaVendor.contains("Android"))
     {
@@ -120,21 +122,32 @@ public class EmbeddedTools
     }
     else
     {
-      SharedLibrary.loadLib("crypto");
-      SharedLibrary.loadLib("ssl");
-      SharedLibrary.loadLib("icudata"); // deps for boost_regexp.so
-      SharedLibrary.loadLib("icuuc");
-      SharedLibrary.loadLib("icui18n");
-      SharedLibrary.loadLib("boost_atomic");
-      SharedLibrary.loadLib("boost_date_time");
-      SharedLibrary.loadLib("boost_system");
-      SharedLibrary.loadLib("boost_thread");
-      SharedLibrary.loadLib("boost_chrono");
-      SharedLibrary.loadLib("boost_locale");
-      SharedLibrary.loadLib("boost_filesystem");
-      SharedLibrary.loadLib("boost_program_options");
-      SharedLibrary.loadLib("boost_regex");
+      // Windows is built with static boost libs,
+      // but the name of the SSL dlls are different
+      if (osName.contains("Windows"))
+      {
+        SharedLibrary.loadLib("libeay32");
+        SharedLibrary.loadLib("ssleay32");
+      }
+      else
+      {
+        SharedLibrary.loadLib("crypto");
+        SharedLibrary.loadLib("ssl");
+        SharedLibrary.loadLib("icudata"); // deps for boost_regexp.so
+        SharedLibrary.loadLib("icuuc");
+        SharedLibrary.loadLib("icui18n");
+        SharedLibrary.loadLib("boost_atomic");
+        SharedLibrary.loadLib("boost_date_time");
+        SharedLibrary.loadLib("boost_system");
+        SharedLibrary.loadLib("boost_thread");
+        SharedLibrary.loadLib("boost_chrono");
+        SharedLibrary.loadLib("boost_locale");
+        SharedLibrary.loadLib("boost_filesystem");
+        SharedLibrary.loadLib("boost_program_options");
+        SharedLibrary.loadLib("boost_regex");
+      } // linux, mac
 
+      // Not on android, need to load qi and qimessagingjni
       if (SharedLibrary.loadLib("qi") == false
               || SharedLibrary.loadLib("qimessagingjni") == false)
       {
