@@ -179,7 +179,11 @@ public:
   qi::CapabilityMap initialAuthData()
   {
     JNIEnv* env = nullptr;
+#ifndef ANDROID
     _jvm->AttachCurrentThread(reinterpret_cast<void**>(&env), nullptr);
+#else
+    _jvm->AttachCurrentThread(&env, nullptr);
+#endif
     jobject ca = qi::jni::Call<jobject>::invoke(env, _jobject, "initialAuthData", "()Ljava/util/Map;");
     return JNI_JavaMaptoMap(env, ca);
   }
@@ -187,7 +191,11 @@ public:
   qi::CapabilityMap _processAuth(const qi::CapabilityMap &authData)
   {
     JNIEnv* env = nullptr;
+#ifndef ANDROID
     _jvm->AttachCurrentThread(reinterpret_cast<void**>(&env), nullptr);
+#else
+    _jvm->AttachCurrentThread(&env, nullptr);
+#endif
     jobject jmap = JNI_MapToJavaMap(env, authData);
     jobject ca = qi::jni::Call<jobject>::invoke(env, _jobject, "_processAuth", "(Ljava/util/Map;)Ljava/util/Map;", jmap);
     return JNI_JavaMaptoMap(env, ca);
@@ -273,7 +281,11 @@ public:
   qi::ClientAuthenticatorPtr newAuthenticator()
   {
     JNIEnv* env = nullptr;
+#ifndef ANDROID
     _jvm->AttachCurrentThread(reinterpret_cast<void**>(&env), nullptr);
+#else
+    _jvm->AttachCurrentThread(&env, nullptr);
+#endif
     jobject ca = qi::jni::Call<jobject>::invoke(env, _jobject, "newAuthenticator", "()Lcom/aldebaran/qi/ClientAuthenticator;");
     return boost::make_shared<Java_ClientAuthenticator>(env, ca);
   }
