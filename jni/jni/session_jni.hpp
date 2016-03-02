@@ -19,7 +19,7 @@ extern "C"
   JNIEXPORT jboolean  Java_com_aldebaran_qi_Session_qiSessionIsConnected(JNIEnv *env, jobject obj, jlong pSession);
   JNIEXPORT jlong     Java_com_aldebaran_qi_Session_qiSessionConnect(JNIEnv *env, jobject obj, jlong pSession, jstring jurl);
   JNIEXPORT void      Java_com_aldebaran_qi_Session_qiSessionClose(JNIEnv *env, jobject obj, jlong pSession);
-  JNIEXPORT jobject   Java_com_aldebaran_qi_Session_service(JNIEnv* env, jobject obj, jlong pSession, jstring jname);
+  JNIEXPORT jlong     Java_com_aldebaran_qi_Session_service(JNIEnv* env, jobject obj, jlong pSession, jstring jname);
   JNIEXPORT jint      Java_com_aldebaran_qi_Session_registerService(JNIEnv *env, jobject obj, jlong pSession, jstring name, jobject object);
   JNIEXPORT void      Java_com_aldebaran_qi_Session_unregisterService(JNIEnv *env, jobject obj, jlong pSession, jint serviceId);
   JNIEXPORT void      Java_com_aldebaran_qi_Session_onDisconnected(JNIEnv *env, jobject obj, jlong pSession, jstring callbackName, jobject objectInstance);

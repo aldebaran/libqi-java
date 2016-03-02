@@ -75,7 +75,7 @@ public class FutureTest
     client.connect(url).sync();
 
     // Get a proxy to serviceTest
-    proxy = client.service("serviceTest");
+    proxy = client.service("serviceTest").get();
     assertNotNull(proxy);
   }
 
@@ -101,7 +101,7 @@ public class FutureTest
     // Get a proxy to serviceTest
     try
     {
-      proxy = client.service("serviceTest");
+      proxy = client.service("serviceTest").get();
     } catch (Exception e1)
     {
       fail("Cannot get serviceTest :" + e1.getMessage());

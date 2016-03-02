@@ -87,25 +87,23 @@ void Java_com_aldebaran_qi_Session_qiSessionClose(JNIEnv* QI_UNUSED(env), jobjec
   s->close();
 }
 
-jobject   Java_com_aldebaran_qi_Session_service(JNIEnv* env, jobject QI_UNUSED(obj), jlong pSession, jstring jname)
+jlong Java_com_aldebaran_qi_Session_service(JNIEnv* env, jobject QI_UNUSED(obj), jlong pSession, jstring jname)
 {
   qi::Session *s = reinterpret_cast<qi::Session*>(pSession);
   std::string serviceName = qi::jni::toString(jname);
 
-  qi::AnyObject *obj = new qi::AnyObject();
-  jobject proxy = 0;
-
   try
   {
-    *obj = s->service(serviceName);
-    JNIObject jniProxy(obj);
-    return jniProxy.object();
+    qi::Future<qi::AnyObject> serviceFuture = s->service(serviceName);
+    // qiFutureCallGet() requires that the future returns a qi::AnyValue
+    qi::Future<qi::AnyValue> future = qi::toAnyValueFuture(std::move(serviceFuture));
+    auto futurePtr = new qi::Future<qi::AnyValue>(std::move(future));
+    return reinterpret_cast<jlong>(futurePtr);
   }
   catch (std::runtime_error &e)
   {
-    delete obj;
-    throwNewException(env, e.what());
-    return proxy;
+    throwNewRuntimeException(env, e.what());
+    return 0;
   }
 }
 

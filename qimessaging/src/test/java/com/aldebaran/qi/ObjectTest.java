@@ -74,8 +74,8 @@ public class ObjectTest
     client.connect(url).sync();
 
     // Get a proxy to serviceTest
-    proxy = client.service("serviceTest");
-    proxyts = client.service("serviceTestTs");
+    proxy = client.service("serviceTest").get();
+    proxyts = client.service("serviceTestTs").get();
     assertNotNull(proxy);
     assertNotNull(proxyts);
   }
