@@ -25,7 +25,7 @@ public class Session
   private static native long    qiSessionConnect(long pSession, String url);
   private static native boolean qiSessionIsConnected(long pSession);
   private static native void    qiSessionClose(long pSession);
-  private static native AnyObject  service(long pSession, String name);
+  private static native long    service(long pSession, String name);
   private static native int     registerService(long pSession, String name, AnyObject obj);
   private static native void    unregisterService(long pSession, int idx);
   private static native void    onDisconnected(long pSession, String callback, Object obj);
@@ -88,11 +88,12 @@ public class Session
   /**
    * Ask for remote service to Service Directory.
    * @param name Name of service.
-   * @return Proxy on remote service on success, null on error.
+   * @return the AnyObject future
    */
-  public AnyObject  service(String name) throws Exception
+  public Future<AnyObject> service(String name)
   {
-    return (AnyObject) Session.service(_session, name);
+    long pFuture = Session.service(_session, name);
+    return new Future<AnyObject>(pFuture);
   }
 
   /**

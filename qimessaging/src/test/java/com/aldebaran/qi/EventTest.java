@@ -60,7 +60,7 @@ public class EventTest
     client.connect(url).sync();
 
     // Get a proxy to serviceTest
-    proxy = client.service("serviceTest");
+    proxy = client.service("serviceTest").get();
     assertNotNull(proxy);
   }
 
