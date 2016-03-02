@@ -21,7 +21,7 @@ JNITuple::JNITuple(jobject obj)
   if (!_cls)
   {
     qiLogError("qimessaging.jni") << "JNITuple : Cannot find Tuple class template";
-    throwJavaError(_env, "JNITuple : Cannot find Tuple class template");
+    throwNewException(_env, "JNITuple : Cannot find Tuple class template");
   }
 }
 
@@ -37,7 +37,7 @@ JNITuple::JNITuple(int size)
   if (!_cls)
   {
     qiLogError("qimessaging.jni") << "JNITuple : Cannot find " << name.str() << " class template";
-    throwJavaError(_env, "JNITuple : Cannot find Tuple class template");
+    throwNewException(_env, "JNITuple : Cannot find Tuple class template");
   }
 
 
@@ -46,7 +46,7 @@ JNITuple::JNITuple(int size)
   if (!mid)
   {
     qiLogError("qimessaging.jni") << "JNITuple : Cannot find " << name.str() << " constructor";
-    throwJavaError(_env, "JNITuple : Cannot find Tuple constructor");
+    throwNewException(_env, "JNITuple : Cannot find Tuple constructor");
   }
 
   _obj = _env->NewObject(_cls, mid);

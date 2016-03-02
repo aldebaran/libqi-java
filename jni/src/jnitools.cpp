@@ -231,15 +231,14 @@ std::string   toJavaSignature(const std::string &signature)
 }
 
 /**
- * @brief throwJavaError Helper function to throw generic Java exception from C++
+ * @brief throwNewException Helper function to throw generic Java exception from C++
  * @param env JNI environment
  * @param message content of exception
  * @return 0 on success, a positive number otherwise
  */
-jint throwJavaError(JNIEnv *env, const char *message)
+jint throwNew(JNIEnv *env, const char *className, const char *message)
 {
   jclass		 exClass;
-  const char*    className = "java/lang/Exception" ;
 
   exClass = env->FindClass(className);
   if (exClass == NULL)
@@ -249,6 +248,21 @@ jint throwJavaError(JNIEnv *env, const char *message)
   }
 
   return env->ThrowNew(exClass, message);
+}
+
+jint throwNewException(JNIEnv *env, const char *message)
+{
+  return throwNew(env, "java/lang/Exception", message);
+}
+
+jint throwNewRuntimeException(JNIEnv *env, const char *message)
+{
+  return throwNew(env, "java/lang/RuntimeException", message);
+}
+
+jint throwNewNullPointerException(JNIEnv *env, const char *message)
+{
+  return throwNew(env, "java/lang/NullPointerException", message);
 }
 
 /**

@@ -130,7 +130,10 @@ std::string   toJavaSignature(const std::string &signature);
 std::string   propertyBaseSignature(JNIEnv *env, jclass propertyBase);
 
 // Java exception thrower
-jint          throwJavaError(JNIEnv *env, const char *message);
+jint throwNew(JNIEnv *env, const char *className, const char *message);
+jint throwNewException(JNIEnv *env, const char *message);
+jint throwNewRuntimeException(JNIEnv *env, const char *message);
+jint throwNewNullPointerException(JNIEnv *env, const char *message);
 
 extern std::map<std::string, jobject> supportedTypes;
 #endif // !_JAVA_JNI_JNITOOLS_HPP_

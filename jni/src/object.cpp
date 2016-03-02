@@ -42,7 +42,7 @@ jlong   Java_com_aldebaran_qi_AnyObject_property(JNIEnv* env, jobject jobj, jlon
   } catch (qi::FutureUserException& e)
   {
     delete ret;
-    throwJavaError(env, e.what());
+    throwNewException(env, e.what());
     return 0;
   }
 
@@ -76,7 +76,7 @@ jlong     Java_com_aldebaran_qi_AnyObject_asyncCall(JNIEnv* env, jobject QI_UNUS
   if (!obj)
   {
     qiLogError() << "Given object not valid.";
-    throwJavaError(env, "Given object is not valid.");
+    throwNewException(env, "Given object is not valid.");
     return 0;
   }
 
@@ -86,7 +86,7 @@ jlong     Java_com_aldebaran_qi_AnyObject_asyncCall(JNIEnv* env, jobject QI_UNUS
     fut = call_from_java(env, obj, method, args);
   } catch (std::exception& e)
   {
-    throwJavaError(env, e.what());
+    throwNewException(env, e.what());
     return 0;
   }
 
@@ -117,7 +117,7 @@ jlong     Java_com_aldebaran_qi_AnyObject_disconnect(JNIEnv *env, jobject jobj, 
     obj.disconnect(subscriberId);
   } catch (std::exception& e)
   {
-    throwJavaError(env, e.what());
+    throwNewException(env, e.what());
   }
   return 0;
 }
@@ -158,7 +158,7 @@ jlong     Java_com_aldebaran_qi_AnyObject_connect(JNIEnv *env, jobject jobj, jlo
     return link;
   } catch (std::exception& e)
   {
-    throwJavaError(env, e.what());
+    throwNewException(env, e.what());
     return 0;
   }
 }
@@ -194,7 +194,7 @@ void      Java_com_aldebaran_qi_AnyObject_post(JNIEnv *env, jobject QI_UNUSED(jo
     obj.metaPost(event, params);
   } catch (std::exception& e)
   {
-    throwJavaError(env, e.what());
+    throwNewException(env, e.what());
   }
 
   // Destroy arguments

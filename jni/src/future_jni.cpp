@@ -68,7 +68,7 @@ jobject  Java_com_aldebaran_qi_Future_qiFutureCallGet(JNIEnv *env, jobject obj, 
   }
   catch (std::runtime_error &e)
   {
-    throwJavaError(env, e.what());
+    throwNewException(env, e.what());
     return 0;
   }
 }
@@ -83,11 +83,11 @@ jstring Java_com_aldebaran_qi_Future_qiFutureCallGetError(JNIEnv *env, jobject o
   }
   catch (std::exception& e)
   {
-    throwJavaError(env, e.what());
+    throwNewException(env, e.what());
     return 0;
   }
 
-  throwJavaError(env, "Unknown error");
+  throwNewException(env, "Unknown error");
   return 0;
 }
 
@@ -104,7 +104,7 @@ jobject  Java_com_aldebaran_qi_Future_qiFutureCallGetWithTimeout(JNIEnv *env, jo
   case qi::FutureState_Running:
     return 0;
   default:
-    throwJavaError(env, fut->error().c_str());
+    throwNewException(env, fut->error().c_str());
   }
 
   return 0;

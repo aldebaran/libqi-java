@@ -74,7 +74,7 @@ void JNIObject::build(qi::AnyObject *newO)
   if (!mid)
   {
     qiLogError() << "JNIObject : Cannot find constructor";
-    throwJavaError(_env, "JNIObject : Cannot find constructor");
+    throwNewException(_env, "JNIObject : Cannot find constructor");
   }
 
   jlong pObj = (long) newO;
