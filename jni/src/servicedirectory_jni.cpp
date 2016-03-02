@@ -35,7 +35,7 @@ jlong   Java_com_aldebaran_qi_ServiceDirectory_qiTestSDCreate(JNIEnv *env, jobje
     ss << "Cannot get test Service Directory: " << fut.error();
     qiLogError() << ss.str();
     delete sd;
-    throwJavaError(env, ss.str().c_str());
+    throwNewException(env, ss.str().c_str());
     return (jlong) 0;
   }
   qiLogDebug() << "Creating new sd " << sd;

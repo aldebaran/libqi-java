@@ -22,7 +22,7 @@ jlong createApplication(JNIEnv* env, jobjectArray jargs, const boost::function<j
 {
   if (app)
   {
-    throwJavaError(env, "Tried to create more than one application");
+    throwNewException(env, "Tried to create more than one application");
     return 0;
   }
 
@@ -102,7 +102,7 @@ void Java_com_aldebaran_qi_Application_qiApplicationStart(JNIEnv *env, jclass, j
   }
   catch (std::exception& e)
   {
-    throwJavaError(env, e.what());
+    throwNewException(env, e.what());
   }
 }
 
@@ -116,7 +116,7 @@ void Java_com_aldebaran_qi_Application_qiApplicationRun(JNIEnv *env, jclass, jlo
   }
   catch (std::exception& e)
   {
-    throwJavaError(env, e.what());
+    throwNewException(env, e.what());
   }
 }
 

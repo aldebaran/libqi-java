@@ -38,7 +38,7 @@ struct toJObject
 
     void visitUnknown(qi::AnyReference value)
     {
-      throwJavaError(env, "Error in conversion: Unable to convert unknown type in Java");
+      throwNewException(env, "Error in conversion: Unable to convert unknown type in Java");
     }
 
     void visitInt(qi::int64_t value, bool isSigned, int byteSize)
@@ -53,7 +53,7 @@ struct toJObject
       if (env->ExceptionCheck())
       {
         qi::jni::releaseClazz(cls);
-        throwJavaError(env, "AnyValue to Integer : FindClass error");
+        throwNewException(env, "AnyValue to Integer : FindClass error");
         return;
       }
 
@@ -62,7 +62,7 @@ struct toJObject
       if (!mid)
       {
         qi::jni::releaseClazz(cls);
-        throwJavaError(env, "AnyValue to Integer : GetMethodID error");
+        throwNewException(env, "AnyValue to Integer : GetMethodID error");
         return;
       }
 
@@ -109,7 +109,7 @@ struct toJObject
       if (env->ExceptionCheck())
       {
         qi::jni::releaseClazz(cls);
-        throwJavaError(env, "AnyValue to Float : FindClass error");
+        throwNewException(env, "AnyValue to Float : FindClass error");
         return;
       }
 
@@ -118,7 +118,7 @@ struct toJObject
       if (!mid)
       {
         qi::jni::releaseClazz(cls);
-        throwJavaError(env, "AnyValue to Float : GetMethodID error");
+        throwNewException(env, "AnyValue to Float : GetMethodID error");
         return;
       }
 
@@ -189,7 +189,7 @@ struct toJObject
     void visitPointer(qi::AnyReference pointee)
     {
       qiLogFatal() << "Error in conversion: Unable to convert pointer in Java";
-      throwJavaError(env, "Error in conversion: Unable to convert pointer in Java");
+      throwNewException(env, "Error in conversion: Unable to convert pointer in Java");
     }
 
     void visitTuple(const std::string& className, const std::vector<qi::AnyReference>& tuple, const std::vector<std::string>& annotations)
@@ -253,7 +253,7 @@ struct toJObject
     void checkForError()
     {
       if (result == NULL)
-        throwJavaError(env, "Error in conversion to JObject");
+        throwNewException(env, "Error in conversion to JObject");
     }
 
     jobject* result;

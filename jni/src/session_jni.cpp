@@ -57,7 +57,7 @@ jlong Java_com_aldebaran_qi_Session_qiSessionConnect(JNIEnv *env, jobject QI_UNU
 {
   if (pSession == 0)
   {
-    throwJavaError(env, "Given qi::Session doesn't exists (pointer null).");
+    throwNewException(env, "Given qi::Session doesn't exists (pointer null).");
     return 0;
   }
 
@@ -104,7 +104,7 @@ jobject   Java_com_aldebaran_qi_Session_service(JNIEnv* env, jobject QI_UNUSED(o
   catch (std::runtime_error &e)
   {
     delete obj;
-    throwJavaError(env, e.what());
+    throwNewException(env, e.what());
     return proxy;
   }
 }
@@ -123,13 +123,13 @@ jint  Java_com_aldebaran_qi_Session_registerService(JNIEnv *env, jobject QI_UNUS
   catch (std::runtime_error &e)
   {
     qiLogError() << "Throwing exception : " << e.what();
-    throwJavaError(env, e.what());
+    throwNewException(env, e.what());
     return 0;
   }
 
   if (ret <= 0)
   {
-    throwJavaError(env, "Cannot register service");
+    throwNewException(env, "Cannot register service");
     return 0;
   }
 
