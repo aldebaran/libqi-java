@@ -190,6 +190,19 @@ namespace qi {
       return _getField<jdouble, &JNIEnv::GetDoubleField>(env, obj, name, "D");
     }
 
+    // jobject is defined as _jobject*
+    using SharedGlobalRef = std::shared_ptr<_jobject>;
+
+    inline SharedGlobalRef makeSharedGlobalRef(JNIEnv *env, jobject localRef)
+    {
+      jobject globalRef = env->NewGlobalRef(localRef);
+      return { globalRef, [](jobject globalRef) {
+        // delegate the deletion to JNI
+        qi::jni::JNIAttach attach;
+        JNIEnv *env = attach.get();
+        env->DeleteGlobalRef(globalRef);
+      }};
+    }
   }// !jni
 }// !qi
 

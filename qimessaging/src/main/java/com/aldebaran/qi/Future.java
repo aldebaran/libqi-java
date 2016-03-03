@@ -4,7 +4,6 @@
 */
 package com.aldebaran.qi;
 
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -39,6 +38,8 @@ public class Future <T>
   private static native boolean qiFutureCallConnect(long pFuture, Object callback, String className, Object[] args);
   private static native void    qiFutureCallWaitWithTimeout(long pFuture, int timeout);
   private static native void    qiFutureDestroy(long pFuture);
+  private native long qiFutureCallThen(long pFuture, QiFunction<?, ?> function);
+  private native long qiFutureCallAndThen(long pFuture, QiFunction<?, ?> function);
 
   private Future()
   {
@@ -102,6 +103,23 @@ public class Future <T>
     return (T) ret;
   }
 
+  /**
+   * Same as {@code get()}, but does not throw checked exceptions.
+   *
+   * This is especially useful for getting the value of a future that we know is
+   * complete with success.
+   *
+   * @return the future value
+   */
+  public T getValue()
+  {
+    try {
+      return get();
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   @SuppressWarnings("unchecked")
   public T get(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException
   {
@@ -144,6 +162,16 @@ public class Future <T>
       return false;
 
     return true;
+  }
+
+  public <Ret> Future<Ret> then(QiFunction<Ret, T> function)
+  {
+    return new Future<Ret>(qiFutureCallThen(_fut, function));
+  }
+
+  public <Ret> Future<Ret> andThen(QiFunction<Ret, T> function)
+  {
+    return new Future<Ret>(qiFutureCallAndThen(_fut, function));
   }
 
   /**

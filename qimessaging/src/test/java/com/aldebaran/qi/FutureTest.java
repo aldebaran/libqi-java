@@ -92,6 +92,91 @@ public class FutureTest
   }
 
   @Test
+  public void testThenSuccess()
+  {
+    try
+    {
+      int value = client.service("serviceTest").then(new QiFunction<Integer, AnyObject>() {
+        @Override
+        public Future<Integer> execute(Future<AnyObject> arg)
+        {
+          return arg.getValue().call("answer", 42);
+        }
+      }).get();
+      // answer adds 1 to the value
+      assertEquals(42 + 1, value);
+    } catch (Exception e)
+    {
+      fail("get() must not fail");
+    }
+  }
+
+  @Test
+  public void testThenFailure()
+  {
+    try
+    {
+      client.service("nonExistant").then(new QiFunction<AnyObject, AnyObject>() {
+        @Override
+        public Future<AnyObject> execute(Future<AnyObject> arg)
+        {
+          try {
+            arg.get();
+            fail("get() must fail, the service does not exist");
+          } catch (Exception e)
+          {
+            // expected exception
+          }
+          return client.service("serviceTest");
+        }
+      }).get();
+    } catch (Exception e)
+    {
+      fail("get() must not fail, the second future should succeed");
+    }
+  }
+
+  @Test
+  public void testAndThenSuccess()
+  {
+    try
+    {
+      int value = client.service("serviceTest").andThen(new QiFunction<Integer, AnyObject>() {
+        @Override
+        public Future<Integer> execute(Future<AnyObject> arg)
+        {
+          return arg.getValue().call("answer", 42);
+        }
+      }).get();
+      // answer adds 1 to the value
+      assertEquals(42 + 1, value);
+    } catch (Exception e)
+    {
+      fail("get() must not fail");
+    }
+  }
+
+  @Test
+  public void testAndThenFailure()
+  {
+    try
+    {
+      client.service("nonExistant").andThen(new QiFunction<Void, AnyObject>() {
+        @Override
+        public Future<Void> execute(Future<AnyObject> arg)
+        {
+          fail("The first future has failed, this code should never be called");
+          return null;
+        }
+      }).get();
+      fail("get() must fail");
+    } catch (Exception e)
+    {
+      // expected exception
+    }
+  }
+
+  @Test
   public void testCallback()
   {
     AnyObject proxy = null;
