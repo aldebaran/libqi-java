@@ -119,6 +119,77 @@ namespace qi {
       return env->CallObjectMethod(jobject, mid, rest...);
     }
 
+    template <typename R>
+    using JNIFieldGetter = R (JNIEnv::*)(jobject, jfieldID);
+
+    template <typename R, JNIFieldGetter<R> GETTER>
+    R _getField(JNIEnv *env, jobject obj, const char *name, const char *sig)
+    {
+      jclass cls = env->GetObjectClass(obj);
+      jfieldID fid = env->GetFieldID(cls, name, sig);
+      if (!fid) {
+        // the caller must check any pending exception
+        return {};
+      }
+      return (env->*GETTER)(obj, fid);
+    }
+
+    inline jobject getObjectField(JNIEnv *env, jobject obj, const char *name, const char *sig)
+    {
+      return _getField<jobject, &JNIEnv::GetObjectField>(env, obj, name, sig);
+    }
+
+    template <typename R>
+    R getField(JNIEnv *env, jobject jobject, const char *name);
+
+    template <>
+    inline jboolean getField(JNIEnv *env, jobject obj, const char *name)
+    {
+      return _getField<jboolean, &JNIEnv::GetBooleanField>(env, obj, name, "Z");
+    }
+
+    template <>
+    inline jbyte getField(JNIEnv *env, jobject obj, const char *name)
+    {
+      return _getField<jbyte, &JNIEnv::GetByteField>(env, obj, name, "B");
+    }
+
+    template <>
+    inline jchar getField(JNIEnv *env, jobject obj, const char *name)
+    {
+      return _getField<jchar, &JNIEnv::GetCharField>(env, obj, name, "C");
+    }
+
+    template <>
+    inline jshort getField(JNIEnv *env, jobject obj, const char *name)
+    {
+      return _getField<jshort, &JNIEnv::GetShortField>(env, obj, name, "S");
+    }
+
+    template <>
+    inline jint getField(JNIEnv *env, jobject obj, const char *name)
+    {
+      return _getField<jint, &JNIEnv::GetIntField>(env, obj, name, "I");
+    }
+
+    template <>
+    inline jlong getField(JNIEnv *env, jobject obj, const char *name)
+    {
+      return _getField<jlong, &JNIEnv::GetLongField>(env, obj, name, "J");
+    }
+
+    template <>
+    inline jfloat getField(JNIEnv *env, jobject obj, const char *name)
+    {
+      return _getField<jfloat, &JNIEnv::GetFloatField>(env, obj, name, "F");
+    }
+
+    template <>
+    inline jdouble getField(JNIEnv *env, jobject obj, const char *name)
+    {
+      return _getField<jdouble, &JNIEnv::GetDoubleField>(env, obj, name, "D");
+    }
+
   }// !jni
 }// !qi
 
