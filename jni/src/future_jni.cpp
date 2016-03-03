@@ -148,8 +148,75 @@ void  Java_com_aldebaran_qi_Future_qiFutureCallWaitWithTimeout(JNIEnv* QI_UNUSED
     fut->wait();
 }
 
+template <typename Param>
+struct QiFunctionFunctor
+{
+  qi::jni::SharedGlobalRef _argFuture;
+  qi::jni::SharedGlobalRef _qiFunction;
+  qi::Future<qi::AnyValue> operator()(Param) const;
+};
+using ThenFunctor = QiFunctionFunctor<qi::Future<qi::AnyValue>>;
+using AndThenFunctor = QiFunctionFunctor<qi::AnyValue>;
+
+JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Future_qiFutureCallThen(JNIEnv *env, jobject thisFuture, jlong pFuture, jobject qiFunction)
+{
+  qi::jni::JNIAttach attach(env);
+  qi::Future<qi::AnyValue>* future = reinterpret_cast<qi::Future<qi::AnyValue>*>(pFuture);
+  auto gThisFuture = qi::jni::makeSharedGlobalRef(env, thisFuture);
+  auto gQiFunction = qi::jni::makeSharedGlobalRef(env, qiFunction);
+  ThenFunctor functor{ gThisFuture, gQiFunction };
+  auto result = new qi::Future<qi::AnyValue>{ future->then(functor).unwrap() };
+  return reinterpret_cast<jlong>(result);
+}
+
+JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Future_qiFutureCallAndThen(JNIEnv *env, jobject thisFuture, jlong pFuture, jobject qiFunction)
+{
+  qi::jni::JNIAttach attach(env);
+  qi::Future<qi::AnyValue>* future = reinterpret_cast<qi::Future<qi::AnyValue>*>(pFuture);
+  auto gThisFuture = qi::jni::makeSharedGlobalRef(env, thisFuture);
+  auto gQiFunction = qi::jni::makeSharedGlobalRef(env, qiFunction);
+  AndThenFunctor functor{ gThisFuture, gQiFunction };
+  auto result = new qi::Future<qi::AnyValue>{ future->andThen(functor).unwrap() };
+  return reinterpret_cast<jlong>(result);
+}
+
 void  Java_com_aldebaran_qi_Future_qiFutureDestroy(JNIEnv* QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pFuture)
 {
   qi::Future<qi::AnyValue>* fut = reinterpret_cast<qi::Future<qi::AnyValue>*>(pFuture);
   delete fut;
+}
+
+template <typename Param>
+qi::Future<qi::AnyValue> QiFunctionFunctor<Param>::operator()(Param) const
+{
+  // We ignore the parameter in order to use the same QiFunction for both
+  // and() and andThen(), while the parameter differ in C++.
+  // Instead, we always use the original future "argFuture".
+
+  jobject argFuture = _argFuture.get();
+  jobject qiFunction = _qiFunction.get();
+
+  qi::jni::JNIAttach attach;
+  JNIEnv *env = attach.get();
+
+  // call QiFunction
+  const char *method = "execute";
+  const char *methodSig = "(Lcom/aldebaran/qi/Future;)Lcom/aldebaran/qi/Future;";
+  jobject future = qi::jni::Call<jobject>::invoke(env, qiFunction, method, methodSig, argFuture);
+  if (env->ExceptionCheck() == JNI_TRUE) {
+    qiLogError() << "Cannot call QiFunction.execute(…) from JNI";
+    return {};
+  }
+  if (!future) {
+    throwNewNullPointerException(env, "QiFunction.execute() returned null");
+    return {};
+  }
+
+  jlong pFuture = qi::jni::getField<jlong>(env, future, "_fut");
+  if (env->ExceptionCheck() == JNI_TRUE) {
+    qiLogError() << "Field not found: Future._fut";
+    return {};
+  }
+
+  return *reinterpret_cast<qi::Future<qi::AnyValue>*>(pFuture);
 }

@@ -5,7 +5,7 @@
 package com.aldebaran.qi;
 
 @SuppressWarnings("serial")
-public class CallError extends Exception
+public class CallError extends RuntimeException
 {
 
   /**
