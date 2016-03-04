@@ -40,6 +40,7 @@ public class Future <T>
   private static native void    qiFutureDestroy(long pFuture);
   private native long qiFutureCallThen(long pFuture, QiFunction<?, ?> function);
   private native long qiFutureCallAndThen(long pFuture, QiFunction<?, ?> function);
+  private static native long qiFutureCreate(Object value);
 
   private Future()
   {
@@ -49,6 +50,11 @@ public class Future <T>
   Future(long pFuture)
   {
     _fut = pFuture;
+  }
+
+  public static <T> Future<T> of(T value)
+  {
+    return new Future<T>(qiFutureCreate(value));
   }
 
   public void sync(long timeout, TimeUnit unit)

@@ -186,6 +186,12 @@ void  Java_com_aldebaran_qi_Future_qiFutureDestroy(JNIEnv* QI_UNUSED(env), jobje
   delete fut;
 }
 
+JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Future_qiFutureCreate(JNIEnv *env, jclass cls, jobject value)
+{
+    auto future = new qi::Future<qi::AnyValue>(qi::AnyValue::from<jobject>(value));
+    return reinterpret_cast<jlong>(future);
+}
+
 template <typename Param>
 qi::Future<qi::AnyValue> QiFunctionFunctor<Param>::operator()(Param) const
 {
