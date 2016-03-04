@@ -264,6 +264,11 @@ struct toJObject
 
 jobject JObject_from_AnyValue(qi::AnyReference val)
 {
+  if (!val.isValid())
+  {
+    // We stored a null value, typeDispatch would be unhappy, so directly return nullptr here
+    return nullptr;
+  }
   jobject result= NULL;
   toJObject tjo(&result);
   qi::typeDispatch<toJObject>(tjo, val);

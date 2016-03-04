@@ -28,6 +28,7 @@ extern "C"
   JNIEXPORT void     Java_com_aldebaran_qi_Future_qiFutureDestroy(JNIEnv* QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pFuture);
   JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Future_qiFutureCallThen(JNIEnv *env, jobject obj, jlong pFuture, jobject qiFunction);
   JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Future_qiFutureCallAndThen(JNIEnv *env, jobject obj, jlong pFuture, jobject qiFunction);
+  JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Future_qiFutureCreate(JNIEnv *env, jclass cls, jobject value);
 } // !extern "C"
 
 #endif //!_FUTURE_JNI_HPP_

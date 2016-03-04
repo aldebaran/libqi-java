@@ -177,6 +177,32 @@ public class FutureTest
   }
 
   @Test
+  public void testImmediateValue()
+  {
+    try
+    {
+      int value = Future.of(42).get();
+      assertEquals(42, value);
+    } catch (Exception e)
+    {
+      fail("get() must not fail");
+    }
+  }
+
+  @Test
+  public void testImmediateNullValue()
+  {
+    try
+    {
+      Object value = Future.of(null).get();
+      assertNull(value);
+    } catch (Exception e)
+    {
+      fail("get() must not fail");
+    }
+  }
+
+  @Test
   public void testCallback()
   {
     AnyObject proxy = null;
