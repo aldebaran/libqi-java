@@ -6,6 +6,7 @@ package com.aldebaran.qi;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.aldebaran.qi.ServiceDirectory;
 import com.aldebaran.qi.Session;
@@ -200,6 +201,78 @@ public class FutureTest
     {
       fail("get() must not fail");
     }
+  }
+
+  @Test
+  public void testConnectCallbackSuccess()
+  {
+    Future<String> future = proxy.call("longReply", "plaf");
+
+    // the callback may be called from another thread
+    final AtomicBoolean finished = new AtomicBoolean();
+
+    future.connect(new Future.Callback<String>()
+    {
+      @Override
+      public void onFinished(Future<String> future)
+      {
+        finished.set(true);
+        try
+        {
+          future.get();
+        } catch (Exception e)
+        {
+          fail("get() must not fail");
+        }
+      }
+    });
+
+    try
+    {
+      future.get();
+    } catch (Exception e)
+    {
+      fail("get() must not fail");
+    }
+
+    assertTrue(finished.get());
+  }
+
+  @Test
+  public void testConnectCallbackFailure()
+  {
+    Future<Void> future = proxy.call("throwUp");
+
+    // the callback may be called from another thread
+    final AtomicBoolean finished = new AtomicBoolean();
+
+    future.connect(new Future.Callback<Void>()
+    {
+      @Override
+      public void onFinished(Future<Void> future)
+      {
+        finished.set(true);
+        try
+        {
+          future.get();
+          fail("get() must fail");
+        } catch (Exception e)
+        {
+          // expected exception
+        }
+      }
+    });
+
+    try
+    {
+      future.get();
+      fail("get() must fail");
+    } catch (Exception e)
+    {
+      // expected exception
+    }
+
+    assertTrue(finished.get());
   }
 
   @Test
