@@ -148,6 +148,21 @@ void  Java_com_aldebaran_qi_Future_qiFutureCallWaitWithTimeout(JNIEnv* QI_UNUSED
     fut->wait();
 }
 
+struct CallbackFunctor
+{
+  qi::jni::SharedGlobalRef _argFuture;
+  qi::jni::SharedGlobalRef _callback;
+  void operator()(const qi::Future<qi::AnyValue> &future) const;
+};
+
+JNIEXPORT void JNICALL Java_com_aldebaran_qi_Future_qiFutureCallConnectCallback(JNIEnv *env, jobject thisFuture, jlong pFuture, jobject callback)
+{
+  qi::Future<qi::AnyValue>* future = reinterpret_cast<qi::Future<qi::AnyValue>*>(pFuture);
+  auto gThisFuture = qi::jni::makeSharedGlobalRef(env, thisFuture);
+  auto gCallback = qi::jni::makeSharedGlobalRef(env, callback);
+  future->connect(CallbackFunctor{ gThisFuture, gCallback });
+}
+
 template <typename Param>
 struct QiFunctionFunctor
 {
@@ -190,6 +205,24 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Future_qiFutureCreate(JNIEnv *env,
 {
     auto future = new qi::Future<qi::AnyValue>(qi::AnyValue::from<jobject>(value));
     return reinterpret_cast<jlong>(future);
+}
+
+void CallbackFunctor::operator()(const qi::Future<qi::AnyValue> &QI_UNUSED(future)) const
+{
+  // we stored the jobject future, so we ignore the parameter
+
+  jobject argFuture = _argFuture.get();
+  jobject callback = _callback.get();
+
+  qi::jni::JNIAttach attach;
+  JNIEnv *env = attach.get();
+
+  const char *method = "onFinished";
+  const char *methodSig = "(Lcom/aldebaran/qi/Future;)V";
+  qi::jni::Call<void>::invoke(env, callback, method, methodSig, argFuture);
+  if (env->ExceptionCheck() == JNI_TRUE) {
+    qiLogError() << "Cannot call Future.Callback.onFinished(…) from JNI";
+  }
 }
 
 template <typename Param>

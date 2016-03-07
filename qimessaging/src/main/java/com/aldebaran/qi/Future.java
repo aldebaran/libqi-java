@@ -25,6 +25,11 @@ public class Future <T>
     }
   }
 
+  public interface Callback<T>
+  {
+    void onFinished(Future<T> future);
+  }
+
   // C++ Future
   private long  _fut;
 
@@ -38,6 +43,7 @@ public class Future <T>
   private static native boolean qiFutureCallConnect(long pFuture, Object callback, String className, Object[] args);
   private static native void    qiFutureCallWaitWithTimeout(long pFuture, int timeout);
   private static native void    qiFutureDestroy(long pFuture);
+  private native void qiFutureCallConnectCallback(long pFuture, Callback<?> callback);
   private native long qiFutureCallThen(long pFuture, QiFunction<?, ?> function);
   private native long qiFutureCallAndThen(long pFuture, QiFunction<?, ?> function);
   private static native long qiFutureCreate(Object value);
@@ -74,13 +80,19 @@ public class Future <T>
    * @return true on success.
    * @since 1.20
    */
-  public boolean addCallback(Callback<?> callback, Object ... args)
+  @Deprecated
+  public boolean addCallback(com.aldebaran.qi.Callback<?> callback, Object ... args)
   {
     String className = callback.getClass().toString();
     className = className.substring(6); // Remove "class "
     className = className.replace('.', '/');
 
     return qiFutureCallConnect(_fut, callback, className, args);
+  }
+
+  public void connect(Callback<T> callback)
+  {
+    qiFutureCallConnectCallback(_fut, callback);
   }
 
   public boolean cancel()
