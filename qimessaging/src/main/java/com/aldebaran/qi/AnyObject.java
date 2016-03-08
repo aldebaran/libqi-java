@@ -20,14 +20,14 @@ public class AnyObject {
 
   private long    _p;
 
-  private static native long     property(long pObj, String property);
-  private static native long     setProperty(long pObj, String property, Object value);
-  private static native long     asyncCall(long pObject, String method, Object[] args);
-  private static native String   printMetaObject(long pObject);
-  private static native void     destroy(long pObj);
-  private static native long     connect(long pObject, String method, Object instance, String className, String eventName);
-  private static native long     disconnect(long pObject, long subscriberId);
-  private static native long     post(long pObject, String name, Object[] args);
+  private native long property(long pObj, String property);
+  private native long setProperty(long pObj, String property, Object value);
+  private native long asyncCall(long pObject, String method, Object[] args);
+  private native String printMetaObject(long pObject);
+  private native void destroy(long pObj);
+  private native long connect(long pObject, String method, Object instance, String className, String eventName);
+  private native long disconnect(long pObject, long subscriberId);
+  private native long post(long pObject, String name, Object[] args);
 
   public static native Object decodeJSON(String str);
   public static native String encodeJSON(Object obj);
@@ -44,12 +44,12 @@ public class AnyObject {
 
   public Future<Void> setProperty(String property, Object o) throws Exception
   {
-    return new Future<Void>(AnyObject.setProperty(_p, property, o));
+    return new Future<Void>(setProperty(_p, property, o));
   }
 
   public <T> Future<T> property(String property)
   {
-    return new Future<T>(AnyObject.property(_p, property));
+    return new Future<T>(property(_p, property));
   }
 
   /**
@@ -65,7 +65,7 @@ public class AnyObject {
 
     try
     {
-      ret = new com.aldebaran.qi.Future<T>(AnyObject.asyncCall(_p, method, args));
+      ret = new com.aldebaran.qi.Future<T>(asyncCall(_p, method, args));
     } catch (Exception e)
     {
       throw new CallError(e.getMessage());
@@ -104,7 +104,7 @@ public class AnyObject {
 
       // If method name match signature
       if (callback.contains(method.getName()) == true)
-        return AnyObject.connect(_p, callback, object, className, eventName);
+        return connect(_p, callback, object, className, eventName);
     }
 
     throw new Exception("Cannot find " + callback + " in object " + object.toString());
@@ -117,7 +117,7 @@ public class AnyObject {
    */
   public long disconnect(long subscriberId)
   {
-    return AnyObject.disconnect(_p, subscriberId);
+    return disconnect(_p, subscriberId);
   }
 
   /**
@@ -128,12 +128,13 @@ public class AnyObject {
    */
   public void post(String eventName, Object ... args)
   {
-    AnyObject.post(_p, eventName, args);
+    post(_p, eventName, args);
   }
 
+  @Override
   public String toString()
   {
-    return AnyObject.printMetaObject(_p);
+    return printMetaObject(_p);
   }
 
   /**
@@ -143,7 +144,7 @@ public class AnyObject {
   @Override
   protected void finalize() throws Throwable
   {
-    AnyObject.destroy(_p);
+    destroy(_p);
     super.finalize();
   }
 }

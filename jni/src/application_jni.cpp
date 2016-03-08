@@ -59,7 +59,7 @@ jlong createApplication(JNIEnv* env, jobjectArray jargs, const boost::function<j
   return app;
 }
 
-jlong newApplicationSession(JNIEnv* env, jstring jdefaultUrl, jboolean listen, int& cargc, char**& cargv)
+JNIEXPORT jlong JNICALL newApplicationSession(JNIEnv *env, jstring jdefaultUrl, jboolean listen, int &cargc, char** &cargv)
 {
   if (jdefaultUrl)
   {
@@ -73,26 +73,26 @@ jlong newApplicationSession(JNIEnv* env, jstring jdefaultUrl, jboolean listen, i
     return (jlong)new qi::ApplicationSession(cargc, cargv);
 }
 
-jlong Java_com_aldebaran_qi_Application_qiApplicationCreate(JNIEnv *env, jclass QI_UNUSED(jobj), jobjectArray jargs, jstring jdefaultUrl, jboolean listen)
+JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Application_qiApplicationCreate(JNIEnv *env, jobject QI_UNUSED(obj), jobjectArray jargs, jstring jdefaultUrl, jboolean listen)
 {
   return createApplication(env, jargs, boost::bind(newApplicationSession, env, jdefaultUrl, listen, _1, _2));
 }
 
-jlong Java_com_aldebaran_qi_Application_qiApplicationGetSession(JNIEnv *,jclass, jlong pApplication)
+JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Application_qiApplicationGetSession(JNIEnv *QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pApplication)
 {
   qi::ApplicationSession* app = reinterpret_cast<qi::ApplicationSession*>(pApplication);
 
   return (jlong)app->session().get();
 }
 
-void Java_com_aldebaran_qi_Application_qiApplicationDestroy(JNIEnv *,jclass, jlong pApplication)
+JNIEXPORT void JNICALL Java_com_aldebaran_qi_Application_qiApplicationDestroy(JNIEnv *env, jobject QI_UNUSED(obj), jlong pApplication)
 {
   qi::Application* app = reinterpret_cast<qi::Application *>(pApplication);
 
   delete app;
 }
 
-void Java_com_aldebaran_qi_Application_qiApplicationStart(JNIEnv *env, jclass, jlong pApplication)
+JNIEXPORT void JNICALL Java_com_aldebaran_qi_Application_qiApplicationStart(JNIEnv *env, jobject QI_UNUSED(obj), jlong pApplication)
 {
   qi::ApplicationSession* app = reinterpret_cast<qi::ApplicationSession*>(pApplication);
 
@@ -106,7 +106,7 @@ void Java_com_aldebaran_qi_Application_qiApplicationStart(JNIEnv *env, jclass, j
   }
 }
 
-void Java_com_aldebaran_qi_Application_qiApplicationRun(JNIEnv *env, jclass, jlong pApplication)
+JNIEXPORT void JNICALL Java_com_aldebaran_qi_Application_qiApplicationRun(JNIEnv *env, jobject QI_UNUSED(obj), jlong pApplication)
 {
   qi::ApplicationSession* app = reinterpret_cast<qi::ApplicationSession*>(pApplication);
 
@@ -120,7 +120,7 @@ void Java_com_aldebaran_qi_Application_qiApplicationRun(JNIEnv *env, jclass, jlo
   }
 }
 
-void Java_com_aldebaran_qi_Application_qiApplicationStop(JNIEnv *, jclass, jlong pApplication)
+JNIEXPORT void JNICALL Java_com_aldebaran_qi_Application_qiApplicationStop(JNIEnv *QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pApplication)
 {
   qi::ApplicationSession* app = reinterpret_cast<qi::ApplicationSession*>(pApplication);
 

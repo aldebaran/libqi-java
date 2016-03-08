@@ -20,16 +20,16 @@ public class Session
   }
 
   // Native function
-  private static native long    qiSessionCreate();
-  private static native void    qiSessionDestroy(long pSession);
-  private static native long    qiSessionConnect(long pSession, String url);
-  private static native boolean qiSessionIsConnected(long pSession);
-  private static native void    qiSessionClose(long pSession);
-  private static native long    service(long pSession, String name);
-  private static native int     registerService(long pSession, String name, AnyObject obj);
-  private static native void    unregisterService(long pSession, int idx);
-  private static native void    onDisconnected(long pSession, String callback, Object obj);
-  private static native void    setClientAuthenticatorFactory(long pSession, ClientAuthenticatorFactory factory);
+  private native long qiSessionCreate();
+  private native void qiSessionDestroy(long pSession);
+  private native long qiSessionConnect(long pSession, String url);
+  private native boolean qiSessionIsConnected(long pSession);
+  private native void qiSessionClose(long pSession);
+  private native long service(long pSession, String name);
+  private native int registerService(long pSession, String name, AnyObject obj);
+  private native void unregisterService(long pSession, int idx);
+  private native void onDisconnected(long pSession, String callback, Object obj);
+  private native void setClientAuthenticatorFactory(long pSession, ClientAuthenticatorFactory factory);
 
   // Members
   private long _session;
@@ -42,7 +42,7 @@ public class Session
    */
   public Session(String sdAddr) throws Exception
   {
-    _session = Session.qiSessionCreate();
+    _session = qiSessionCreate();
     this.connect(sdAddr).sync();
     _destroy = true;
   }
@@ -52,7 +52,7 @@ public class Session
    */
   public Session()
   {
-    _session = Session.qiSessionCreate();
+    _session = qiSessionCreate();
     _destroy = true;
   }
 
@@ -70,7 +70,7 @@ public class Session
     if (_session == 0)
       return false;
 
-    return Session.qiSessionIsConnected(_session);
+    return qiSessionIsConnected(_session);
   }
 
   /**
@@ -80,7 +80,7 @@ public class Session
    */
   public Future<Void> connect(String serviceDirectoryAddress) throws Exception
   {
-    long pFuture = Session.qiSessionConnect(_session, serviceDirectoryAddress);
+    long pFuture = qiSessionConnect(_session, serviceDirectoryAddress);
     com.aldebaran.qi.Future<Void> future = new com.aldebaran.qi.Future<Void>(pFuture);
     return future;
   }
@@ -92,16 +92,16 @@ public class Session
    */
   public Future<AnyObject> service(String name)
   {
-    long pFuture = Session.service(_session, name);
+    long pFuture = service(_session, name);
     return new Future<AnyObject>(pFuture);
   }
 
   /**
    * Close connection to Service Directory
    */
-  public void 	close()
+  public void close()
   {
-    Session.qiSessionClose(_session);
+    qiSessionClose(_session);
   }
 
   /**
@@ -124,7 +124,7 @@ public class Session
    */
   public int registerService(String name, AnyObject object)
   {
-    return Session.registerService(_session, name, object);
+    return registerService(_session, name, object);
   }
 
   /**
@@ -134,16 +134,16 @@ public class Session
    */
   public void unregisterService(int idx)
   {
-    Session.unregisterService(_session, idx);
+    unregisterService(_session, idx);
   }
 
   public void onDisconnected(String callback, Object object)
   {
-    Session.onDisconnected(_session, callback, object);
+    onDisconnected(_session, callback, object);
   }
 
   public void setClientAuthenticatorFactory(ClientAuthenticatorFactory factory)
   {
-    Session.setClientAuthenticatorFactory(_session, factory);
+    setClientAuthenticatorFactory(_session, factory);
   }
 }
