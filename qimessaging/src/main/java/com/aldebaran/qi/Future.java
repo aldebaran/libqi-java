@@ -34,15 +34,15 @@ public class Future <T>
   private long  _fut;
 
   // Native C API object functions
-  private static native boolean qiFutureCallCancel(long pFuture);
-  private static native Object  qiFutureCallGet(long pFuture);
-  private static native Object  qiFutureCallGetWithTimeout(long pFuture, int timeout);
-  private static native String  qiFutureCallGetError(long pFuture);
-  private static native boolean qiFutureCallIsCancelled(long pFuture);
-  private static native boolean qiFutureCallIsDone(long pFuture);
-  private static native boolean qiFutureCallConnect(long pFuture, Object callback, String className, Object[] args);
-  private static native void    qiFutureCallWaitWithTimeout(long pFuture, int timeout);
-  private static native void    qiFutureDestroy(long pFuture);
+  private native boolean qiFutureCallCancel(long pFuture);
+  private native Object qiFutureCallGet(long pFuture);
+  private native Object qiFutureCallGetWithTimeout(long pFuture, int timeout);
+  private native String qiFutureCallGetError(long pFuture);
+  private native boolean qiFutureCallIsCancelled(long pFuture);
+  private native boolean qiFutureCallIsDone(long pFuture);
+  private native boolean qiFutureCallConnect(long pFuture, Object callback, String className, Object[] args);
+  private native void qiFutureCallWaitWithTimeout(long pFuture, int timeout);
+  private native void qiFutureDestroy(long pFuture);
   private native void qiFutureCallConnectCallback(long pFuture, Callback<?> callback);
   private native long qiFutureCallThen(long pFuture, QiFunction<?, ?> function);
   private native long qiFutureCallAndThen(long pFuture, QiFunction<?, ?> function);
@@ -65,7 +65,7 @@ public class Future <T>
 
   public void sync(long timeout, TimeUnit unit)
   {
-    Future.qiFutureCallWaitWithTimeout(_fut, (int) unit.toMillis(timeout));
+    qiFutureCallWaitWithTimeout(_fut, (int) unit.toMillis(timeout));
   }
 
   public void sync()
@@ -109,7 +109,7 @@ public class Future <T>
 
     try
     {
-      ret = Future.qiFutureCallGet(_fut);
+      ret = qiFutureCallGet(_fut);
     } catch (Exception e)
     {
       throw new RuntimeException(e.getMessage());
@@ -147,7 +147,7 @@ public class Future <T>
 
     try
     {
-      ret = Future.qiFutureCallGetWithTimeout(_fut, timeoutms);
+      ret = qiFutureCallGetWithTimeout(_fut, timeoutms);
     } catch (Exception e)
     {
       throw new RuntimeException(e.getMessage());
@@ -161,17 +161,17 @@ public class Future <T>
 
   public String getError()
   {
-    return Future.qiFutureCallGetError(_fut);
+    return qiFutureCallGetError(_fut);
   }
 
   public boolean isCancelled()
   {
-    return Future.qiFutureCallIsCancelled(_fut);
+    return qiFutureCallIsCancelled(_fut);
   }
 
   public boolean isDone()
   {
-    return Future.qiFutureCallIsDone(_fut);
+    return qiFutureCallIsDone(_fut);
   }
 
   public boolean isValid()
@@ -199,7 +199,7 @@ public class Future <T>
   @Override
   protected void finalize() throws Throwable
   {
-    Future.qiFutureDestroy(_fut);
+    qiFutureDestroy(_fut);
     super.finalize();
   }
 

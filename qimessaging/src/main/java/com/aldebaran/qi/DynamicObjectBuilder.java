@@ -20,13 +20,13 @@ public class DynamicObjectBuilder {
 
   private long _p;
 
-  private static native long   create();
-  private static native void   destroy(long pObject);
-  private static native Object object(long pObjectBuilder);
-  private static native long   advertiseMethod(long pObjectBuilder, String method, Object instance, String className, String description);
-  private static native long   advertiseSignal(long pObjectBuilder, String eventSignature);
-  private static native long   advertiseProperty(long pObjectBuilder, String name, Class<?> propertyBase);
-  private static native long   advertiseThreadSafeness(long pObjectBuilder, boolean isThreadSafe);
+  private native long create();
+  private native void destroy(long pObject);
+  private native Object object(long pObjectBuilder);
+  private native long advertiseMethod(long pObjectBuilder, String method, Object instance, String className, String description);
+  private native long advertiseSignal(long pObjectBuilder, String eventSignature);
+  private native long advertiseProperty(long pObjectBuilder, String name, Class<?> propertyBase);
+  private native long advertiseThreadSafeness(long pObjectBuilder, boolean isThreadSafe);
 
   /// Possible thread models for an object
   public enum ObjectThreadingModel
@@ -39,7 +39,7 @@ public class DynamicObjectBuilder {
 
   public DynamicObjectBuilder()
   {
-    _p = DynamicObjectBuilder.create();
+    _p = create();
   }
 
   /**
@@ -65,7 +65,7 @@ public class DynamicObjectBuilder {
       // If method name match signature
       if (methodSignature.contains(method.getName()) == true)
       {
-        if (DynamicObjectBuilder.advertiseMethod(_p, methodSignature, service, className, description) == 0)
+        if (advertiseMethod(_p, methodSignature, service, className, description) == 0)
           throw new QiException("Cannot register method " + methodSignature);
         return;
       }
@@ -81,14 +81,14 @@ public class DynamicObjectBuilder {
   {
     if (_p == 0)
       throw new Exception("Invalid object");
-    DynamicObjectBuilder.advertiseSignal(_p, signalSignature);
+    advertiseSignal(_p, signalSignature);
   }
 
   public void advertiseProperty(String name, Class<?> propertyBase) throws QiException
   {
     if (_p == 0)
       throw new QiException("Invalid object");
-    if (DynamicObjectBuilder.advertiseProperty(_p, name, propertyBase) <= 0)
+    if (advertiseProperty(_p, name, propertyBase) <= 0)
       throw new QiException("Cannot advertise " + name + " property");
   }
 
@@ -105,7 +105,7 @@ public class DynamicObjectBuilder {
   {
     if (_p == 0)
       throw new QiException("Invalid object");
-    DynamicObjectBuilder.advertiseThreadSafeness(_p, threadModel == ObjectThreadingModel.MultiThread);
+    advertiseThreadSafeness(_p, threadModel == ObjectThreadingModel.MultiThread);
   }
 
   /**
@@ -115,7 +115,7 @@ public class DynamicObjectBuilder {
    */
   public AnyObject object()
   {
-    return (AnyObject) DynamicObjectBuilder.object(_p);
+    return (AnyObject) object(_p);
   }
 
   /**
@@ -125,7 +125,7 @@ public class DynamicObjectBuilder {
   @Override
   protected void finalize() throws Throwable
   {
-    DynamicObjectBuilder.destroy(_p);
+    destroy(_p);
     super.finalize();
   }
 }

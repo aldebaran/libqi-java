@@ -14,10 +14,10 @@
 
 extern "C"
 {
-  JNIEXPORT jlong Java_com_aldebaran_qi_RawApplication_qiApplicationCreate(JNIEnv *env, jclass QI_UNUSED(jobj), jobjectArray jargs, jstring jdefaultUrl, jboolean listen);
-  JNIEXPORT void  Java_com_aldebaran_qi_RawApplication_qiApplicationDestroy(JNIEnv *env, jclass, jlong pApplication);
-  JNIEXPORT void  Java_com_aldebaran_qi_RawApplication_qiApplicationRun(JNIEnv *env, jclass, jlong pApplication);
-  JNIEXPORT void  Java_com_aldebaran_qi_RawApplication_qiApplicationStop(JNIEnv *env, jclass, jlong pApplication);
+  JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_RawApplication_qiApplicationCreate(JNIEnv *env, jobject obj, jobjectArray jargs, jstring jdefaultUrl, jboolean listen);
+  JNIEXPORT void JNICALL Java_com_aldebaran_qi_RawApplication_qiApplicationDestroy(JNIEnv *env, jobject obj, jlong pApplication);
+  JNIEXPORT void JNICALL Java_com_aldebaran_qi_RawApplication_qiApplicationRun(JNIEnv *env, jobject obj, jlong pApplication);
+  JNIEXPORT void JNICALL Java_com_aldebaran_qi_RawApplication_qiApplicationStop(JNIEnv *env, jobject obj, jlong pApplication);
 } // !extern "C"
 
 #endif // !_JAVA_JNI_APPLICATION_HPP_
