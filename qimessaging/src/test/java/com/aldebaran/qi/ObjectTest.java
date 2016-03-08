@@ -12,6 +12,7 @@ import org.junit.Test;
 
 import java.util.Hashtable;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 public class ObjectTest
 {
@@ -116,14 +117,16 @@ public class ObjectTest
   public void callThrow() throws Exception
   {
     Future<Integer> v0 = proxyts.<Integer>call("throwUp");
-    assertEquals(v0.getError(), "I has faild");
+    assertTrue(v0.hasError());
+    assertEquals(v0.getErrorMessage(), "I has faild");
   }
 
-  @Test(expected=Exception.class)
+  @Test
   public void getErrorOnSuccess() throws Exception
   {
     Future<Void> v0 = proxyts.<Void>call("setStored", 18);
-    v0.getError();
+    assertNull(v0.getError());
+    assertFalse(v0.hasError());
   }
 
   @Test
@@ -158,8 +161,8 @@ public class ObjectTest
     Map<Object, Object> readSettings = null;
     try {
       readSettings = ro.<Map<Object, Object>>property("settings").get();
-    } catch (InterruptedException e) {
-      fail("Call must not be interrupted: " + e.getMessage());
+    } catch (ExecutionException e) {
+      fail("Execution must not fail: " + e.getMessage());
     }
     assertEquals(readSettings.get("foo"), true);
     assertEquals(readSettings.get("bar"), "This is bar");

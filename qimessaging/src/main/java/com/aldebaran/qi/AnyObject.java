@@ -71,9 +71,6 @@ public class AnyObject {
       throw new CallError(e.getMessage());
     }
 
-    if (ret.isValid() == false)
-      throw new CallError("Future is null.");
-
     try
     {
       return ret;

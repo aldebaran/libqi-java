@@ -4,6 +4,8 @@
 */
 package com.aldebaran.qi;
 
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -64,6 +66,7 @@ public class FutureTest
     ob.advertiseMethod("echoFloatList::[m]([f])", reply, "Return the exact same list");
     ob.advertiseMethod("createObject::o()", reply, "Return a test object");
     ob.advertiseMethod("longReply::s(s)", reply, "Sleep 2s, then return given argument + 'bim !'");
+    ob.advertiseMethod("throwUp::v()", reply, "Throws");
 
     // Connect session to Service Directory
     s.connect(url).sync();
@@ -440,7 +443,7 @@ public class FutureTest
   }
 
   @Test
-  public void testTimeout() throws InterruptedException, CallError
+  public void testTimeout() throws ExecutionException, CallError
   {
     System.out.println("testTimeout...");
     Future<Void> fut = null;
@@ -476,5 +479,19 @@ public class FutureTest
 
     assertFalse(fut.isDone());
     assertFalse(test.isConnected());
+  }
+
+  @Test(expected=ExecutionException.class)
+  public void testExecutionException() throws ExecutionException
+  {
+    proxy.call("throwUp").get();
+  }
+
+  @Test(expected=CancellationException.class)
+  public void testCancelMatchesJavaFutureSemantics() throws ExecutionException
+  {
+    Future<Void> future = proxy.call("longReply", "plaf");
+    future.cancel(false);
+    future.get();
   }
 }
