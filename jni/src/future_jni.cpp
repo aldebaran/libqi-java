@@ -50,13 +50,14 @@ JNIEXPORT jboolean JNICALL Java_com_aldebaran_qi_Future_qiFutureCallCancel(JNIEn
   return true;
 }
 
-JNIEXPORT jobject JNICALL Java_com_aldebaran_qi_Future_qiFutureCallGet(JNIEnv *env, jobject QI_UNUSED(obj), jlong pFuture)
+JNIEXPORT jobject JNICALL Java_com_aldebaran_qi_Future_qiFutureCallGet(JNIEnv *env, jobject QI_UNUSED(obj), jlong pFuture, jint msecs)
 {
   qi::Future<qi::AnyValue>* fut = reinterpret_cast<qi::Future<qi::AnyValue>*>(pFuture);
 
   try
   {
-    qi::AnyReference arRes = fut->value().asReference();
+    int qiMsecs = msecs == -1 ? qi::FutureTimeout_Infinite : msecs;
+    qi::AnyReference arRes = fut->value(qiMsecs).asReference();
     std::pair<qi::AnyReference, bool> converted = arRes.convert(qi::typeOf<jobject>());
     jobject result = * (jobject*)converted.first.rawValue();
     // keep it alive while we remove the global ref
@@ -65,48 +66,32 @@ JNIEXPORT jobject JNICALL Java_com_aldebaran_qi_Future_qiFutureCallGet(JNIEnv *e
       converted.first.destroy();
     return result;
   }
+  catch (const qi::FutureException &e)
+  {
+    switch (e.state())
+    {
+    case qi::FutureException::ExceptionState_FutureTimeout:
+      throwNewTimeoutException(env, "native future timeout");
+      break;
+    case qi::FutureException::ExceptionState_FutureCanceled:
+      // libqi uses "canceled"/"cancelation" while java uses "cancelled"/"cancellation"...
+      throwNewCancellationException(env, "native future cancelled");
+      break;
+    case qi::FutureException::ExceptionState_FutureUserError:
+      throwNewExecutionException(env, e.what());
+      break;
+    default:
+      // unexpected error => java RuntimeException
+      throwNewRuntimeException(env, e.what());
+    }
+    return nullptr;
+  }
   catch (std::runtime_error &e)
   {
-    throwNewException(env, e.what());
-    return 0;
+    // unexpected error => java RuntimeException
+    throwNewRuntimeException(env, e.what());
+    return nullptr;
   }
-}
-
-JNIEXPORT jstring JNICALL Java_com_aldebaran_qi_Future_qiFutureCallGetError(JNIEnv *env, jobject QI_UNUSED(obj), jlong pFuture)
-{
-  qi::Future<qi::AnyValue>* fut = reinterpret_cast<qi::Future<qi::AnyValue>*>(pFuture);
-
-  try
-  {
-    return env->NewStringUTF(fut->error().c_str());
-  }
-  catch (std::exception& e)
-  {
-    throwNewException(env, e.what());
-    return 0;
-  }
-
-  throwNewException(env, "Unknown error");
-  return 0;
-}
-
-JNIEXPORT jobject JNICALL Java_com_aldebaran_qi_Future_qiFutureCallGetWithTimeout(JNIEnv *env, jobject obj, jlong pFuture, jint timeout)
-{
-  qiLogVerbose() << "Future wait " << timeout;
-  qi::Future<qi::AnyValue>* fut = reinterpret_cast<qi::Future<qi::AnyValue>*>(pFuture);
-
-  qi::FutureState status = fut->wait(timeout);
-  qiLogVerbose() << "Waited, got " << status;
-  switch(status) {
-  case qi::FutureState_FinishedWithValue:
-    return Java_com_aldebaran_qi_Future_qiFutureCallGet(env, obj, pFuture);
-  case qi::FutureState_Running:
-    return 0;
-  default:
-    throwNewException(env, fut->error().c_str());
-  }
-
-  return 0;
 }
 
 JNIEXPORT jboolean JNICALL Java_com_aldebaran_qi_Future_qiFutureCallIsCancelled(JNIEnv *QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pFuture)

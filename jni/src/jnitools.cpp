@@ -265,6 +265,21 @@ jint throwNewNullPointerException(JNIEnv *env, const char *message)
   return throwNew(env, "java/lang/NullPointerException", message);
 }
 
+jint throwNewCancellationException(JNIEnv *env, const char *message)
+{
+  return throwNew(env, "java/util/concurrent/CancellationException", message);
+}
+
+jint throwNewExecutionException(JNIEnv *env, const char *message)
+{
+  return throwNew(env, "java/util/concurrent/ExecutionException", message);
+}
+
+jint throwNewTimeoutException(JNIEnv *env, const char *message)
+{
+  return throwNew(env, "java/util/concurrent/TimeoutException", message);
+}
+
 /**
  * @brief propertyBaseSignature Get the qitype signature of a Java class template (jclass)
  * @param env JNI environment
