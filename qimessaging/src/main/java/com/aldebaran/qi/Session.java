@@ -36,18 +36,6 @@ public class Session
   private boolean _destroy;
 
   /**
-   * Create session and try to connect to given address.
-   * @param sdAddr Address to connect to.
-   * @throws Exception on error.
-   */
-  public Session(String sdAddr) throws Exception
-  {
-    _session = qiSessionCreate();
-    this.connect(sdAddr).sync();
-    _destroy = true;
-  }
-
-  /**
    * Create a qimessaging session.
    */
   public Session()
@@ -78,11 +66,10 @@ public class Session
    * @param serviceDirectoryAddress Address to connect to.
    * @throws Exception on error.
    */
-  public Future<Void> connect(String serviceDirectoryAddress) throws Exception
+  public Future<Void> connect(String serviceDirectoryAddress)
   {
     long pFuture = qiSessionConnect(_session, serviceDirectoryAddress);
-    com.aldebaran.qi.Future<Void> future = new com.aldebaran.qi.Future<Void>(pFuture);
-    return future;
+    return new Future<Void>(pFuture);
   }
 
   /**
