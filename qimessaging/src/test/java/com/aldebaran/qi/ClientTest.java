@@ -76,16 +76,16 @@ public class ClientTest
   {
     System.out.println("testSessionConstructor");
     ServiceDirectory sd = new ServiceDirectory();
-    Session s = null;
+    Session session = new Session();
 
     try {
-      s = new Session(sd.listenUrl());
+      session.connect(sd.listenUrl()).get();
     }
     catch (Exception e)
     {
       fail("Session must be connected to ServiceDirectory");
     }
 
-    assertTrue("Session must be connected to ServiceDirectory", s.isConnected());
+    assertTrue("Session must be connected to ServiceDirectory", session.isConnected());
   }
 }
