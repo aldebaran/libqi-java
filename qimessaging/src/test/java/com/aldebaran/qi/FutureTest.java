@@ -100,7 +100,8 @@ public class FutureTest
   {
     try
     {
-      int value = client.service("serviceTest").then(new QiFunction<Integer, AnyObject>() {
+      int value = client.service("serviceTest").then(new QiFunction<Integer, AnyObject>()
+      {
         @Override
         public Future<Integer> execute(Future<AnyObject> arg)
         {
@@ -120,7 +121,8 @@ public class FutureTest
   {
     try
     {
-      client.service("nonExistant").then(new QiFunction<AnyObject, AnyObject>() {
+      client.service("nonExistant").then(new QiFunction<AnyObject, AnyObject>()
+      {
         @Override
         public Future<AnyObject> execute(Future<AnyObject> arg)
         {
@@ -145,7 +147,8 @@ public class FutureTest
   {
     try
     {
-      int value = client.service("serviceTest").andThen(new QiFunction<Integer, AnyObject>() {
+      int value = client.service("serviceTest").andThen(new QiFunction<Integer, AnyObject>()
+      {
         @Override
         public Future<Integer> execute(Future<AnyObject> arg)
         {
@@ -165,7 +168,8 @@ public class FutureTest
   {
     try
     {
-      client.service("nonExistant").andThen(new QiFunction<Void, AnyObject>() {
+      client.service("nonExistant").andThen(new QiFunction<Void, AnyObject>()
+      {
         @Override
         public Future<Void> execute(Future<AnyObject> arg)
         {
@@ -298,7 +302,8 @@ public class FutureTest
     try
     {
       fut = proxy.call("longReply", "plaf");
-      fut.addCallback(new Callback<String>() {
+      fut.addCallback(new Callback<String>()
+      {
 
         public void onSuccess(Future<String> future, Object[] args)
         {
