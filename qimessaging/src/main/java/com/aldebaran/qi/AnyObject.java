@@ -57,27 +57,11 @@ public class AnyObject {
    * @param method Method name to call
    * @param args Arguments to be forward to remote method
    * @return Future method return value
-   * @throws CallError
+   * @throws DynamicCallException
    */
-  public <T> Future<T> call(String method, Object ... args) throws CallError
+  public <T> Future<T> call(String method, Object... args)
   {
-    com.aldebaran.qi.Future<T> ret = null;
-
-    try
-    {
-      ret = new com.aldebaran.qi.Future<T>(asyncCall(_p, method, args));
-    } catch (Exception e)
-    {
-      throw new CallError(e.getMessage());
-    }
-
-    try
-    {
-      return ret;
-    } catch (Exception e)
-    {
-      throw new CallError(e.getMessage());
-    }
+    return new Future<T>(asyncCall(_p, method, args));
   }
 
   /**

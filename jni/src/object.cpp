@@ -73,20 +73,13 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_asyncCall(JNIEnv* env, j
 
   qi::jni::JNIAttach attach(env);
 
-  if (!obj)
-  {
-    qiLogError() << "Given object not valid.";
-    throwNewException(env, "Given object is not valid.");
-    return 0;
-  }
-
   // Get method name and parameters C style.
   method = qi::jni::toString(jmethod);
   try {
     fut = call_from_java(env, obj, method, args);
   } catch (std::exception& e)
   {
-    throwNewException(env, e.what());
+    throwNewDynamicCallException(env, e.what());
     return 0;
   }
 
