@@ -4,7 +4,7 @@
 */
 package com.aldebaran.qi;
 
-public class QiException extends Exception {
+public class AdvertisementException extends RuntimeException {
 
   private static final long serialVersionUID = 1L;
 
@@ -12,7 +12,7 @@ public class QiException extends Exception {
    * Exception thrown when error occurs during a QiMessaging operation.
    * @param e Error message.
    */
-  public QiException(String e)
+  public AdvertisementException(String e)
   {
     super(e);
   }
@@ -20,7 +20,7 @@ public class QiException extends Exception {
   /**
    * Exception thrown when error occurs during a QiMessaging operation.
    */
-  public QiException()
+  public AdvertisementException()
   {
     super();
   }
