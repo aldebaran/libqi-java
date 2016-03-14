@@ -20,6 +20,9 @@
 #include <object_jni.hpp>
 #include <callbridge.hpp>
 
+#include <qi/messaging/clientauthenticator.hpp>
+#include <qi/messaging/clientauthenticatorfactory.hpp>
+
 qiLogCategory("qimessaging.jni");
 
 jlong Java_com_aldebaran_qi_Session_qiSessionCreate()
@@ -162,4 +165,138 @@ void      Java_com_aldebaran_qi_Session_onDisconnected(JNIEnv *env, jobject jobj
   session->disconnected.connect(
       qi::AnyFunction::fromDynamicFunction(
           boost::bind(&event_callback_to_java, (void*) data, _1)));
+}
+
+class Java_ClientAuthenticator : public qi::ClientAuthenticator
+{
+public:
+  Java_ClientAuthenticator(JNIEnv* env, jobject object)
+  {
+    env->GetJavaVM(&_jvm);
+    _jobject = env->NewGlobalRef(object);
+  }
+
+  qi::CapabilityMap initialAuthData()
+  {
+    JNIEnv* env = nullptr;
+#ifndef ANDROID
+    _jvm->AttachCurrentThread(reinterpret_cast<void**>(&env), nullptr);
+#else
+    _jvm->AttachCurrentThread(&env, nullptr);
+#endif
+    jobject ca = qi::jni::Call<jobject>::invoke(env, _jobject, "initialAuthData", "()Ljava/util/Map;");
+    return JNI_JavaMaptoMap(env, ca);
+  }
+
+  qi::CapabilityMap _processAuth(const qi::CapabilityMap &authData)
+  {
+    JNIEnv* env = nullptr;
+#ifndef ANDROID
+    _jvm->AttachCurrentThread(reinterpret_cast<void**>(&env), nullptr);
+#else
+    _jvm->AttachCurrentThread(&env, nullptr);
+#endif
+    jobject jmap = JNI_MapToJavaMap(env, authData);
+    jobject ca = qi::jni::Call<jobject>::invoke(env, _jobject, "_processAuth", "(Ljava/util/Map;)Ljava/util/Map;", jmap);
+    return JNI_JavaMaptoMap(env, ca);
+  }
+
+private:
+  JavaVM* _jvm;
+  jobject _jobject;
+
+  static qi::CapabilityMap JNI_JavaMaptoMap(JNIEnv* env, jobject jmap)
+  {
+    qi::CapabilityMap result;
+
+    jobject set = qi::jni::Call<jobject>::invoke(env, jmap, "entrySet", "()Ljava/util/Set;");
+    jobject it = qi::jni::Call<jobject>::invoke(env, set, "iterator", "()Ljava/util/Iterator;");
+
+    while (qi::jni::Call<jboolean>::invoke(env, it, "hasNext", "()Z"))
+    {
+      jobject entry = qi::jni::Call<jobject>::invoke(env, it, "next", "()Ljava/lang/Object;");
+      jstring key = (jstring) qi::jni::Call<jobject>::invoke(env, entry, "getKey", "()Ljava/lang/Object;");
+      std::string k = env->GetStringUTFChars(key, nullptr);
+
+      // FIXME: should implement this for jobject and not only jstring
+      qiLogWarning() << "FIXME: only jstring are supported";
+      jobject value = qi::jni::Call<jobject>::invoke(env, entry, "getValue", "()Ljava/lang/Object;");
+      std::string v2 = env->GetStringUTFChars((jstring) value, nullptr);
+      qi::AnyValue v = qi::AnyValue::from(v2);
+
+      result[k] = v;
+    }
+
+    return result;
+  }
+
+  static jobject JNI_MapToJavaMap(JNIEnv* env, qi::CapabilityMap map)
+  {
+    jclass mapClass = env->FindClass("java/util/HashMap");
+    jmethodID init = env->GetMethodID(mapClass, "<init>", "()V");
+    jobject result = env->NewObject(mapClass, init);
+
+    qi::CapabilityMap::const_iterator it;
+    for (it = map.begin(); it != map.end(); ++it)
+    {
+      std::string key = it->first;
+      jstring k = env->NewStringUTF(key.c_str());
+
+      const qi::AnyValue& val = it->second;
+      const std::string sig = val.signature().toString();
+      jobject v;
+
+      if (sig == "I")
+      {
+        jclass cls = env->FindClass("java/lang/Integer");
+        jmethodID mid = env->GetMethodID(cls, "<init>", "(I)V");
+        v = env->NewObject(cls, mid, val.toUInt());
+      }
+      else if (sig == "s")
+      {
+        v = (jobject) env->NewStringUTF(val.toString().c_str());
+      }
+      else
+      {
+        qiLogError() << "sig " << sig << " not supported, skipping...";
+        continue;
+      }
+
+      qi::jni::Call<jobject>::invoke(env, result, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", k, v);
+    }
+
+    return result;
+  }
+};
+
+class Java_ClientAuthenticatorFactory : public qi::ClientAuthenticatorFactory
+{
+public:
+  Java_ClientAuthenticatorFactory(JNIEnv* env, jobject object)
+  {
+    env->GetJavaVM(&_jvm);
+    _jobject = env->NewGlobalRef(object);
+  }
+
+  qi::ClientAuthenticatorPtr newAuthenticator()
+  {
+    JNIEnv* env = nullptr;
+#ifndef ANDROID
+    _jvm->AttachCurrentThread(reinterpret_cast<void**>(&env), nullptr);
+#else
+    _jvm->AttachCurrentThread(&env, nullptr);
+#endif
+    jobject ca = qi::jni::Call<jobject>::invoke(env, _jobject, "newAuthenticator", "()Lcom/aldebaran/qi/ClientAuthenticator;");
+    return boost::make_shared<Java_ClientAuthenticator>(env, ca);
+  }
+
+private:
+  JavaVM* _jvm;
+  jobject _jobject;
+};
+
+void      Java_com_aldebaran_qi_Session_setClientAuthenticatorFactory(JNIEnv* env, jobject obj, jlong pSession, jobject object)
+{
+  qi::Session* session = reinterpret_cast<qi::Session*>(pSession);
+  session->setClientAuthenticatorFactory(boost::make_shared<Java_ClientAuthenticatorFactory>(env, object));
 }

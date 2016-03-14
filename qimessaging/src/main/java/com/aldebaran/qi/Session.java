@@ -4,6 +4,8 @@
 */
 package com.aldebaran.qi;
 
+import com.aldebaran.qi.ClientAuthenticatorFactory;
+
 public class Session
 {
 
@@ -27,6 +29,7 @@ public class Session
   private static native int     registerService(long pSession, String name, AnyObject obj);
   private static native void    unregisterService(long pSession, int idx);
   private static native void    onDisconnected(long pSession, String callback, Object obj);
+  private static native void    setClientAuthenticatorFactory(long pSession, ClientAuthenticatorFactory factory);
 
   // Members
   private long _session;
@@ -136,5 +139,10 @@ public class Session
   public void onDisconnected(String callback, Object object)
   {
     Session.onDisconnected(_session, callback, object);
+  }
+
+  public void setClientAuthenticatorFactory(ClientAuthenticatorFactory factory)
+  {
+    Session.setClientAuthenticatorFactory(_session, factory);
   }
 }

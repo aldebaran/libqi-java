@@ -69,6 +69,56 @@ namespace qi {
     std::string javaSignature(const std::string& qiSignature);
     std::string qiSignature(jclass clazz);
 
+    template<typename R>
+    struct Call
+    {
+      template <typename... Types>
+      static R invoke(JNIEnv*     env,
+                      jobject     jobject,
+                      const char* methodName,
+                      const char* methodSig,
+                      Types       ...rest);
+    };
+
+    template <>
+    template <typename... Types>
+    void Call<void>::invoke(JNIEnv*     env,
+                            jobject     jobject,
+                            const char* methodName,
+                            const char* methodSig,
+                            Types       ...rest)
+    {
+      jclass cls = env->GetObjectClass(jobject);
+      jmethodID mid = env->GetMethodID(cls, methodName, methodSig);
+      return env->CallVoidMethod(jobject, mid, rest...);
+    }
+
+    template <>
+    template <typename... Types>
+    jboolean Call<jboolean>::invoke(JNIEnv*     env,
+                                    jobject     jobject,
+                                    const char* methodName,
+                                    const char* methodSig,
+                                    Types       ...rest)
+    {
+      jclass cls = env->GetObjectClass(jobject);
+      jmethodID mid = env->GetMethodID(cls, methodName, methodSig);
+      return env->CallBooleanMethod(jobject, mid, rest...);
+    }
+
+    template <>
+    template <typename... Types>
+    jobject Call<jobject>::invoke(JNIEnv*     env,
+                                  jobject     jobject,
+                                  const char* methodName,
+                                  const char* methodSig,
+                                  Types       ...rest)
+    {
+      jclass cls = env->GetObjectClass(jobject);
+      jmethodID mid = env->GetMethodID(cls, methodName, methodSig);
+      return env->CallObjectMethod(jobject, mid, rest...);
+    }
+
   }// !jni
 }// !qi
 
