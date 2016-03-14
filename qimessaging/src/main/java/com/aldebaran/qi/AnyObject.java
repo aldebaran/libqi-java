@@ -42,7 +42,7 @@ public class AnyObject {
     this._p = p;
   }
 
-  public Future<Void> setProperty(String property, Object o) throws Exception
+  public Future<Void> setProperty(String property, Object o)
   {
     return new Future<Void>(setProperty(_p, property, o));
   }
