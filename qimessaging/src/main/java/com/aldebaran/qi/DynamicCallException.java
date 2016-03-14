@@ -5,14 +5,14 @@
 package com.aldebaran.qi;
 
 @SuppressWarnings("serial")
-public class CallError extends RuntimeException
+public class DynamicCallException extends RuntimeException
 {
 
   /**
    * Exception thrown when error occur during a qimessaging call.
    * @param e Error message.
    */
-  public CallError(String e)
+  public DynamicCallException(String e)
   {
     super(e);
   }
@@ -21,7 +21,7 @@ public class CallError extends RuntimeException
    * Exception thrown when error occurs during a call.
    * Exception thrown when error occur during a qimessaging call.
    */
-  public CallError()
+  public DynamicCallException()
   {
     super();
   }

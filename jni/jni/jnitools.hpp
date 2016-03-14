@@ -223,5 +223,7 @@ jint throwNewCancellationException(JNIEnv *env, const char *message = "");
 jint throwNewExecutionException(JNIEnv *env, const char *message = "");
 jint throwNewTimeoutException(JNIEnv *env, const char *message = "");
 
+jint throwNewDynamicCallException(JNIEnv *env, const char *message = "");
+
 extern std::map<std::string, jobject> supportedTypes;
 #endif // !_JAVA_JNI_JNITOOLS_HPP_

@@ -70,7 +70,7 @@ qi::Future<qi::AnyValue>* call_from_java(JNIEnv *env, qi::AnyObject object, cons
   } catch (std::runtime_error &e)
   {
     delete fut;
-    throwNewException(env, e.what());
+    throwNewDynamicCallException(env, e.what());
     return 0;
   }
   return fut;

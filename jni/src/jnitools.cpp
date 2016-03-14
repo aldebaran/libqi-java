@@ -280,6 +280,11 @@ jint throwNewTimeoutException(JNIEnv *env, const char *message)
   return throwNew(env, "java/util/concurrent/TimeoutException", message);
 }
 
+jint throwNewDynamicCallException(JNIEnv *env, const char *message)
+{
+  return throwNew(env, "com/aldebaran/qi/DynamicCallException", message);
+}
+
 /**
  * @brief propertyBaseSignature Get the qitype signature of a Java class template (jclass)
  * @param env JNI environment

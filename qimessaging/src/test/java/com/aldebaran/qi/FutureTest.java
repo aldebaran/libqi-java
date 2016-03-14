@@ -319,7 +319,7 @@ public class FutureTest
           assertEquals(2, args[1]);
         }
       }, 1, 2);
-    } catch (CallError e)
+    } catch (DynamicCallException e)
     {
       fail("Error calling answer function : " + e.getMessage());
     }
@@ -344,7 +344,7 @@ public class FutureTest
     try
     {
       fut = proxy.call("longReply", "plaf");
-    } catch (CallError e)
+    } catch (DynamicCallException e)
     {
       fail("Error calling answer function : " + e.getMessage());
     }
@@ -383,7 +383,7 @@ public class FutureTest
     try
     {
       fut = proxy.call("longReply", "plaf");
-    } catch (CallError e)
+    } catch (DynamicCallException e)
     {
       System.out.println("Error calling answer function : " + e.getMessage());
       return;
@@ -420,7 +420,7 @@ public class FutureTest
     try
     {
       fut = proxy.call("longReply", "plaf");
-    } catch (CallError e)
+    } catch (DynamicCallException e)
     {
       System.out.println("Error calling answer function : " + e.getMessage());
       return;
@@ -443,7 +443,7 @@ public class FutureTest
   }
 
   @Test
-  public void testTimeout() throws ExecutionException, CallError
+  public void testTimeout() throws ExecutionException
   {
     System.out.println("testTimeout...");
     Future<Void> fut = null;
