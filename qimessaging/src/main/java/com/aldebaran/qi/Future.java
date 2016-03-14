@@ -95,10 +95,14 @@ public class Future<T> implements java.util.concurrent.Future<T>
   }
 
   @Override
-  public synchronized boolean cancel(boolean mayInterruptIfRunning)
+  public boolean cancel(boolean mayInterruptIfRunning)
   {
     // ignore mayInterruptIfRunning, can't map it to native libqi
+    return cancel();
+  }
 
+  public synchronized boolean cancel()
+  {
     if (qiFutureCallCancel(_fut))
       cancelled = true;
     return cancelled;
