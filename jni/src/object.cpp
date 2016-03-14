@@ -19,14 +19,6 @@ qiLogCategory("qimessaging.jni");
 
 extern MethodInfoHandler gInfoHandler;
 
-static void adaptFuture(qi::Future<void> f, qi::Promise<qi::AnyValue> p)
-{
-  if (f.hasError())
-    p.setError(f.error());
-  else
-    p.setValue(qi::AnyValue(qi::typeOf<void>()));
-}
-
 JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_property(JNIEnv* env, jobject QI_UNUSED(jobj), jlong pObj, jstring name)
 {
   qi::AnyObject&     obj = *(reinterpret_cast<qi::AnyObject*>(pObj));
@@ -51,18 +43,24 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_property(JNIEnv* env, jo
 
 JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_setProperty(JNIEnv* env, jobject QI_UNUSED(jobj), jlong pObj, jstring name, jobject property)
 {
-  qi::AnyObject&    obj = *(reinterpret_cast<qi::AnyObject*>(pObj));
-  std::string       propName = qi::jni::toString(name);
+  qi::AnyObject *obj = reinterpret_cast<qi::AnyObject*>(pObj);
+  std::string propName = qi::jni::toString(name);
 
   qi::jni::JNIAttach attach(env);
 
-  qi::Future<qi::AnyValue>* ret = new qi::Future<qi::AnyValue>();
-
-  qi::Future<void> f = obj.setProperty(propName, qi::AnyValue::from<jobject>(property)).async();
-  qi::Promise<qi::AnyValue> promise;
-  *ret = promise.future();
-  f.connect(adaptFuture, _1, promise);
-  return (jlong) ret;
+  auto value = qi::AnyValue::from<jobject>(property);
+  try
+  {
+    qi::Future<void> propertyFuture = obj->setProperty(propName, std::move(value));
+    qi::Future<qi::AnyValue> future = qi::toAnyValueFuture(std::move(propertyFuture));
+    auto futurePtr = new qi::Future<qi::AnyValue>(std::move(future));
+    return reinterpret_cast<jlong>(futurePtr);
+  }
+  catch (std::runtime_error &e)
+  {
+    throwNewDynamicCallException(env, e.what());
+    return 0;
+  }
 }
 
 JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_asyncCall(JNIEnv* env, jobject QI_UNUSED(jobj), jlong pObject, jstring jmethod, jobjectArray args)
