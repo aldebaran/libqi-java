@@ -36,8 +36,6 @@ extern "C"
   JNIEXPORT void JNICALL Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(JNIEnv* env, jclass cls, jobject str, jobject i, jobject f, jobject d,
                                                                                    jobject l, jobject m, jobject al, jobject tuple, jobject obj, jobject b,
                                                                                    jobject fut);
-  JNIEXPORT void JNICALL Java_com_aldebaran_qi_EmbeddedTools_initTupleInTypeSystem(JNIEnv* env, jclass cls, jobject t1, jobject t2, jobject t3, jobject t4,
-                                                                                   jobject t5, jobject t6, jobject t7, jobject t8, jobject t9, jobject t10, jobject t11, jobject t12, jobject t13, jobject t14, jobject t15, jobject t16, jobject t17, jobject t18, jobject t19, jobject t20, jobject t21, jobject t22, jobject t23, jobject t24, jobject t25, jobject t26, jobject t27, jobject t28, jobject t29, jobject t30, jobject t31, jobject t32);
 } // !extern C
 
 
@@ -61,7 +59,6 @@ namespace qi {
     jclass      clazz(const std::string &name);
     jclass      clazz(jobject object);
     void        releaseClazz(jclass clazz);
-    bool        isTuple(jobject object);
     // JVM Environment management
     JNIEnv*     env();
     void        releaseObject(jobject obj);

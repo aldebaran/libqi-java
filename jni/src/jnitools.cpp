@@ -66,51 +66,6 @@ JNIEXPORT void JNICALL Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(JNIEnv
   }
 }
 
-JNIEXPORT void JNICALL Java_com_aldebaran_qi_EmbeddedTools_initTupleInTypeSystem(JNIEnv* env, jclass QI_UNUSED(cls), jobject t1, jobject t2, jobject t3, jobject t4, jobject t5, jobject t6, jobject t7, jobject t8, jobject t9, jobject t10, jobject t11, jobject t12, jobject t13, jobject t14, jobject t15, jobject t16, jobject t17, jobject t18, jobject t19, jobject t20, jobject t21, jobject t22, jobject t23, jobject t24, jobject t25, jobject t26, jobject t27, jobject t28, jobject t29, jobject t30, jobject t31, jobject t32)
-{
-  JVM(env);
-
-  supportedTypes["Tuple1"] = env->NewGlobalRef(t1);
-  supportedTypes["Tuple2"] = env->NewGlobalRef(t2);
-  supportedTypes["Tuple3"] = env->NewGlobalRef(t3);
-  supportedTypes["Tuple4"] = env->NewGlobalRef(t4);
-  supportedTypes["Tuple5"] = env->NewGlobalRef(t5);
-  supportedTypes["Tuple6"] = env->NewGlobalRef(t6);
-  supportedTypes["Tuple7"] = env->NewGlobalRef(t7);
-  supportedTypes["Tuple8"] = env->NewGlobalRef(t8);
-  supportedTypes["Tuple9"] = env->NewGlobalRef(t9);
-  supportedTypes["Tuple10"] = env->NewGlobalRef(t10);
-  supportedTypes["Tuple11"] = env->NewGlobalRef(t11);
-  supportedTypes["Tuple12"] = env->NewGlobalRef(t12);
-  supportedTypes["Tuple13"] = env->NewGlobalRef(t13);
-  supportedTypes["Tuple14"] = env->NewGlobalRef(t14);
-  supportedTypes["Tuple15"] = env->NewGlobalRef(t15);
-  supportedTypes["Tuple16"] = env->NewGlobalRef(t16);
-  supportedTypes["Tuple17"] = env->NewGlobalRef(t17);
-  supportedTypes["Tuple18"] = env->NewGlobalRef(t18);
-  supportedTypes["Tuple19"] = env->NewGlobalRef(t19);
-  supportedTypes["Tuple20"] = env->NewGlobalRef(t20);
-  supportedTypes["Tuple21"] = env->NewGlobalRef(t21);
-  supportedTypes["Tuple22"] = env->NewGlobalRef(t22);
-  supportedTypes["Tuple23"] = env->NewGlobalRef(t23);
-  supportedTypes["Tuple24"] = env->NewGlobalRef(t24);
-  supportedTypes["Tuple25"] = env->NewGlobalRef(t25);
-  supportedTypes["Tuple26"] = env->NewGlobalRef(t26);
-  supportedTypes["Tuple27"] = env->NewGlobalRef(t27);
-  supportedTypes["Tuple28"] = env->NewGlobalRef(t28);
-  supportedTypes["Tuple29"] = env->NewGlobalRef(t29);
-  supportedTypes["Tuple30"] = env->NewGlobalRef(t30);
-  supportedTypes["Tuple31"] = env->NewGlobalRef(t31);
-  supportedTypes["Tuple32"] = env->NewGlobalRef(t32);
-
-
-  for (std::map<std::string, jobject>::iterator it = supportedTypes.begin(); it != supportedTypes.end(); ++it)
-  {
-    if (it->second == 0)
-      qiLogError() << it->first << ": Initialization failed.";
-  }
-}
-
 /*
  * JNIEnv structure is thread dependent.
  * To use a JNIEnv* pointer in another thread (such as QiMessaging callback)
@@ -562,37 +517,5 @@ namespace qi {
 
       env->DeleteLocalRef(obj);
     }
-
-    // Return true is jobject is a QiMessaging tuple.
-    bool        isTuple(jobject object)
-    {
-      JNIEnv*     env = qi::jni::env();
-      jclass      cls = 0;
-      std::string className;
-
-      if (!env)
-        return false;
-
-      for (std::map<std::string, jobject>::iterator it = supportedTypes.begin(); it != supportedTypes.end(); ++it)
-      {
-        className = it->first;
-
-        // searching for tuple
-        if (className.find("Tuple") == std::string::npos)
-          continue;
-
-        cls = env->GetObjectClass(it->second);
-        if (env->IsInstanceOf(object, cls))
-        {
-          qi::jni::releaseClazz(cls);
-          return true;
-        }
-
-        qi::jni::releaseClazz(cls);
-      }
-
-      return false;
-    }
-
   }// !jni
 }// !qi

@@ -61,7 +61,7 @@ public class ReplyService extends QiService
 
   public Tuple info(String str, Integer i, Boolean b)
   {
-    Tuple ret = new Tuple3<String, Integer, Boolean>(str, i, b);
+    Tuple ret = Tuple.of(str, i, b);
     System.out.println("Received : " + str + "," + i + "," + b);
     return ret;
   }

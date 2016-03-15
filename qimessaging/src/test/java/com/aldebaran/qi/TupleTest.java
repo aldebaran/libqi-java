@@ -5,7 +5,6 @@
 package com.aldebaran.qi;
 
 import java.util.Hashtable;
-import java.util.Map;
 
 import static org.junit.Assert.*;
 
@@ -82,7 +81,7 @@ public class TupleTest
   @Test
   public void testOutOfBoundException()
   {
-    Tuple tuple = new Tuple3<String, Integer, Map<Integer, String>>();
+    Tuple tuple = new Tuple(0);
     boolean exceptionRaised = false;
 
     try
@@ -100,7 +99,7 @@ public class TupleTest
   @Test
   public void testTuple()
   {
-    Tuple tuple = new Tuple3<String, Integer, Boolean>();
+    Tuple tuple = new Tuple(3);
     String str  = new String("plafbim");
     Integer i   = new Integer(42);
     Boolean b   = new Boolean(true);
@@ -134,7 +133,7 @@ public class TupleTest
   @Test
   public void testValue()
   {
-    Tuple tuple = new Tuple3<String, Integer, Boolean>("42", 42, true);
+    Tuple tuple = Tuple.of("42", 42, true);
     String str  = null;
     Integer i   = null;
     Boolean b   = null;
@@ -173,7 +172,7 @@ public class TupleTest
   @Test(expected=IndexOutOfBoundsException.class)
   public void testIndexOutOfBoundsException() throws IndexOutOfBoundsException, ClassCastException, IllegalArgumentException, IllegalAccessException
   {
-    Tuple tuple = new Tuple3<String, Integer, Map<Integer, String>>("42", 42, null);
+    Tuple tuple = Tuple.of("42", 42, null);
 
     tuple.<String>get(42);
   }
@@ -182,7 +181,7 @@ public class TupleTest
   @Test(expected=ClassCastException.class)
   public void testClassCastException() throws IndexOutOfBoundsException, ClassCastException, IllegalArgumentException, IllegalAccessException
   {
-    Tuple tuple = new Tuple3<String, Integer, Map<Integer, String>>("42", 42, new Hashtable<Integer, String>());
+    Tuple tuple = Tuple.of("42", 42, new Hashtable<Integer, String>());
 
     @SuppressWarnings("unused")
     ReplyService tmp = tuple.<ReplyService>get(0);
@@ -190,7 +189,7 @@ public class TupleTest
 
   public void testIllegalArgumentException() throws IndexOutOfBoundsException, ClassCastException, IllegalArgumentException, IllegalAccessException
   {
-    Tuple tuple = new Tuple3<String, Session, Map<AnyObject, Session>>("42", new Session(), new Hashtable<AnyObject, Session>());
+    Tuple tuple = Tuple.of("42", new Session(), new Hashtable<AnyObject, Session>());
 
     tuple.<Long>set(0, new Long(1234567890));
     tuple.<Long>set(1, new Long(1234567890));
