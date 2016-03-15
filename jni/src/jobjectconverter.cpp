@@ -192,22 +192,40 @@ struct toJObject
       throwNewException(env, "Error in conversion: Unable to convert pointer in Java");
     }
 
-    void visitTuple(const std::string& className, const std::vector<qi::AnyReference>& tuple, const std::vector<std::string>& annotations)
+private:
+    jobject newTuple(jobjectArray values)
     {
-      JNITuple jtuple(tuple.size());
-      int i = 0;
-
-      for(std::vector<qi::AnyReference>::const_iterator it = tuple.begin(); it != tuple.end(); ++it)
+      jclass tupleClass = env->FindClass("com/aldebaran/qi/Tuple");
+      if (!tupleClass)
       {
-        qi::AnyReference arRes = *it;
-        std::pair<qi::AnyReference, bool> converted = arRes.convert(qi::typeOf<jobject>());
-        jobject result = *(jobject*)converted.first.rawValue();
-        jtuple.set(i++, result);
+        qiLogError() << "Cannot find Tuple class";
+        return nullptr;
+      }
+
+      jmethodID ctor = env->GetMethodID(tupleClass, "<init>", "([Ljava/lang/Object;)V");
+      if (!ctor)
+      {
+        qiLogError() << "Cannot find Tuple constructor";
+        return nullptr;
+      }
+      return env->NewObject(tupleClass, ctor, values);
+    }
+
+public:
+    void visitTuple(const std::string& className, const std::vector<qi::AnyReference>& tuples, const std::vector<std::string>& annotations)
+    {
+      jclass objectClass = env->FindClass("java/lang/Object");
+      jobjectArray values = env->NewObjectArray(tuples.size(), objectClass, nullptr);
+      int i = 0;
+      for (const qi::AnyReference &ref : tuples)
+      {
+        std::pair<qi::AnyReference, bool> converted = ref.convert(qi::typeOf<jobject>());
+        jobject value = *reinterpret_cast<jobject *>(converted.first.rawValue());
+        env->SetObjectArrayElement(values, i++, value);
         if (converted.second)
           converted.first.destroy();
       }
-
-      *result = jtuple.object();
+      *result = newTuple(values);
     }
 
     void visitDynamic(qi::AnyReference pointee)
@@ -432,7 +450,7 @@ std::pair<qi::AnyReference, bool> AnyValue_from_JObject(jobject val)
     copy = true;
     res = AnyValue_from_JObject_Map(val);
   }
-  else if (qi::jni::isTuple(val))
+  else if (env->IsInstanceOf(val, tupleClass))
   {
     copy = true;
     res = AnyValue_from_JObject_Tuple(val);
