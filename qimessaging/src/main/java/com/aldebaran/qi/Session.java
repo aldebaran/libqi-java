@@ -133,4 +133,17 @@ public class Session
   {
     setClientAuthenticatorFactory(_session, factory);
   }
+
+  public void setClientAuthenticator(final ClientAuthenticator authenticator)
+  {
+    setClientAuthenticatorFactory(new ClientAuthenticatorFactory()
+    {
+      @Override
+      public ClientAuthenticator newAuthenticator()
+      {
+        // always return the same instance
+        return authenticator;
+      }
+    });
+  }
 }
