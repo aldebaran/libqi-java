@@ -75,7 +75,10 @@ JNIEXPORT jlong JNICALL newApplicationSession(JNIEnv *env, jstring jdefaultUrl, 
 
 JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Application_qiApplicationCreate(JNIEnv *env, jobject QI_UNUSED(obj), jobjectArray jargs, jstring jdefaultUrl, jboolean listen)
 {
-  return createApplication(env, jargs, boost::bind(newApplicationSession, env, jdefaultUrl, listen, _1, _2));
+  return createApplication(env, jargs, boost::function<jlong(int&, char**&)>([=](int &cargc, char** &cargv)
+  {
+    return newApplicationSession(env, jdefaultUrl, listen, cargc, cargv);
+  }));
 }
 
 JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Application_qiApplicationGetSession(JNIEnv *QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pApplication)
