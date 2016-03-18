@@ -38,7 +38,7 @@ public class Future<T> implements java.util.concurrent.Future<T>
   private long  _fut;
 
   // Native C API object functions
-  private native boolean qiFutureCallCancel(long pFuture);
+  private native boolean qiFutureCallCancel(long pFuture, boolean mayInterrupt);
   private native Object qiFutureCallGet(long pFuture, int msecs) throws ExecutionException, TimeoutException;
   private native boolean qiFutureCallIsCancelled(long pFuture);
   private native boolean qiFutureCallIsDone(long pFuture);
@@ -103,7 +103,7 @@ public class Future<T> implements java.util.concurrent.Future<T>
 
   public synchronized boolean cancel()
   {
-    if (qiFutureCallCancel(_fut))
+    if (qiFutureCallCancel(_fut, true))
       cancelled = true;
     return cancelled;
   }
