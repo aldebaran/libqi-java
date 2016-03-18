@@ -127,7 +127,7 @@ JNIEXPORT void JNICALL Java_com_aldebaran_qi_Application_qiApplicationStop(JNIEn
   app->stop();
 }
 
-void Java_com_aldebaran_qi_Application_setLogCategory(JNIEnv *env, jclass cls, jstring category, jlong verbosity)
+JNIEXPORT void JNICALL Java_com_aldebaran_qi_Application_setLogCategory(JNIEnv *env, jclass cls, jstring category, jlong verbosity)
 {
   ::qi::log::addFilter(qi::jni::toString(category), (qi::LogLevel)verbosity, 0);
 }
