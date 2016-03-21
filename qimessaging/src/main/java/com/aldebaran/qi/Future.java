@@ -192,7 +192,14 @@ public class Future<T> implements java.util.concurrent.Future<T>
   {
     // for convenience
     ExecutionException e = getError();
-    return e == null ? null : e.getMessage();
+    if (e == null) {
+      return null;
+    }
+    Throwable cause = e.getCause();
+    if (cause instanceof QiException) {
+      return ((QiException) cause).getMessage();
+    }
+    return e.getMessage();
   }
 
   @Override

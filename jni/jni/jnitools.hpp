@@ -187,6 +187,20 @@ namespace qi {
       return _getField<jdouble, &JNIEnv::GetDoubleField>(env, obj, name, "D");
     }
 
+    template <typename ...T>
+    inline jobject construct(JNIEnv *env, const char *className, const char *sig, T... params)
+    {
+      jclass cls = env->FindClass(className);
+      if (!cls)
+        return nullptr;
+
+      jmethodID ctor = env->GetMethodID(cls, "<init>", sig);
+      if (!ctor)
+        return nullptr;
+
+      return env->NewObject(cls, ctor, params...);
+    }
+
     // jobject is defined as _jobject*
     using SharedGlobalRef = std::shared_ptr<_jobject>;
 
@@ -210,6 +224,11 @@ JavaVM*       JVM(JNIEnv* env = 0);
 std::string   toJavaSignature(const std::string &signature);
 std::string   propertyBaseSignature(JNIEnv *env, jclass propertyBase);
 
+jthrowable createNewException(JNIEnv *env, const char *className, const char *message, jthrowable cause);
+jthrowable createNewException(JNIEnv *env, const char *className, const char *message);
+jthrowable createNewException(JNIEnv *env, const char *className, jthrowable cause);
+jthrowable createNewQiException(JNIEnv *env, const char *message);
+
 // Java exception thrower
 jint throwNew(JNIEnv *env, const char *className, const char *message = "");
 jint throwNewException(JNIEnv *env, const char *message = "");
@@ -217,7 +236,7 @@ jint throwNewRuntimeException(JNIEnv *env, const char *message = "");
 jint throwNewNullPointerException(JNIEnv *env, const char *message = "");
 
 jint throwNewCancellationException(JNIEnv *env, const char *message = "");
-jint throwNewExecutionException(JNIEnv *env, const char *message = "");
+jint throwNewExecutionException(JNIEnv *env, jthrowable cause);
 jint throwNewTimeoutException(JNIEnv *env, const char *message = "");
 
 jint throwNewDynamicCallException(JNIEnv *env, const char *message = "");

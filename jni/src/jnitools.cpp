@@ -185,6 +185,33 @@ std::string   toJavaSignature(const std::string &signature)
   return sig;
 }
 
+jthrowable createNewException(JNIEnv *env, const char *className, const char *message, jthrowable cause)
+{
+  jstring jMessage = qi::jni::toJstring(message);
+  jobject ex = qi::jni::construct(env, className, "(Ljava/lang/String;Ljava/lang/Throwable)V", jMessage, cause);
+  return reinterpret_cast<jthrowable>(ex);
+}
+
+jthrowable createNewException(JNIEnv *env, const char *className, const char *message)
+{
+  jstring jMessage = qi::jni::toJstring(message);
+  jobject ex = qi::jni::construct(env, className, "(Ljava/lang/String;)V", jMessage);
+  return reinterpret_cast<jthrowable>(ex);
+}
+
+jthrowable createNewException(JNIEnv *env, const char *className, jthrowable cause)
+{
+  jobject ex = qi::jni::construct(env, className, "(Ljava/lang/Throwable;)V", cause);
+  if (!ex)
+  qiLogFatal() << className << " noex";
+  return reinterpret_cast<jthrowable>(ex);
+}
+
+jthrowable createNewQiException(JNIEnv *env, const char *message)
+{
+  return createNewException(env, "com/aldebaran/qi/QiException", message);
+}
+
 /**
  * @brief throwNewException Helper function to throw generic Java exception from C++
  * @param env JNI environment
@@ -223,9 +250,12 @@ jint throwNewCancellationException(JNIEnv *env, const char *message)
   return throwNew(env, "java/util/concurrent/CancellationException", message);
 }
 
-jint throwNewExecutionException(JNIEnv *env, const char *message)
+jint throwNewExecutionException(JNIEnv *env, jthrowable cause)
 {
-  return throwNew(env, "java/util/concurrent/ExecutionException", message);
+  jthrowable ex = createNewException(env, "java/util/concurrent/ExecutionException", cause);
+  if (!ex)
+    return 1;
+  return env->Throw(ex);
 }
 
 jint throwNewTimeoutException(JNIEnv *env, const char *message)
