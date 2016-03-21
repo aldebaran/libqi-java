@@ -190,12 +190,12 @@ public class ObjectTest
     ok = false;
     try {
         ret = ro.<String>call("add", "42", 42, 42).get();
-      } catch (Exception e) {
+      } catch (ExecutionException e) {
         ok = true;
         String expected = "cannot convert parameters from (sii) to (iii)";
         System.out.println(e.getMessage());
         System.out.println(expected);
-        assertEquals(expected, e.getMessage());
+        assertEquals(expected, e.getCause().getMessage());
       }
     assertTrue(ok);
 

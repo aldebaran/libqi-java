@@ -78,7 +78,7 @@ JNIEXPORT jobject JNICALL Java_com_aldebaran_qi_Future_qiFutureCallGet(JNIEnv *e
       throwNewCancellationException(env, "native future cancelled");
       break;
     case qi::FutureException::ExceptionState_FutureUserError:
-      throwNewExecutionException(env, e.what());
+      throwNewExecutionException(env, createNewQiException(env, e.what()));
       break;
     default:
       // unexpected error => java RuntimeException

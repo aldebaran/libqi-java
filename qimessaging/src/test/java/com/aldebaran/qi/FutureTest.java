@@ -486,10 +486,15 @@ public class FutureTest
     assertFalse(test.isConnected());
   }
 
-  @Test(expected=ExecutionException.class)
-  public void testExecutionException() throws ExecutionException
+  public void testExecutionException()
   {
-    proxy.call("throwUp").get();
+    try {
+      proxy.call("throwUp").get();
+    } catch (ExecutionException e) {
+      assertTrue("ExecutionException cause should extend QiException", e.getCause() instanceof QiException);
+      return;
+    }
+    fail("Must have thrown ExecutionException");
   }
 
   @Test(expected=CancellationException.class)
