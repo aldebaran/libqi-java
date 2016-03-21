@@ -40,7 +40,7 @@ void      java_future_callback(const qi::Future<qi::AnyValue>& future)
   qi::FutureHandler::removeCallbackInfo(future);
 }
 
-JNIEXPORT jboolean JNICALL Java_com_aldebaran_qi_Future_qiFutureCallCancel(JNIEnv *QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pFuture, jboolean QI_UNUSED(mayInterrupt)) {
+JNIEXPORT jboolean JNICALL Java_com_aldebaran_qi_Future_qiFutureCallCancel(JNIEnv *QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pFuture) {
   qi::Future<qi::AnyValue>* fut = reinterpret_cast<qi::Future<qi::AnyValue>*>(pFuture);
 
   if (fut->isCancelable() == false)
