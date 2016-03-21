@@ -193,12 +193,10 @@ std::string   toJavaSignature(const std::string &signature)
  */
 jint throwNew(JNIEnv *env, const char *className, const char *message)
 {
-  jclass		 exClass;
-
-  exClass = env->FindClass(className);
-  if (exClass == NULL)
+  jclass exClass = env->FindClass(className);
+  if (!exClass)
   {
-    qiLogFatal() << "Cannot throw any exceptions";
+    qiLogFatal() << "Cannot find exception class: " << className;
     return 1;
   }
 
