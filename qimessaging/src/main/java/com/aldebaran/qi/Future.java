@@ -108,6 +108,11 @@ public class Future<T> implements java.util.concurrent.Future<T>
     return cancelled;
   }
 
+  /* package */ synchronized void setCancelled() {
+    // to be called from Promise
+    cancelled = true;
+  }
+
   @SuppressWarnings("unchecked")
   private T get(int msecs) throws ExecutionException, TimeoutException
   {
