@@ -4,7 +4,7 @@
 */
 package com.aldebaran.qi;
 
-public class AdvertisementException extends RuntimeException {
+public class AdvertisementException extends QiRuntimeException {
 
   private static final long serialVersionUID = 1L;
 
