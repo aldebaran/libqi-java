@@ -5,7 +5,7 @@
 package com.aldebaran.qi;
 
 @SuppressWarnings("serial")
-public class DynamicCallException extends RuntimeException
+public class DynamicCallException extends QiRuntimeException
 {
 
   /**
