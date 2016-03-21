@@ -32,6 +32,7 @@ set(SOURCE
    jni/futurehandler.hpp
    jni/object_jni.hpp
    jni/object.hpp
+   jni/promise_jni.hpp
 
    src/session_jni.cpp
    src/application_jni.cpp
@@ -49,6 +50,7 @@ set(SOURCE
    src/futurehandler.cpp
    src/object_jni.cpp
    src/object.cpp
+   src/promise_jni.cpp
    )
 
 # Compile qimessaging java compatibility layer using jni
