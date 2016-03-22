@@ -191,6 +191,20 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Future_qiFutureCreate(JNIEnv *env,
     return reinterpret_cast<jlong>(future);
 }
 
+static inline qi::Future<qi::AnyValue> createErrorFuture(const std::string &error)
+{
+  qi::Promise<qi::AnyValue> promise;
+  promise.setError(error);
+  return promise.future();
+}
+
+static inline qi::Future<qi::AnyValue> toErrorFuture(JNIEnv *env, jthrowable exception)
+{
+  jobject str = qi::jni::Call<jobject>::invoke(env, exception, "toString", "()Ljava/lang/String;");
+  jstring jstr = reinterpret_cast<jstring>(str);
+  return createErrorFuture(qi::jni::toString(jstr));
+}
+
 void CallbackFunctor::operator()(const qi::Future<qi::AnyValue> &QI_UNUSED(future)) const
 {
   // we stored the jobject future, so we ignore the parameter
@@ -225,14 +239,18 @@ qi::Future<qi::AnyValue> QiFunctionFunctor<Param>::operator()(Param) const
   // call QiFunction
   const char *method = "execute";
   const char *methodSig = "(Lcom/aldebaran/qi/Future;)Lcom/aldebaran/qi/Future;";
+
   jobject future = qi::jni::Call<jobject>::invoke(env, qiFunction, method, methodSig, argFuture);
-  if (env->ExceptionCheck() == JNI_TRUE) {
-    qiLogError() << "Cannot call QiFunction.execute(…) from JNI";
-    return {};
+  jthrowable exception = env->ExceptionOccurred();
+  if (exception)
+  {
+    env->ExceptionDescribe();
+    // we report it in the future, so we ignore it here
+    env->ExceptionClear();
+    return toErrorFuture(env, exception);
   }
   if (!future) {
-    throwNewNullPointerException(env, "QiFunction.execute() returned null");
-    return {};
+    return createErrorFuture("QiFunction.execute() returned null");
   }
 
   jlong pFuture = qi::jni::getField<jlong>(env, future, "_fut");

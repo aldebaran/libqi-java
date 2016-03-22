@@ -185,6 +185,29 @@ public class FutureTest
   }
 
   @Test
+  public void testQiFunctionException()
+  {
+    try
+    {
+      client.service("serviceTest").andThen(new QiFunction<Void, AnyObject>()
+      {
+        @Override
+        public Future<Void> execute(Future<AnyObject> arg)
+        {
+          throw new RuntimeException("something went wrong (fake)");
+        }
+      }).get();
+      fail("get() must fail");
+    } catch (ExecutionException e)
+    {
+      // expected exception
+      QiException cause = (QiException) e.getCause();
+      assertTrue("Exception must contain the error from the future",
+          cause.getMessage().contains("something went wrong (fake)"));
+    }
+  }
+
+  @Test
   public void testImmediateValue()
   {
     try
