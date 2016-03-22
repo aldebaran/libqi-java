@@ -208,6 +208,98 @@ public class FutureTest
   }
 
   @Test
+  public void testThenAdapterSuccess()
+  {
+    try
+    {
+      int value = client.service("serviceTest").then(new QiFunctionAdapter<Integer, AnyObject>()
+      {
+        @Override
+        public Future<Integer> handleResult(AnyObject service)
+        {
+          return service.call("answer", 42);
+        }
+      }).get();
+      // answer adds 1 to the value
+      assertEquals(42 + 1, value);
+    } catch (Exception e)
+    {
+      fail("get() must not fail");
+    }
+  }
+
+  @Test
+  public void testThenAdapterFailure()
+  {
+    final AtomicBoolean handleErrorCalled = new AtomicBoolean();
+    try
+    {
+      client.service("nonExistant").then(new QiFunctionAdapter<AnyObject, AnyObject>()
+      {
+        @Override
+        public Future<AnyObject> handleResult(AnyObject service)
+        {
+          fail("handleResult() must not be called, the service does not exist");
+          return null;
+        }
+
+        @Override
+        public Future<AnyObject> handleError(ExecutionException exception) throws ExecutionException
+        {
+          handleErrorCalled.set(true);
+          return client.service("serviceTest");
+        }
+      }).get();
+    } catch (Exception e)
+    {
+      fail("get() must not fail, the second future should succeed");
+    }
+    assertTrue("handleError() must be called", handleErrorCalled.get());
+  }
+
+  @Test
+  public void testAndThenAdapterSuccess()
+  {
+    try
+    {
+      int value = client.service("serviceTest").andThen(new QiFunctionAdapter<Integer, AnyObject>()
+      {
+        @Override
+        public Future<Integer> handleResult(AnyObject service)
+        {
+          return service.call("answer", 42);
+        }
+      }).get();
+      // answer adds 1 to the value
+      assertEquals(42 + 1, value);
+    } catch (Exception e)
+    {
+      fail("get() must not fail");
+    }
+  }
+
+  @Test
+  public void testAndThenAdapterFailure()
+  {
+    try
+    {
+      client.service("nonExistant").andThen(new QiFunctionAdapter<Void, AnyObject>()
+      {
+        @Override
+        public Future<Void> handleResult(AnyObject service)
+        {
+          fail("The first future has failed, this code should never be called");
+          return null;
+        }
+      }).get();
+      fail("get() must fail");
+    } catch (Exception e)
+    {
+      // expected exception
+    }
+  }
+
+  @Test
   public void testImmediateValue()
   {
     try
