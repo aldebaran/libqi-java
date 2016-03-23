@@ -14,6 +14,8 @@
 #include <future_jni.hpp>
 #include <callbridge.hpp>
 
+#include "qitools.hpp"
+
 qiLogCategory("qimessaging.java");
 
 void      java_future_callback(const qi::Future<qi::AnyValue>& future)
@@ -164,7 +166,7 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Future_qiFutureCallThen(JNIEnv *en
   auto gThisFuture = qi::jni::makeSharedGlobalRef(env, thisFuture);
   auto gQiFunction = qi::jni::makeSharedGlobalRef(env, qiFunction);
   ThenFunctor functor{ gThisFuture, gQiFunction };
-  auto result = new qi::Future<qi::AnyValue>{ future->then(functor).unwrap() };
+  auto result = new qi::Future<qi::AnyValue>{ qi::localThen(*future, functor) };
   return reinterpret_cast<jlong>(result);
 }
 
@@ -175,7 +177,7 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Future_qiFutureCallAndThen(JNIEnv 
   auto gThisFuture = qi::jni::makeSharedGlobalRef(env, thisFuture);
   auto gQiFunction = qi::jni::makeSharedGlobalRef(env, qiFunction);
   AndThenFunctor functor{ gThisFuture, gQiFunction };
-  auto result = new qi::Future<qi::AnyValue>{ future->andThen(functor).unwrap() };
+  auto result = new qi::Future<qi::AnyValue>{ qi::localAndThen(*future, functor) };
   return reinterpret_cast<jlong>(result);
 }
 

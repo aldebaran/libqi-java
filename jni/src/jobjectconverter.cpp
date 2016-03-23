@@ -462,8 +462,8 @@ std::pair<qi::AnyReference, bool> AnyValue_from_JObject(jobject val)
   }
   else
   {
-    qiLogError() << "Cannot serialize return value: Unable to convert JObject in AnyValue";
-    throw std::runtime_error("Cannot serialize return value: Unable to convert JObject in AnyValue");
+    qiLogError() << "Cannot serialize return value: Unable to convert JObject to AnyValue";
+    throw std::runtime_error("Cannot serialize return value: Unable to convert JObject to AnyValue");
   }
 
   qi::jni::releaseClazz(stringClass);

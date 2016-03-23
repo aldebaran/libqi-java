@@ -300,6 +300,34 @@ public class FutureTest
   }
 
   @Test
+  public void testUnknownType() throws ExecutionException
+  {
+    class X
+    {
+      int value;
+
+      X(int value)
+      {
+        this.value = value;
+      }
+    }
+
+    Promise<X> promise = new Promise<X>();
+    promise.setValue(new X(42));
+    Future<X> future = promise.getFuture();
+    X x = future.andThen(new QiFunctionAdapter<X, X>()
+
+    {
+      @Override
+      public Future<X> handleResult(X x) throws Exception
+      {
+        return Future.of(new X(x.value + 1));
+      }
+    }).get();
+    assertEquals(43, x.value);
+  }
+
+  @Test
   public void testImmediateValue()
   {
     try
