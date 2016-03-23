@@ -219,7 +219,10 @@ void CallbackFunctor::operator()(const qi::Future<qi::AnyValue> &QI_UNUSED(futur
   const char *methodSig = "(Lcom/aldebaran/qi/Future;)V";
   qi::jni::Call<void>::invoke(env, callback, method, methodSig, argFuture);
   if (env->ExceptionCheck() == JNI_TRUE) {
-    qiLogError() << "Cannot call Future.Callback.onFinished(…) from JNI";
+    qiLogError() << "Exception when calling Future.Callback.onFinished(…) from JNI";
+    env->ExceptionDescribe();
+    // the callback threw an exception, it must have no impact on the caller
+    env->ExceptionClear();
   }
 }
 
