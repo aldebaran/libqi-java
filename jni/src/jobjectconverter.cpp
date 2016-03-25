@@ -95,6 +95,7 @@ struct toJObject
       jclass cls = env->FindClass("java/lang/Void");
       jmethodID mid = env->GetMethodID(cls, "<init>", "()V");
       *result = env->NewObject(cls, mid);
+      qi::jni::releaseClazz(cls);
       checkForError();
     }
 
@@ -195,20 +196,16 @@ struct toJObject
 private:
     jobject newTuple(jobjectArray values)
     {
-      jclass tupleClass = env->FindClass("com/aldebaran/qi/Tuple");
-      if (!tupleClass)
-      {
-        qiLogError() << "Cannot find Tuple class";
-        return nullptr;
-      }
-
+      jclass tupleClass = qi::jni::clazz("Tuple");
       jmethodID ctor = env->GetMethodID(tupleClass, "<init>", "([Ljava/lang/Object;)V");
       if (!ctor)
       {
         qiLogError() << "Cannot find Tuple constructor";
         return nullptr;
       }
-      return env->NewObject(tupleClass, ctor, values);
+      jobject result = env->NewObject(tupleClass, ctor, values);
+      qi::jni::releaseClazz(tupleClass);
+      return result;
     }
 
 public:
@@ -216,6 +213,7 @@ public:
     {
       jclass objectClass = env->FindClass("java/lang/Object");
       jobjectArray values = env->NewObjectArray(tuples.size(), objectClass, nullptr);
+      qi::jni::releaseClazz(objectClass);
       int i = 0;
       for (const qi::AnyReference &ref : tuples)
       {
@@ -370,114 +368,116 @@ qi::AnyReference AnyValue_from_JObject_RemoteObject(jobject val)
   return qi::AnyReference::from(*tmp);
 }
 
+qi::AnyReference _AnyValue_from_JObject(jobject val);
+
 std::pair<qi::AnyReference, bool> AnyValue_from_JObject(jobject val)
 {
-  qi::AnyReference res;
-  JNIEnv* env;
-  bool copy = false;
-
   if (!val)
     return std::make_pair(qi::AnyReference(), false);
 
+  return std::make_pair(_AnyValue_from_JObject(val), true);
+}
+
+qi::AnyReference _AnyValue_from_JObject(jobject val)
+{
+  qi::AnyReference res;
+  jclass cls;
+
   qi::jni::JNIAttach attach;
-  env = attach.get();
+  JNIEnv *env = attach.get();
 
-  jclass stringClass = qi::jni::clazz("String");
-  jclass int32Class = qi::jni::clazz("Integer");
-  jclass floatClass = qi::jni::clazz("Float");
-  jclass doubleClass = qi::jni::clazz("Double");
-  jclass boolClass = qi::jni::clazz("Boolean");
-  jclass longClass = qi::jni::clazz("Long");
-  jclass mapClass = qi::jni::clazz("Map");
-  jclass listClass = qi::jni::clazz("List");
-  jclass tupleClass = qi::jni::clazz("Tuple");
-  jclass objectClass = qi::jni::clazz("Object");
+  cls = qi::jni::clazz("String");
+  if (env->IsInstanceOf(val, cls))
+  {
+    qi::jni::releaseClazz(cls);
+    std::string tmp = qi::jni::toString(reinterpret_cast<jstring>(val));
+    return qi::AnyReference::from(tmp).clone();
+  }
+  qi::jni::releaseClazz(cls);
 
-  if (val == NULL)
+  cls = qi::jni::clazz("Float");
+  if (env->IsInstanceOf(val, cls))
   {
-    res = qi::AnyReference(qi::typeOf<void>());
-  }
-  else if (env->IsInstanceOf(val, stringClass))
-  {
-    const char* data = env->GetStringUTFChars((jstring) val, 0);
-    std::string tmp = std::string(data);
-    env->ReleaseStringUTFChars((jstring) val, data);
-    res = qi::AnyReference::from(tmp).clone();
-    copy = true;
-  }
-  else if (env->IsInstanceOf(val, floatClass))
-  {
-    jmethodID mid = env->GetMethodID(floatClass, "floatValue","()F");
+    jmethodID mid = env->GetMethodID(cls, "floatValue","()F");
+    qi::jni::releaseClazz(cls);
     jfloat v = env->CallFloatMethod(val, mid);
-    res = qi::AnyReference::from((float)v).clone();
-    copy = true;
+    return qi::AnyReference::from(v).clone();
   }
-  else if (env->IsInstanceOf(val, doubleClass)) // If double, convert to float
+  qi::jni::releaseClazz(cls);
+
+  cls = qi::jni::clazz("Double");
+  if (env->IsInstanceOf(val, cls)) // If double, convert to float
   {
-    jmethodID mid = env->GetMethodID(doubleClass, "doubleValue","()D");
-    jfloat v = (jfloat) env->CallDoubleMethod(val, mid);
-    res = qi::AnyReference::from((float)v).clone();
-    copy = true;
+    jmethodID mid = env->GetMethodID(cls, "doubleValue","()D");
+    qi::jni::releaseClazz(cls);
+    jfloat v = static_cast<jfloat>(env->CallDoubleMethod(val, mid));
+    return qi::AnyReference::from(v).clone();
   }
-  else if (env->IsInstanceOf(val, longClass))
+  qi::jni::releaseClazz(cls);
+
+  cls = qi::jni::clazz("Long");
+  if (env->IsInstanceOf(val, cls))
   {
-    jmethodID mid = env->GetMethodID(longClass, "longValue","()L");
+    jmethodID mid = env->GetMethodID(cls, "longValue","()L");
+    qi::jni::releaseClazz(cls);
     jlong v = env->CallLongMethod(val, mid);
-    res = qi::AnyReference::from(v).clone();
-    copy = true;
+    return qi::AnyReference::from(v).clone();
   }
-  else if (env->IsInstanceOf(val, boolClass))
+  qi::jni::releaseClazz(cls);
+
+  cls = qi::jni::clazz("Boolean");
+  if (env->IsInstanceOf(val, cls))
   {
-    jmethodID mid = env->GetMethodID(boolClass, "booleanValue","()Z");
+    jmethodID mid = env->GetMethodID(cls, "booleanValue","()Z");
+    qi::jni::releaseClazz(cls);
     jboolean v = env->CallBooleanMethod(val, mid);
-    res = qi::AnyReference::from((bool) v).clone();
-    copy = true;
+    return qi::AnyReference::from(static_cast<bool>(v)).clone();
   }
-  else if (env->IsInstanceOf(val, int32Class))
+  qi::jni::releaseClazz(cls);
+
+  cls = qi::jni::clazz("Integer");
+  if (env->IsInstanceOf(val, cls))
   {
-    jmethodID mid = env->GetMethodID(int32Class, "intValue","()I");
+    jmethodID mid = env->GetMethodID(cls, "intValue","()I");
+    qi::jni::releaseClazz(cls);
     jint v = env->CallIntMethod(val, mid);
-    res = qi::AnyReference::from((int) v).clone();
-    copy = true;
+    return qi::AnyReference::from(v).clone();
   }
-  else if (env->IsInstanceOf(val, listClass))
+  qi::jni::releaseClazz(cls);
+
+  cls = qi::jni::clazz("List");
+  if (env->IsInstanceOf(val, cls))
   {
-    copy = true;
-    res = AnyValue_from_JObject_List(val);
+    qi::jni::releaseClazz(cls);
+    return AnyValue_from_JObject_List(val);
   }
-  else if (env->IsInstanceOf(val, mapClass))
+  qi::jni::releaseClazz(cls);
+
+  cls = qi::jni::clazz("Map");
+  if (env->IsInstanceOf(val, cls))
   {
-    copy = true;
-    res = AnyValue_from_JObject_Map(val);
+    qi::jni::releaseClazz(cls);
+    return AnyValue_from_JObject_Map(val);
   }
-  else if (env->IsInstanceOf(val, tupleClass))
+  qi::jni::releaseClazz(cls);
+
+  cls = qi::jni::clazz("Tuple");
+  if (env->IsInstanceOf(val, cls))
   {
-    copy = true;
-    res = AnyValue_from_JObject_Tuple(val);
-  }
-  else if (env->IsInstanceOf(val, objectClass))
-  {
-    copy = true;
-    res = AnyValue_from_JObject_RemoteObject(val);
-  }
-  else
-  {
-    qiLogError() << "Cannot serialize return value: Unable to convert JObject to AnyValue";
-    throw std::runtime_error("Cannot serialize return value: Unable to convert JObject to AnyValue");
+    qi::jni::releaseClazz(cls);
+    return AnyValue_from_JObject_Tuple(val);
   }
 
-  qi::jni::releaseClazz(stringClass);
-  qi::jni::releaseClazz(int32Class);
-  qi::jni::releaseClazz(floatClass);
-  qi::jni::releaseClazz(doubleClass);
-  qi::jni::releaseClazz(boolClass);
-  qi::jni::releaseClazz(longClass);
-  qi::jni::releaseClazz(mapClass);
-  qi::jni::releaseClazz(listClass);
-  qi::jni::releaseClazz(tupleClass);
-  qi::jni::releaseClazz(objectClass);
+  cls = qi::jni::clazz("Object");
+  if (env->IsInstanceOf(val, cls))
+  {
+    qi::jni::releaseClazz(cls);
+    return AnyValue_from_JObject_RemoteObject(val);
+  }
+  qi::jni::releaseClazz(cls);
 
-  return std::make_pair(res, copy);
+  qiLogError() << "Cannot serialize return value: Unable to convert JObject to AnyValue";
+  throw std::runtime_error("Cannot serialize return value: Unable to convert JObject to AnyValue");
 }
 
 
