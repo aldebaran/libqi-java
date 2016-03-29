@@ -90,6 +90,9 @@ public class EmbeddedTools
       // but the name of the SSL dlls are different
       if (osName.contains("Windows"))
       {
+        // Load vcredist libs
+        SharedLibrary.loadLib("msvcr120");
+        SharedLibrary.loadLib("mscvp120");
         SharedLibrary.loadLib("libeay32");
         SharedLibrary.loadLib("ssleay32");
       }
