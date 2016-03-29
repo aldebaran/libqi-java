@@ -224,6 +224,7 @@ public:
           converted.first.destroy();
       }
       *result = newTuple(values);
+      env->DeleteLocalRef(values);
     }
 
     void visitDynamic(qi::AnyReference pointee)
