@@ -87,6 +87,7 @@ namespace qi {
     {
       jclass cls = env->GetObjectClass(jobject);
       jmethodID mid = env->GetMethodID(cls, methodName, methodSig);
+      env->DeleteLocalRef(cls);
       return env->CallVoidMethod(jobject, mid, rest...);
     }
 
@@ -100,6 +101,7 @@ namespace qi {
     {
       jclass cls = env->GetObjectClass(jobject);
       jmethodID mid = env->GetMethodID(cls, methodName, methodSig);
+      env->DeleteLocalRef(cls);
       return env->CallBooleanMethod(jobject, mid, rest...);
     }
 
@@ -113,6 +115,7 @@ namespace qi {
     {
       jclass cls = env->GetObjectClass(jobject);
       jmethodID mid = env->GetMethodID(cls, methodName, methodSig);
+      env->DeleteLocalRef(cls);
       return env->CallObjectMethod(jobject, mid, rest...);
     }
 
@@ -124,6 +127,7 @@ namespace qi {
     {
       jclass cls = env->GetObjectClass(obj);
       jfieldID fid = env->GetFieldID(cls, name, sig);
+      env->DeleteLocalRef(cls);
       if (!fid) {
         // the caller must check any pending exception
         return {};
@@ -195,10 +199,14 @@ namespace qi {
         return nullptr;
 
       jmethodID ctor = env->GetMethodID(cls, "<init>", sig);
-      if (!ctor)
+      if (!ctor) {
+        env->DeleteLocalRef(cls);
         return nullptr;
+      }
 
-      return env->NewObject(cls, ctor, params...);
+      jobject result = env->NewObject(cls, ctor, params...);
+      env->DeleteLocalRef(cls);
+      return result;
     }
 
     // jobject is defined as _jobject*
