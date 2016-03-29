@@ -210,6 +210,7 @@ private:
 
     jobject set = qi::jni::Call<jobject>::invoke(env, jmap, "entrySet", "()Ljava/util/Set;");
     jobject it = qi::jni::Call<jobject>::invoke(env, set, "iterator", "()Ljava/util/Iterator;");
+    env->DeleteLocalRef(set);
 
     while (qi::jni::Call<jboolean>::invoke(env, it, "hasNext", "()Z"))
     {
@@ -221,10 +222,17 @@ private:
       qiLogWarning() << "FIXME: only jstring are supported";
       jobject value = qi::jni::Call<jobject>::invoke(env, entry, "getValue", "()Ljava/lang/Object;");
       std::string v2 = env->GetStringUTFChars((jstring) value, nullptr);
+
+      env->DeleteLocalRef(entry);
+      env->DeleteLocalRef(key);
+      env->DeleteLocalRef(value);
+
       qi::AnyValue v = qi::AnyValue::from(v2);
 
       result[k] = v;
     }
+
+    env->DeleteLocalRef(it);
 
     return result;
   }
@@ -234,6 +242,7 @@ private:
     jclass mapClass = env->FindClass("java/util/HashMap");
     jmethodID init = env->GetMethodID(mapClass, "<init>", "()V");
     jobject result = env->NewObject(mapClass, init);
+    env->DeleteLocalRef(mapClass);
 
     qi::CapabilityMap::const_iterator it;
     for (it = map.begin(); it != map.end(); ++it)
@@ -250,6 +259,7 @@ private:
         jclass cls = env->FindClass("java/lang/Integer");
         jmethodID mid = env->GetMethodID(cls, "<init>", "(I)V");
         v = env->NewObject(cls, mid, val.toUInt());
+        env->DeleteLocalRef(cls);
       }
       else if (sig == "s")
       {
@@ -257,11 +267,15 @@ private:
       }
       else
       {
+        env->DeleteLocalRef(k);
         qiLogError() << "sig " << sig << " not supported, skipping...";
         continue;
       }
 
       qi::jni::Call<jobject>::invoke(env, result, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", k, v);
+
+      env->DeleteLocalRef(k);
+      env->DeleteLocalRef(v);
     }
 
     return result;
