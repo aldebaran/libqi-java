@@ -1,5 +1,7 @@
 <project version="3">
   <maintainer email="jlamotte@aldebaran.com">Joël Lamotte</maintainer>
+  <maintainer email="epinault@aldebaran.com">Erwan Pinault</maintainer>
+  <maintainer email="vpaleologue@aldebaran.com">Victor Paleologue</maintainer>
   <!-- qibuild project in c++ for the jni shared library -->
   <project src="jni" />
   <!-- standalone maven project -->
