@@ -92,7 +92,7 @@ public class EmbeddedTools
       {
         // Load vcredist libs
         SharedLibrary.loadLib("msvcr120");
-        SharedLibrary.loadLib("mscvp120");
+        SharedLibrary.loadLib("msvcp120");
         SharedLibrary.loadLib("libeay32");
         SharedLibrary.loadLib("ssleay32");
       }
