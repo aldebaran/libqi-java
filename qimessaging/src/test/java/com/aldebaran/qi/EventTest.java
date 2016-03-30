@@ -6,6 +6,9 @@ package com.aldebaran.qi;
 
 import static org.junit.Assert.*;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -123,5 +126,32 @@ public class EventTest
     client.close();
     Thread.sleep(100);
     assertTrue(callbackCalled);
+  }
+
+  @Test
+  public void testSessionConnectionListener() throws ExecutionException, InterruptedException
+  {
+    Session session = new Session();
+    final AtomicBoolean connectedCalled = new AtomicBoolean();
+    final AtomicBoolean disconnectedCalled = new AtomicBoolean();
+    session.addConnectionListener(new Session.ConnectionListener()
+    {
+      @Override
+      public void onConnected()
+      {
+        connectedCalled.set(true);
+      }
+
+      @Override
+      public void onDisconnected(String reason)
+      {
+        disconnectedCalled.set(true);
+      }
+    });
+    session.connect(sd.listenUrl()).get();
+    session.close();
+    Thread.sleep(100);
+    assertTrue(connectedCalled.get());
+    assertTrue(disconnectedCalled.get());
   }
 }

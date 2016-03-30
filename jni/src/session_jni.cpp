@@ -166,6 +166,22 @@ JNIEXPORT void JNICALL Java_com_aldebaran_qi_Session_onDisconnected(JNIEnv *env,
           boost::bind(&event_callback_to_java, (void*) data, _1)));
 }
 
+JNIEXPORT void JNICALL Java_com_aldebaran_qi_Session_addConnectionListener(JNIEnv *env, jobject QI_UNUSED(obj), jlong pSession, jobject listener)
+{
+  qi::Session *session = reinterpret_cast<qi::Session*>(pSession);
+  auto gListener = qi::jni::makeSharedGlobalRef(env, listener);
+  session->connected.connect([gListener] {
+    qi::jni::JNIAttach attach;
+    JNIEnv *env = attach.get();
+    qi::jni::Call<void>::invoke(env, gListener.get(), "onConnected", "()V");
+  });
+  session->disconnected.connect([gListener](const std::string &reason) {
+    qi::jni::JNIAttach attach;
+    JNIEnv *env = attach.get();
+    qi::jni::Call<void>::invoke(env, gListener.get(), "onDisconnected", "(Ljava/lang/String;)V", qi::jni::toJstring(reason));
+  });
+}
+
 class Java_ClientAuthenticator : public qi::ClientAuthenticator
 {
 public:

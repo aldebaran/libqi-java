@@ -19,6 +19,12 @@ public class Session
     }
   }
 
+  public interface ConnectionListener
+  {
+    void onConnected();
+    void onDisconnected(String reason);
+  }
+
   // Native function
   private native long qiSessionCreate();
   private native void qiSessionDestroy(long pSession);
@@ -29,6 +35,7 @@ public class Session
   private native int registerService(long pSession, String name, AnyObject obj);
   private native void unregisterService(long pSession, int idx);
   private native void onDisconnected(long pSession, String callback, Object obj);
+  private native void addConnectionListener(long pSession, ConnectionListener listener);
   private native void setClientAuthenticatorFactory(long pSession, ClientAuthenticatorFactory factory);
 
   // Members
@@ -124,9 +131,15 @@ public class Session
     unregisterService(_session, idx);
   }
 
+  @Deprecated
   public void onDisconnected(String callback, Object object)
   {
     onDisconnected(_session, callback, object);
+  }
+
+  public void addConnectionListener(ConnectionListener listener)
+  {
+    addConnectionListener(_session, listener);
   }
 
   public void setClientAuthenticatorFactory(ClientAuthenticatorFactory factory)
