@@ -20,9 +20,24 @@
 
     <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+      <!-- default value for the nativeResourceFilter : used when
+           we do multilib android package -->
+      <nativeResourceFilter>lib/*/*.so</nativeResourceFilter>
+      <!-- default name is libqi-java-android -->
+      <finalName>libqi-java-android</finalName>
     </properties>
 
     <packaging>jar</packaging>
+
+    <profiles>
+      <profile>
+        <id>arm-only</id>
+        <properties>
+          <nativeResourceFilter>lib/armeabi/*.so</nativeResourceFilter>
+          <finalName>libqi-java-android-arm</finalName>
+        </properties>
+      </profile>
+    </profiles>
 
     <dependencies>
       <dependency>
@@ -40,9 +55,13 @@
     </dependencies>
 
     <build>
+      <finalName>${finalName}</finalName>
       <resources>
         <resource>
           <directory>native-android</directory>
+          <includes>
+            <include>${nativeResourceFilter}</include>
+          </includes>
         </resource>
       </resources>
       <plugins>
