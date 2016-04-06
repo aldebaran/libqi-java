@@ -70,9 +70,8 @@ public class AnyObject {
    * @param callback Callback name
    * @param object Instance of class implementing callback
    * @return an unique subscriber id
-   * @throws Exception If callback method is not found in object instance.
    */
-  public long connect(String eventName, String callback, Object object) throws Exception
+  public long connect(String eventName, String callback, Object object)
   {
     Class<?extends Object> c = object.getClass();
     Method[] methods = c.getDeclaredMethods();
@@ -88,7 +87,7 @@ public class AnyObject {
         return connect(_p, callback, object, className, eventName);
     }
 
-    throw new Exception("Cannot find " + callback + " in object " + object.toString());
+    throw new QiRuntimeException("Cannot find " + callback + " in object " + object);
   }
 
   /**
