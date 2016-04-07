@@ -154,6 +154,53 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_connect(JNIEnv *env, job
   }
 }
 
+JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_connectSignal(JNIEnv *env, jobject QI_UNUSED(obj), jlong pObject, jstring jSignalName, jobject listener)
+{
+  qi::AnyObject *anyObject = reinterpret_cast<qi::AnyObject *>(pObject);
+  std::string signalName = qi::jni::toString(jSignalName);
+  auto gListener = qi::jni::makeSharedGlobalRef(env, listener);
+
+  qi::SignalSubscriber subscriber {
+    qi::AnyFunction::fromDynamicFunction(
+      [gListener](const std::vector<qi::AnyReference> &params) -> qi::AnyReference {
+        jobject listener = gListener.get();
+
+        qi::jni::JNIAttach attach;
+        JNIEnv *env = attach.get();
+
+        const char *method = "onSignalReceived";
+        const char *methodSig = "([Ljava/lang/Object;)V";
+        jobjectArray jparams = qi::jni::toJobjectArray(params);
+        qi::jni::Call<void>::invoke(env, listener, method, methodSig, jparams);
+        jthrowable exception = env->ExceptionOccurred();
+        if (exception)
+        {
+          env->ExceptionDescribe();
+          // an exception occurred in a listener, report and ignore
+          env->ExceptionClear();
+        }
+        return {}; // a void AnyReference
+      }
+    )
+  };
+
+  qi::Future<qi::SignalLink> signalLinkFuture = anyObject->connect(signalName, subscriber);
+
+  qi::Future<qi::AnyValue> future = qi::toAnyValueFuture(std::move(signalLinkFuture));
+  auto futurePtr = new qi::Future<qi::AnyValue>(std::move(future));
+  return reinterpret_cast<jlong>(futurePtr);
+}
+
+JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_disconnectSignal(JNIEnv *env, jobject QI_UNUSED(obj), jlong pObject, jlong subscriberId)
+{
+  qi::AnyObject *anyObject = reinterpret_cast<qi::AnyObject *>(pObject);
+  qi::Future<void> disconnectFuture = anyObject->disconnect(subscriberId);
+
+  qi::Future<qi::AnyValue> future = qi::toAnyValueFuture(std::move(disconnectFuture));
+  auto futurePtr = new qi::Future<qi::AnyValue>(std::move(future));
+  return reinterpret_cast<jlong>(futurePtr);
+}
+
 JNIEXPORT void JNICALL Java_com_aldebaran_qi_AnyObject_post(JNIEnv *env, jobject QI_UNUSED(jobj), jlong pObject, jstring eventName, jobjectArray jargs)
 {
   qi::AnyObject obj = *(reinterpret_cast<qi::AnyObject *>(pObject));

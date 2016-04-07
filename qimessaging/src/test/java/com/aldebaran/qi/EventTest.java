@@ -6,8 +6,10 @@ package com.aldebaran.qi;
 
 import static org.junit.Assert.*;
 
+import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.After;
 import org.junit.Before;
@@ -126,6 +128,32 @@ public class EventTest
     client.close();
     Thread.sleep(100);
     assertTrue(callbackCalled);
+  }
+
+  @Test
+  public void testSignal() throws InterruptedException
+  {
+    final AtomicInteger value = new AtomicInteger();
+    QiSignalConnection connection = proxy.connect("fire", new QiSignalListener()
+    {
+      @Override
+      public void onSignalReceived(Object... args)
+      {
+        int v = (Integer) args[0];
+        value.set(v);
+      }
+    });
+    connection.waitForDone();
+    obj.post("fire", 42);
+    Thread.sleep(100);
+    assertEquals(42, value.get());
+    obj.post("fire", 99);
+    Thread.sleep(100);
+    assertEquals(99, value.get());
+    connection.disconnect().sync();
+    obj.post("fire", 12);
+    Thread.sleep(100);
+    assertEquals(99, value.get());
   }
 
   @Test

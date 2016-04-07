@@ -27,6 +27,8 @@ public class AnyObject {
   private native void destroy(long pObj);
   private native long connect(long pObject, String method, Object instance, String className, String eventName);
   private native long disconnect(long pObject, long subscriberId);
+  private native long connectSignal(long pObject, String signalName, QiSignalListener listener);
+  private native long disconnectSignal(long pObject, long subscriberId);
   private native long post(long pObject, String name, Object[] args);
 
   public static native Object decodeJSON(String str);
@@ -88,6 +90,25 @@ public class AnyObject {
     }
 
     throw new QiRuntimeException("Cannot find " + callback + " in object " + object);
+  }
+
+  public QiSignalConnection connect(String signalName, QiSignalListener listener)
+  {
+    long futurePtr = connectSignal(_p, signalName, listener);
+    return new QiSignalConnection(this, new Future<Long>(futurePtr));
+  }
+
+  Future<Void> disconnect(QiSignalConnection connection)
+  {
+    return connection.getFuture().andThen(new QiFunctionAdapter<Void, Long>()
+    {
+      @Override
+      public Future<Void> handleResult(Long subscriberId)
+      {
+        long futurePtr = disconnectSignal(_p, subscriberId);
+        return new Future<Void>(futurePtr);
+      }
+    });
   }
 
   /**
