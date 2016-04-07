@@ -545,5 +545,26 @@ namespace qi {
 
       env->DeleteLocalRef(obj);
     }
+
+    jobjectArray toJobjectArray(const std::vector<AnyReference> &values)
+    {
+      JNIEnv *env = qi::jni::env();
+      if (!env)
+        return nullptr;
+
+      jclass objectClass = env->FindClass("java/lang/Object");
+      jobjectArray array = env->NewObjectArray(values.size(), objectClass, nullptr);
+      qi::jni::releaseClazz(objectClass);
+      int i = 0;
+      for (const AnyReference &ref : values)
+      {
+        std::pair<AnyReference, bool> converted = ref.convert(qi::typeOf<jobject>());
+        jobject value = *reinterpret_cast<jobject *>(converted.first.rawValue());
+        env->SetObjectArrayElement(array, i++, value);
+        if (converted.second)
+          converted.first.destroy();
+      }
+      return array;
+    }
   }// !jni
 }// !qi
