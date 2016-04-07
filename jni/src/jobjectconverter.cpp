@@ -28,6 +28,8 @@
 qiLogCategory("qimessaging.jni");
 using namespace qi;
 
+static const int JAVA_INT_NBYTES = 4;
+
 struct toJObject
 {
     toJObject(jobject *result)
@@ -49,7 +51,19 @@ struct toJObject
 
       // Get Integer class template
       // ... or Boolean if byteSize is 0
-      jclass cls = qi::jni::clazz(byteSize == 0 ? "Boolean" : "Integer");
+      const char *type;
+      const char *ctorSig;
+      if (byteSize == 0) {
+        type = "Boolean";
+        ctorSig = "(Z)V";
+      } else if (byteSize <= JAVA_INT_NBYTES) {
+        type = "Integer";
+        ctorSig = "(I)V";
+      } else {
+        type = "Long";
+        ctorSig = "(J)V";
+      }
+      jclass cls = qi::jni::clazz(type);
       if (env->ExceptionCheck())
       {
         qi::jni::releaseClazz(cls);
@@ -58,7 +72,7 @@ struct toJObject
       }
 
       // Find constructor method ID
-      jmethodID mid = env->GetMethodID(cls, "<init>", byteSize == 0 ? "(Z)V" : "(I)V");
+      jmethodID mid = env->GetMethodID(cls, "<init>", ctorSig);
       if (!mid)
       {
         qi::jni::releaseClazz(cls);
@@ -67,8 +81,7 @@ struct toJObject
       }
 
       // Instanciate new Integer, yeah !
-      jint jval = value;
-      *result = env->NewObject(cls, mid, jval);
+      *result = env->NewObject(cls, mid, value);
       checkForError();
       qi::jni::releaseClazz(cls);
     }
@@ -408,7 +421,7 @@ qi::AnyReference _AnyValue_from_JObject(jobject val)
   cls = qi::jni::clazz("Long");
   if (env->IsInstanceOf(val, cls))
   {
-    jmethodID mid = env->GetMethodID(cls, "longValue","()L");
+    jmethodID mid = env->GetMethodID(cls, "longValue","()J");
     qi::jni::releaseClazz(cls);
     jlong v = env->CallLongMethod(val, mid);
     return qi::AnyReference::from(v).clone();
