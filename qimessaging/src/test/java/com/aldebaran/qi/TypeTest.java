@@ -289,8 +289,8 @@ public class TypeTest
   {
     Object o = AnyObject.decodeJSON("1");
     System.out.println(o.getClass().getName());
-    assertTrue(o instanceof java.lang.Integer);
-    assertTrue(((Integer)o).equals(1));
+    assertTrue(o instanceof Number);
+    assertEquals(((Number) o).intValue(), 1);
     String str = AnyObject.encodeJSON(o);
     assertEquals(str, "1");
 
@@ -314,8 +314,8 @@ public class TypeTest
     assertTrue(o instanceof List);
     List l = (List)o;
     assertEquals(l.size(), 3);
-    assertEquals(l.get(0), 1);
-    assertEquals(l.get(2), 3);
+    assertEquals(((Number) l.get(0)).intValue(), 1);
+    assertEquals(((Number) l.get(2)).intValue(), 3);
     str = AnyObject.encodeJSON(o);
     // be leniant on non-significant formatting
     assertEquals(str.replace(" ",""), "[1,2,3]");
@@ -337,7 +337,7 @@ public class TypeTest
     assertTrue(o instanceof List);
     List l = (List)o;
     assertEquals(l.size(), 1001);
-    assertEquals(l.get(100), 100);
+    assertEquals(((Number) l.get(100)).intValue(), 100);
     String str = AnyObject.encodeJSON(o);
     assertEquals(str.replace(" ",""), mega);
     System.out.println("big test finished");
