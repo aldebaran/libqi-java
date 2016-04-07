@@ -209,22 +209,11 @@ private:
     }
 
 public:
-    void visitTuple(const std::string& className, const std::vector<qi::AnyReference>& tuples, const std::vector<std::string>& annotations)
+    void visitTuple(const std::string& className, const std::vector<qi::AnyReference>& values, const std::vector<std::string>& annotations)
     {
-      jclass objectClass = env->FindClass("java/lang/Object");
-      jobjectArray values = env->NewObjectArray(tuples.size(), objectClass, nullptr);
-      qi::jni::releaseClazz(objectClass);
-      int i = 0;
-      for (const qi::AnyReference &ref : tuples)
-      {
-        std::pair<qi::AnyReference, bool> converted = ref.convert(qi::typeOf<jobject>());
-        jobject value = *reinterpret_cast<jobject *>(converted.first.rawValue());
-        env->SetObjectArrayElement(values, i++, value);
-        if (converted.second)
-          converted.first.destroy();
-      }
-      *result = newTuple(values);
-      env->DeleteLocalRef(values);
+      jobjectArray array = qi::jni::toJobjectArray(values);
+      *result = newTuple(array);
+      env->DeleteLocalRef(array);
     }
 
     void visitDynamic(qi::AnyReference pointee)

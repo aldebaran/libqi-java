@@ -40,6 +40,7 @@ extern "C"
 
 
 namespace qi {
+  class AnyReference;
   namespace jni {
 
     class JNIAttach
@@ -65,6 +66,7 @@ namespace qi {
     // Signature
     std::string javaSignature(const std::string& qiSignature);
     std::string qiSignature(jclass clazz);
+    jobjectArray toJobjectArray(const std::vector<AnyReference> &values);
 
     template<typename R>
     struct Call
