@@ -3,19 +3,16 @@
 **  See COPYING for the license
 */
 import com.aldebaran.qi.*;
+import java.util.concurrent.TimeUnit;
 public class SayHello {
 
 	public static void main(String[] args) throws Exception {
-		Application app = new Application(args);
 		Session session = new Session();
 		Future<Void> fut = session.connect("tcp://nao.local:9559");
-		synchronized(fut) {
-			fut.wait(1000);
-		}
+		fut.get(1, TimeUnit.SECONDS);
 
 		com.aldebaran.qi.AnyObject tts = null;
-		tts = session.service("ALTextToSpeech");
-
+		tts = session.service("ALTextToSpeech").get();
 
 		boolean ping = tts.<Boolean>call("ping").get();
 		if (!ping) {
