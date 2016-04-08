@@ -4,6 +4,7 @@
 */
 package com.aldebaran.qi;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public class AnyObject {
@@ -73,6 +74,7 @@ public class AnyObject {
    * @param object Instance of class implementing callback
    * @return an unique subscriber id
    */
+  @Deprecated
   public long connect(String eventName, String callback, Object object)
   {
     Class<?extends Object> c = object.getClass();
@@ -98,6 +100,34 @@ public class AnyObject {
     return new QiSignalConnection(this, new Future<Long>(futurePtr));
   }
 
+  public QiSignalConnection connect(String signalName, final Object annotatedSlotContainer, String slotName)
+  {
+    final Method method = findSlot(annotatedSlotContainer, slotName);
+
+    if (method == null)
+      throw new QiSlotException("Slot \"" + slotName + "\" not found in " + annotatedSlotContainer.getClass().getName()
+          + " (did you forget the @QiSlot annotation?)");
+
+    return connect(signalName, new QiSignalListener()
+    {
+      @Override
+      public void onSignalReceived(Object... args)
+      {
+        try
+        {
+          method.setAccessible(true);
+          method.invoke(annotatedSlotContainer, args);
+        } catch (IllegalAccessException e) {
+          throw new QiSlotException(e);
+        } catch (IllegalArgumentException e) {
+          throw new QiSlotException(e);
+        } catch (InvocationTargetException e) {
+          throw new QiSlotException(e);
+        }
+      }
+    });
+  }
+
   Future<Void> disconnect(QiSignalConnection connection)
   {
     return connection.getFuture().andThen(new QiFunctionAdapter<Void, Long>()
@@ -116,6 +146,7 @@ public class AnyObject {
    * @param subscriberId id returned by connect()
    *
    */
+  @Deprecated
   public long disconnect(long subscriberId)
   {
     return disconnect(_p, subscriberId);
@@ -147,5 +178,32 @@ public class AnyObject {
   {
     destroy(_p);
     super.finalize();
+  }
+
+  private static Method findSlot(Object annotatedSlotContainer, String slotName)
+  {
+    Class<?> clazz = annotatedSlotContainer.getClass();
+    Method slot = null;
+    for (Method method : clazz.getDeclaredMethods()) {
+      QiSlot qiSlot = method.getAnnotation(QiSlot.class);
+
+      if (qiSlot == null)
+        // not a slot
+        continue;
+
+      String name = qiSlot.value();
+
+      if (name.isEmpty())
+        // no name defined in QiSlot, use the method name
+        name = method.getName();
+
+      if (slotName.equals(name)) {
+        if (slot != null)
+          throw new QiSlotException("More than one slot with name \"" + slotName + "\" in " + clazz.getName());
+        slot = method;
+        // continue iteration to detect duplicated slot names
+      }
+    }
+    return slot;
   }
 }

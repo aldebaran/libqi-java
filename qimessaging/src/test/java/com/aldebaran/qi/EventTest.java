@@ -157,6 +157,69 @@ public class EventTest
   }
 
   @Test
+  public void testSignalSlot() throws InterruptedException
+  {
+    final AtomicBoolean correct = new AtomicBoolean();
+    Object callback = new Object()
+    {
+      @QiSlot
+      public void onResult(int i, String s)
+      {
+        correct.set(i == 42 && "hello".equals(s));
+      }
+    };
+    QiSignalConnection connection = proxy.connect("fire", callback, "onResult");
+    connection.waitForDone();
+    obj.post("fire", 42, "hello");
+    Thread.sleep(100);
+    assertTrue(correct.get());
+    connection.disconnect();
+  }
+
+  @Test(expected=QiSlotException.class)
+  public void testSignalAmbiguousSlot()
+  {
+    Object callback = new Object()
+    {
+      @QiSlot
+      public void onResult(int i, String s)
+      {
+      }
+
+      @QiSlot
+      public void onResult()
+      {
+      }
+    };
+    proxy.connect("fire", callback, "onResult");
+  }
+
+  @Test
+  public void testSignalNamedSlot() throws InterruptedException
+  {
+    final AtomicBoolean correct = new AtomicBoolean();
+    Object callback = new Object()
+    {
+      @QiSlot("abc")
+      public void onResult(int i, String s)
+      {
+        correct.set(i == 42 && "hello".equals(s));
+      }
+
+      @QiSlot("def")
+      public void onResult()
+      {
+      }
+    };
+    QiSignalConnection connection = proxy.connect("fire", callback, "abc");
+    connection.waitForDone();
+    obj.post("fire", 42, "hello");
+    Thread.sleep(100);
+    assertTrue(correct.get());
+    connection.disconnect();
+  }
+
+  @Test
   public void testSessionConnectionListener() throws ExecutionException, InterruptedException
   {
     Session session = new Session();
