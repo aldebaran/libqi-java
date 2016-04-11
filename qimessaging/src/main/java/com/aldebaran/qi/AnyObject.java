@@ -6,6 +6,8 @@ package com.aldebaran.qi;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
+import java.util.Arrays;
 
 public class AnyObject {
 
@@ -113,19 +115,34 @@ public class AnyObject {
       @Override
       public void onSignalReceived(Object... args)
       {
+        Object[] convertedArgs = null;
         try
         {
           method.setAccessible(true);
-          method.invoke(annotatedSlotContainer, args);
+          // convert Tuples to custom @QiStruct if necessary
+          convertedArgs = StructConverter.tuplesToStructs(args, method.getGenericParameterTypes());
+          method.invoke(annotatedSlotContainer, convertedArgs);
         } catch (IllegalAccessException e) {
           throw new QiSlotException(e);
         } catch (IllegalArgumentException e) {
-          throw new QiSlotException(e);
+          String message = "Cannot call method " + method + " with parameter types " + Arrays.toString(getTypes(convertedArgs));
+          throw new QiSlotException(message, e);
         } catch (InvocationTargetException e) {
+          throw new QiSlotException(e);
+        } catch (QiConversionException e) {
           throw new QiSlotException(e);
         }
       }
     });
+  }
+
+  private static Class<?>[] getTypes(Object[] values) {
+    Class<?>[] types = new Class[values.length];
+    for (int i = 0; i < types.length; ++i) {
+      Object value = values[i];
+      types[i] = value == null ? null : value.getClass();
+    }
+    return types;
   }
 
   Future<Void> disconnect(QiSignalConnection connection)

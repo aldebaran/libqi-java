@@ -6,8 +6,13 @@ package com.aldebaran.qi;
 
 import static org.junit.Assert.*;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -17,12 +22,12 @@ import org.junit.Test;
 
 public class EventTest
 {
-  private boolean         callbackCalled = false;
-  private int             callbackParam = 0;
-  public AnyObject           proxy = null;
-  public AnyObject           obj = null;
-  public Session          s = null;
-  public Session          client = null;
+  private boolean callbackCalled = false;
+  private int callbackParam = 0;
+  public AnyObject proxy = null;
+  public AnyObject obj = null;
+  public Session s = null;
+  public Session client = null;
   public ServiceDirectory sd = null;
 
   @Before
@@ -43,6 +48,7 @@ public class EventTest
 
     // Register event 'Fire'
     ob.advertiseSignal("fire::(i)");
+    ob.advertiseSignal("bigFire::([({s((s(is))[(s(is))])})])");
     ob.advertiseMethod("reply::s(s)", reply, "Concatenate given argument with 'bim !'");
     ob.advertiseMethod("answer::s()", reply, "Return given argument");
     ob.advertiseMethod("add::i(iii)", reply, "Return sum of arguments");
@@ -88,7 +94,8 @@ public class EventTest
   {
 
     @SuppressWarnings("unused")
-    Object callback = new Object() {
+    Object callback = new Object()
+    {
       public void fireCallback(Integer i)
       {
         callbackCalled = true;
@@ -97,9 +104,11 @@ public class EventTest
     };
 
     long sid = 0;
-    try {
+    try
+    {
       sid = proxy.connect("fire::(i)", "fireCallback::(i)", callback);
-    } catch (Exception e) {
+    } catch (Exception e)
+    {
       fail("Connect to event must succeed : " + e.getMessage());
     }
     obj.post("fire", 42);
@@ -112,7 +121,7 @@ public class EventTest
     callbackCalled = false;
     obj.post("fire", 42);
     Thread.sleep(100);
-    assertTrue("Event callback not called ", ! callbackCalled);
+    assertTrue("Event callback not called ", !callbackCalled);
   }
 
   public void testCallback(String s)
@@ -176,7 +185,7 @@ public class EventTest
     connection.disconnect();
   }
 
-  @Test(expected=QiSlotException.class)
+  @Test(expected = QiSlotException.class)
   public void testSignalAmbiguousSlot()
   {
     Object callback = new Object()
@@ -217,6 +226,68 @@ public class EventTest
     Thread.sleep(100);
     assertTrue(correct.get());
     connection.disconnect();
+  }
+
+  @QiStruct
+  static class X
+  {
+    String s;
+    Tuple raw;
+  }
+
+  @QiStruct
+  static class Y
+  {
+    X head;
+    List<X> tail;
+  }
+
+  @QiStruct
+  static class Z
+  {
+    Map<String, Y> map;
+  }
+
+  @Test
+  public void testSignalSlotAutoConversion() throws ExecutionException, TimeoutException
+  {
+    // final Promise<Z> zPromise = new Promise<>();
+    final Promise<List<Z>> listPromise = new Promise<List<Z>>();
+    Object callback = new Object()
+    {
+      @QiSlot
+      public void onResult(List<Z> l)
+      {
+        listPromise.setValue(l);
+      }
+    };
+
+    QiSignalConnection connection = proxy.connect("bigFire", callback, "onResult");
+    connection.waitForDone();
+
+    obj.post("bigFire", buildBigFireParams());
+    List<Z> result = listPromise.getFuture().get(100, TimeUnit.MILLISECONDS);
+    assertEquals(1, result.size());
+    Z z = result.get(0);
+    Y y = z.map.get("myKey");
+    X x = y.head;
+    assertEquals("x1", x.s);
+    assertEquals(1, x.raw.get(0));
+    assertEquals("one", x.raw.get(1));
+  }
+
+  private static List<Tuple> buildBigFireParams()
+  {
+    Tuple x = Tuple.of("x1", Tuple.of(1, "one"));
+    List<Tuple> listX = new ArrayList<Tuple>();
+    listX.add(x);
+    Tuple y = Tuple.of(x, listX);
+    Map<String, Tuple> map = new HashMap<String, Tuple>();
+    map.put("myKey", y);
+    Tuple z = Tuple.of(map);
+    List<Tuple> result = new ArrayList<Tuple>();
+    result.add(z);
+    return result;
   }
 
   @Test
