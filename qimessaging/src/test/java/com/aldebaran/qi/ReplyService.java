@@ -5,7 +5,7 @@
 package com.aldebaran.qi;
 
 import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -40,7 +40,7 @@ public class ReplyService extends QiService
 
       ob.advertiseProperty("name", String.class);
       ob.advertiseProperty("uid", Integer.class);
-      ob.advertiseProperty("settings", Hashtable.class);
+      ob.advertiseProperty("settings", HashMap.class);
 
     } catch (Exception e1) {
       System.out.println("Cannot advertise methods and signals : " + e1.getMessage());
@@ -124,7 +124,7 @@ public class ReplyService extends QiService
 
   public Map<Integer, Boolean> abacus(Map<Integer, Boolean> map)
   {
-    Map<Integer, Boolean> ret = new Hashtable<Integer, Boolean>();
+    Map<Integer, Boolean> ret = new HashMap<Integer, Boolean>();
 
     System.out.println("abacus : Received args : " + map);
     try

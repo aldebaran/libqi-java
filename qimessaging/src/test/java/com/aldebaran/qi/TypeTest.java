@@ -5,7 +5,7 @@
 package com.aldebaran.qi;
 
 import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -13,7 +13,6 @@ import com.aldebaran.qi.ServiceDirectory;
 import com.aldebaran.qi.Session;
 import com.aldebaran.qi.ReplyService;
 import com.aldebaran.qi.AnyObject;
-import com.aldebaran.qi.Application;
 
 import static org.junit.Assert.*;
 
@@ -181,11 +180,11 @@ public class TypeTest
   @Test
   public void testEmptyMap()
   {
-    Map<Integer, Boolean> args = new Hashtable<Integer, Boolean>();
+    Map<Integer, Boolean> args = new HashMap<Integer, Boolean>();
 
     Map<Integer, Boolean> ret = null;
     try {
-      ret = proxy.<Hashtable<Integer, Boolean> >call("abacus", args).get();
+      ret = proxy.<HashMap<Integer, Boolean> >call("abacus", args).get();
     }
     catch (Exception e)
     {
@@ -201,7 +200,7 @@ public class TypeTest
   @Test
   public void testIntegerBooleanMap()
   {
-    Map<Integer, Boolean> args = new Hashtable<Integer, Boolean>();
+    Map<Integer, Boolean> args = new HashMap<Integer, Boolean>();
     args.put(4, true);
     args.put(3, false);
     args.put(2, false);
@@ -209,7 +208,7 @@ public class TypeTest
 
     Map<Integer, Boolean> ret = null;
     try {
-      ret = proxy.<Hashtable<Integer, Boolean> >call("abacus", args).get();
+      ret = proxy.<HashMap<Integer, Boolean> >call("abacus", args).get();
     }
     catch (Exception e)
     {

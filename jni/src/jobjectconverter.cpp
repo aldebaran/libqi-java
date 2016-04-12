@@ -162,7 +162,7 @@ struct toJObject
 
     void visitMap(qi::AnyIterator it, qi::AnyIterator end)
     {
-      JNIHashTable ht;
+      JNIMap map;
 
       for (; it != end; ++it)
       {
@@ -171,7 +171,7 @@ struct toJObject
         std::pair<qi::AnyReference, bool> valConv =
           (*it)[1].convert(qi::typeOf<jobject>());
 
-        ht.setItem(*(jobject*)keyConv.first.rawValue(),
+        map.put(*(jobject*)keyConv.first.rawValue(),
             *(jobject*)valConv.first.rawValue());
 
         if (keyConv.second)
@@ -180,7 +180,7 @@ struct toJObject
           valConv.first.destroy();
       }
 
-      *result = ht.object();
+      *result = map.object();
     }
 
     void visitObject(qi::GenericObject obj)
@@ -321,20 +321,20 @@ qi::AnyReference AnyValue_from_JObject_List(jobject val)
   return qi::AnyReference::from(res);
 }
 
-qi::AnyReference AnyValue_from_JObject_Map(jobject hashtable)
+qi::AnyReference AnyValue_from_JObject_Map(jobject hashmap)
 {
   JNIEnv* env;
   std::map<qi::AnyValue, qi::AnyValue>& res = *new std::map<qi::AnyValue, qi::AnyValue>();
-  JNIHashTable ht(hashtable);
-  jobject key, value;
+  JNIMap map(hashmap);
 
   JVM()->GetEnv((void **) &env, QI_JNI_MIN_VERSION);
 
-  JNIEnumeration keys = ht.keys();
-  while (keys.hasNextElement())
+  jobjectArray keys = map.keys();
+  int size = env->GetArrayLength(keys);
+  for (int i = 0; i < size; ++i)
   {
-    key = keys.nextElement();
-    value = ht.at(key);
+    jobject key = env->GetObjectArrayElement(keys, i);
+    jobject value = map.get(key);
     std::pair<qi::AnyReference, bool> convKey = AnyValue_from_JObject(key);
     std::pair<qi::AnyReference, bool> convValue = AnyValue_from_JObject(value);
     res[qi::AnyValue(convKey.first, !convKey.second, true)] = qi::AnyValue(convValue.first, !convValue.second, true);

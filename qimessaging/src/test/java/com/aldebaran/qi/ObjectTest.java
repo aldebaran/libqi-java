@@ -10,7 +10,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
@@ -150,7 +150,7 @@ public class ObjectTest
       fail("Property must not fail");
     }
 
-    Map<Object, Object> settings = new Hashtable<Object, Object>();
+    Map<Object, Object> settings = new HashMap<Object, Object>();
     settings.put("foo", true);
     settings.put("bar", "This is bar");
     try {

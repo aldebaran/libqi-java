@@ -4,9 +4,9 @@
 */
 package com.aldebaran.qi;
 
-import java.util.Hashtable;
-
 import static org.junit.Assert.*;
+
+import java.util.HashMap;
 
 import org.junit.After;
 import org.junit.Before;
@@ -181,7 +181,7 @@ public class TupleTest
   @Test(expected=ClassCastException.class)
   public void testClassCastException() throws IndexOutOfBoundsException, ClassCastException, IllegalArgumentException, IllegalAccessException
   {
-    Tuple tuple = Tuple.of("42", 42, new Hashtable<Integer, String>());
+    Tuple tuple = Tuple.of("42", 42, new HashMap<Integer, String>());
 
     @SuppressWarnings("unused")
     ReplyService tmp = tuple.<ReplyService>get(0);
@@ -189,7 +189,7 @@ public class TupleTest
 
   public void testIllegalArgumentException() throws IndexOutOfBoundsException, ClassCastException, IllegalArgumentException, IllegalAccessException
   {
-    Tuple tuple = Tuple.of("42", new Session(), new Hashtable<AnyObject, Session>());
+    Tuple tuple = Tuple.of("42", new Session(), new HashMap<AnyObject, Session>());
 
     tuple.<Long>set(0, new Long(1234567890));
     tuple.<Long>set(1, new Long(1234567890));
