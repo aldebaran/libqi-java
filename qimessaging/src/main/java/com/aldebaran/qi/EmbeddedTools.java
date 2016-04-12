@@ -6,7 +6,7 @@ package com.aldebaran.qi;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -43,7 +43,7 @@ public class EmbeddedTools
     DynamicObjectBuilder ob = new DynamicObjectBuilder();
     AnyObject obj  = ob.object();
 
-    Map<Object, Object> m  = new Hashtable<Object, Object>();
+    Map<Object, Object> m  = new HashMap<Object, Object>();
     ArrayList<Object>             al = new ArrayList<Object>();
 
     // Initialize generic type system

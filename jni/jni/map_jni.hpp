@@ -11,26 +11,22 @@
 #define _JAVA_JNI_MAP_HPP_
 
 #include <jni.h>
-#include <enumeration_jni.hpp>
 
 /**
- * @brief The JNIHashTable class Helper class to manipulation Java Hashtable<?, ?> (map) in C++
+ * @brief The JNIMap class Helper class to manipulation Java Map<?, ?> in C++
  */
-class JNIHashTable
+class JNIMap
 {
   public:
-    JNIHashTable();
-    JNIHashTable(jobject obj);
-    ~JNIHashTable();
+    JNIMap();
+    JNIMap(jobject obj);
+    ~JNIMap();
 
     int     size();
-    JNIEnumeration keys();
-    jobject at(jobject key);
+    jobjectArray keys();
+    jobject get(jobject key);
     jobject object();
-    bool    setItem(jobject key, jobject value);
-
-    jobject at(int pos);
-    bool    next(int *pos, jobject* key, jobject* value);
+    void    put(jobject key, jobject value);
 
   private:
     jobject _obj;

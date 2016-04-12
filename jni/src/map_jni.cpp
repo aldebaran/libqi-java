@@ -15,59 +15,58 @@
 
 qiLogCategory("qimessaging.jni");
 
-JNIHashTable::JNIHashTable()
+JNIMap::JNIMap()
 {
    JVM()->GetEnv((void**) &_env, QI_JNI_MIN_VERSION);
-  _cls = _env->FindClass("java/util/Hashtable");
+  _cls = _env->FindClass("java/util/HashMap");
 
   jmethodID mid = _env->GetMethodID(_cls, "<init>", "()V");
   if (!mid)
   {
-    qiLogFatal() << "JNIHashTable::JNIHashTable : Cannot call constructor";
-    throw std::runtime_error("JNIHashTable::JNIHashTable : Cannot call constructor");
+    qiLogFatal() << "JNIMap::JNIMap : Cannot call constructor";
+    throw std::runtime_error("JNIMap::JNIMap : Cannot call constructor");
   }
 
   _obj = _env->NewObject(_cls, mid);
 }
 
-JNIHashTable::JNIHashTable(jobject obj)
+JNIMap::JNIMap(jobject obj)
 {
    JVM()->GetEnv((void**) &_env, QI_JNI_MIN_VERSION);
    _obj = obj;
-  _cls = _env->FindClass("java/util/Hashtable");
+  _cls = _env->FindClass("java/util/Map");
 }
 
-JNIHashTable::~JNIHashTable()
+JNIMap::~JNIMap()
 {
   _env->DeleteLocalRef(_cls);
 }
 
-bool JNIHashTable::setItem(jobject key, jobject value)
+void JNIMap::put(jobject key, jobject value)
 {
   jmethodID mid = _env->GetMethodID(_cls, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
 
   if (!key || !value)
   {
-    qiLogFatal() << "JNIHashTable::setItem() : Given key/value pair is null";
-    return false;
+    qiLogFatal() << "JNIMap::put() : Given key/value pair is null";
+    return;
   }
 
   if (!mid)
   {
-    qiLogFatal() << "JNIHashTable::setItem() : Cannot call put";
-    throw std::runtime_error("JNIHashTable::setItem() : Cannot call put");
+    qiLogFatal() << "JNIMap::put() : Cannot call put";
+    throw std::runtime_error("JNIMap::put() : Cannot call put");
   }
 
   _env->CallObjectMethod(_obj, mid, key, value);
-  return true;
 }
 
-jobject JNIHashTable::object()
+jobject JNIMap::object()
 {
   return _obj;
 }
 
-int     JNIHashTable::size()
+int     JNIMap::size()
 {
   jmethodID mid = _env->GetMethodID(_cls, "size", "()I");
 
@@ -77,44 +76,33 @@ int     JNIHashTable::size()
   return _env->CallIntMethod(_obj, mid);
 }
 
-JNIEnumeration JNIHashTable::keys()
+jobjectArray JNIMap::keys()
 {
-  jmethodID mid = _env->GetMethodID(_cls, "keys", "()Ljava/util/Enumeration;");
-
-  if (!mid)
-  {
-    qiLogFatal() << "JNIHashTable : Cannot call method keys";
-    throw std::runtime_error("JNIHashTable : Cannot call method keys");
-  }
-
-  return JNIEnumeration(_env->CallObjectMethod(_obj, mid));
+  jobject set = qi::jni::Call<jobject>::invoke(_env, _obj, "keySet", "()Ljava/util/Set;");
+  if (!set)
+    return nullptr;
+  jobject asArray = qi::jni::Call<jobject>::invoke(_env, set, "toArray", "()[Ljava/lang/Object;");
+  if (!asArray)
+    return nullptr;
+  return static_cast<jobjectArray>(asArray);
 }
 
-jobject JNIHashTable::at(jobject key)
+jobject JNIMap::get(jobject key)
 {
   jmethodID mid = _env->GetMethodID(_cls, "get", "(Ljava/lang/Object;)Ljava/lang/Object;");
 
   if (!key)
   {
-    qiLogFatal() << "JNIHashTable::at() : Given key is null";
+    qiLogFatal() << "JNIMap::get() : Given key is null";
     return 0;
   }
 
   if (!mid)
   {
-    qiLogFatal() << "JNIHashTable::at() : Cannot call method get";
-    throw std::runtime_error("JNIHashTable::at() : Cannot call method get");
+    qiLogFatal() << "JNIMap::get() : Cannot call method get";
+    throw std::runtime_error("JNIMap::get() : Cannot call method get");
   }
 
   return _env->CallObjectMethod(_obj, mid, key);
 }
 
-jobject JNIHashTable::at(int pos)
-{
-  throw std::runtime_error("JNIHashTable::at() : Not implemented");
-}
-
-bool    JNIHashTable::next(int* pos, jobject* key, jobject* value)
-{
-  throw std::runtime_error("JNIHashTable::next() : Not implemented");
-}
