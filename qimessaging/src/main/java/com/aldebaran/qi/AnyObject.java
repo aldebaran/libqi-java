@@ -6,7 +6,6 @@ package com.aldebaran.qi;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 import java.util.Arrays;
 
 public class AnyObject {
@@ -49,7 +48,14 @@ public class AnyObject {
 
   public Future<Void> setProperty(String property, Object o)
   {
-    return new Future<Void>(setProperty(_p, property, o));
+    try {
+      // convert custom structs to tuples if necessary
+      Object convertedProperty = StructConverter.structsToTuples(o);
+      return new Future<Void>(setProperty(_p, property, convertedProperty));
+    } catch (QiConversionException e)
+    {
+      throw new QiRuntimeException(e);
+    }
   }
 
   public <T> Future<T> property(String property)
@@ -119,7 +125,7 @@ public class AnyObject {
         try
         {
           method.setAccessible(true);
-          // convert Tuples to custom @QiStruct if necessary
+          // convert tuples to custom structs if necessary
           convertedArgs = StructConverter.tuplesToStructs(args, method.getGenericParameterTypes());
           method.invoke(annotatedSlotContainer, convertedArgs);
         } catch (IllegalAccessException e) {
