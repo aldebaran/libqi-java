@@ -20,6 +20,10 @@ public class Tuple
     return new Tuple(values);
   }
 
+  public static Tuple fromStruct(Object struct) throws QiConversionException {
+    return StructConverter.structToTuple(struct);
+  }
+
   // called from native
   private Tuple(Object... values) {
     this.values = values;
