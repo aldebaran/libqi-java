@@ -37,9 +37,8 @@ public class Tuple
     return values.length;
   }
 
-  @SuppressWarnings("unchecked")
-  public <T> T get(int index) {
-    return (T) values[index];
+  public Object get(int index) {
+    return values[index];
   }
 
   public <T> void set(int index, T value) {
