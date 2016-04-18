@@ -118,6 +118,9 @@ public class StructConverter
     if (source == null)
       return null;
 
+    if (source instanceof Object[])
+      return structsToTuplesInArray((Object[]) source);
+
     if (source instanceof List)
       return structsToTuplesInList((List<?>) source);
 
@@ -154,6 +157,14 @@ public class StructConverter
     {
       throw new QiConversionException(e);
     }
+  }
+
+  public static Object[] structsToTuplesInArray(Object[] array) throws QiConversionException
+  {
+    Object[] convertedArray = new Object[array.length];
+    for (int i = 0; i < array.length; ++i)
+      convertedArray[i] = structsToTuples(array[i]);
+    return convertedArray;
   }
 
   public static List<?> structsToTuplesInList(List<?> list) throws QiConversionException
