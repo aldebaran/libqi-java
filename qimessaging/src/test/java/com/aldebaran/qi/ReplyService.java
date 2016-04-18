@@ -7,6 +7,7 @@ package com.aldebaran.qi;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 public class ReplyService extends QiService
@@ -180,5 +181,21 @@ public class ReplyService extends QiService
   public void throwUp()
   {
     throw new RuntimeException("I has faild");
+  }
+
+  public Tuple genTuple() {
+    return Tuple.of(42, "forty-two");
+  }
+
+  public ArrayList<Tuple> genTuples() {
+    // services expect ArrayList, not List :(
+    ArrayList<Tuple> tuples = new ArrayList<Tuple>();
+    tuples.add(genTuple());
+    return tuples;
+  }
+
+  public Integer getFirstFieldValue(Tuple tuple)
+  {
+    return (Integer) tuple.get(0);
   }
 }

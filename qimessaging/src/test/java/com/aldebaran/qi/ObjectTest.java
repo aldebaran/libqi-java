@@ -10,7 +10,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.lang.reflect.Type;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
@@ -54,6 +56,9 @@ public class ObjectTest
     ob.advertiseMethod("createObject::o()", reply, "Return a test object");
     ob.advertiseMethod("setStored::v(i)", reply, "Set stored value");
     ob.advertiseMethod("waitAndAddToStored::i(ii)", reply, "Wait given time, and return stored + val");
+    ob.advertiseMethod("genTuple::(is)()", reply, "Return a tuple");
+    ob.advertiseMethod("genTuples::[(is)]()", reply, "Return a tuple list");
+    ob.advertiseMethod("getFirstFieldValue::i((is))", reply, "Return the first field value as int");
 
     QiService replyts = new ReplyService();
     DynamicObjectBuilder obts = new DynamicObjectBuilder();
@@ -210,5 +215,49 @@ public class ObjectTest
         assertTrue(e.getMessage().contains("Can't find method"));
       }
     assertTrue(ok);
+  }
+
+  @QiStruct
+  static class Item
+  {
+    int i;
+    String s;
+
+    Item()
+    {
+    }
+
+    Item(int i, String s)
+    {
+      this.i = i;
+      this.s = s;
+    }
+  }
+
+  @Test
+  public void testCallReturnStructConversion() throws ExecutionException
+  {
+    Tuple tuple = proxy.<Tuple> call("genTuple").get();
+    assertEquals(42, tuple.get(0));
+    assertEquals("forty-two", tuple.get(1));
+
+    Item item = proxy.call(Item.class, "genTuple").get();
+    assertEquals(42, item.i);
+    assertEquals("forty-two", item.s);
+
+    Type listOfItemsType = new TypeToken<List<Item>>() {}.getType();
+    @SuppressWarnings("unchecked")
+    List<Item> items = (List<Item>) proxy.call(listOfItemsType, "genTuples").get();
+    item = items.get(0);
+    assertEquals(42, item.i);
+    assertEquals("forty-two", item.s);
+  }
+
+  @Test
+  public void testCallParameterStructConversion() throws ExecutionException
+  {
+    Item item = new Item(42, "forty-two");
+    int value = proxy.<Integer> call(int.class, "getFirstFieldValue", item).get();
+    assertEquals(42, value);
   }
 }
