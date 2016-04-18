@@ -204,19 +204,11 @@ public class StructConverterTest
 
   private static Type getListOfPersonsType()
   {
-    class X
-    {
-      List<Person> list;
-    }
-    return X.class.getDeclaredFields()[0].getGenericType();
+    return new TypeToken<List<Person>>() {}.getType();
   }
 
   private static Type getMapOfStringPersonsType()
   {
-    class X
-    {
-      Map<String, Person> map;
-    }
-    return X.class.getDeclaredFields()[0].getGenericType();
+    return new TypeToken<Map<String, Person>>() {}.getType();
   }
 }
