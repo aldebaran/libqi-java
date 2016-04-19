@@ -18,12 +18,12 @@ public class Application
   }
 
   // Native function
-  private static native long qiApplicationCreate(String[] args, String defaultUrl, boolean listen);
-  private static native long qiApplicationGetSession(long pApp);
-  private static native void qiApplicationStart(long pApp);
-  private static native void qiApplicationRun(long pApp);
-  private static native void qiApplicationStop(long pApp);
-  private static native void qiApplicationDestroy(long pApplication);
+  private native long qiApplicationCreate(String[] args, String defaultUrl, boolean listen);
+  private native long qiApplicationGetSession(long pApp);
+  private native void qiApplicationStart(long pApp);
+  private native void qiApplicationRun(long pApp);
+  private native void qiApplicationStop(long pApp);
+  private native void qiApplicationDestroy(long pApplication);
 
   /**
   * Crude interface to native log system
@@ -62,8 +62,8 @@ public class Application
 
   private void init(String[] args, String defaultUrl, boolean listen)
   {
-    _application = Application.qiApplicationCreate(args, defaultUrl, listen);
-    _session = new Session(Application.qiApplicationGetSession(_application));
+    _application = qiApplicationCreate(args, defaultUrl, listen);
+    _session = new Session(qiApplicationGetSession(_application));
   }
 
   /**
@@ -71,7 +71,7 @@ public class Application
    */
   public void start()
   {
-    Application.qiApplicationStart(_application);
+    qiApplicationStart(_application);
   }
 
   public Session session()
@@ -85,7 +85,7 @@ public class Application
    */
   public void stop()
   {
-    Application.qiApplicationStop(_application);
+    qiApplicationStop(_application);
   }
 
   /**
@@ -97,7 +97,7 @@ public class Application
    */
   public void run()
   {
-    Application.qiApplicationRun(_application);
+    qiApplicationRun(_application);
   }
 
 }

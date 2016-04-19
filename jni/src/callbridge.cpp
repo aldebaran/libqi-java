@@ -70,7 +70,7 @@ qi::Future<qi::AnyValue>* call_from_java(JNIEnv *env, qi::AnyObject object, cons
   } catch (std::runtime_error &e)
   {
     delete fut;
-    throwJavaError(env, e.what());
+    throwNewDynamicCallException(env, e.what());
     return 0;
   }
   return fut;
@@ -100,7 +100,7 @@ qi::AnyReference call_to_java(std::string signature, void* data, const qi::Gener
   if (info == 0)
   {
     qiLogError() << "Internal method informations are not valid";
-    throwJavaError(env, "Internal method informations are not valid");
+    throwNewException(env, "Internal method informations are not valid");
     return res;
   }
   // Translate parameters from AnyValues to jobjects

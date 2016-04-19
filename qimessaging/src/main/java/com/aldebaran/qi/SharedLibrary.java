@@ -49,7 +49,7 @@ public class SharedLibrary
   private static boolean loadLibHelper(String libraryName)
   {
     System.out.format("Loading %s\n", libraryName);
-    String resourcePath = "/" + libraryName;
+    String resourcePath = "/" + getSubDir() + "/" + libraryName;
     URL libraryUrl = SharedLibrary.class.getResource(resourcePath);
     if (libraryUrl == null)
     {
@@ -71,6 +71,26 @@ public class SharedLibrary
       // then, try as a file in the jar
       return extractAndLoad(libraryUrl, libraryName);
     }
+  }
+
+  private static String getSubDir() {
+    String osName = System.getProperty("os.name").toLowerCase();
+    String osArch = System.getProperty("os.arch").toLowerCase();
+    if (osName.contains("mac")) {
+      return "mac64";
+    }
+    else if (osName.contains("win")) {
+      if (osArch.contains("x86")) {
+        return "win32";
+      }
+      if (osArch.contains("64")) {
+        return "win64";
+      }
+    }
+    else if (osName.contains("linux")) {
+        return "linux64";
+    }
+    return "";
   }
 
   private static boolean extractAndLoad(URL libraryUrl, String libraryName)

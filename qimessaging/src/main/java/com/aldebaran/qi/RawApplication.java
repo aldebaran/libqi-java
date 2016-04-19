@@ -18,10 +18,10 @@ public class RawApplication
   }
 
   // Native function
-  private static native long qiApplicationCreate(String[] args);
-  private static native void qiApplicationRun(long pApp);
-  private static native void qiApplicationStop(long pApp);
-  private static native void qiApplicationDestroy(long pApplication);
+  private native long qiApplicationCreate(String[] args);
+  private native void qiApplicationRun(long pApp);
+  private native void qiApplicationStop(long pApp);
+  private native void qiApplicationDestroy(long pApplication);
 
   // Members
   private long _application;
@@ -38,7 +38,7 @@ public class RawApplication
   {
     if (args == null)
       throw new NullPointerException("Creating application with null args");
-    _application = RawApplication.qiApplicationCreate(args);
+    _application = qiApplicationCreate(args);
   }
 
   /**
@@ -47,7 +47,7 @@ public class RawApplication
    */
   public void stop()
   {
-    RawApplication.qiApplicationStop(_application);
+    qiApplicationStop(_application);
   }
 
   /**
@@ -59,7 +59,7 @@ public class RawApplication
    */
   public void run()
   {
-    RawApplication.qiApplicationRun(_application);
+    qiApplicationRun(_application);
   }
 
 }

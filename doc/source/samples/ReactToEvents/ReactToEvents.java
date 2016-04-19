@@ -3,10 +3,10 @@
 **  See COPYING for the license
 */
 import com.aldebaran.qi.Application;
-import com.aldebaran.qi.CallError;
 import com.aldebaran.qi.Future;
 import com.aldebaran.qi.AnyObject;
 import com.aldebaran.qi.Session;
+import java.util.concurrent.TimeUnit;
 
 public class ReactToEvents {
 
@@ -24,11 +24,7 @@ public class ReactToEvents {
 		public void onTouch(Object value) {
 			float data = (Float) value;
 			if (data == 1.0) {
-				try {
-					tts.call("say", "ouch");
-				} catch (CallError error) {
-					System.err.println(error.getMessage());
-				}
+				tts.call("say", "ouch");
 			}
 		}
 
@@ -39,15 +35,14 @@ public class ReactToEvents {
 		if (args.length == 1) {
 			url = args[0];
 		}
-		Application application = new Application(args);
+		String[] appArgs = { "--qi-url", url };
+		Application application = new Application(appArgs);
 		Session session = new Session();
 		Future<Void> fut = session.connect(url);
-		synchronized(fut) {
-			fut.wait(1000);
-		}
-		tts = session.service("ALTextToSpeech");
+		fut.get(1, TimeUnit.SECONDS);
+		tts = session.service("ALTextToSpeech").get();
 		callback = new CallBack(tts);
-		memory = session.service("ALMemory");
+		memory = session.service("ALMemory").get();
 		AnyObject subscriber = (AnyObject) memory.call("subscriber",
 				"FrontTactilTouched").get();
 		subscriber.connect("signal::(m)", "onTouch::(m)", callback);

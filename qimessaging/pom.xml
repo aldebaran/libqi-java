@@ -55,13 +55,6 @@
       <resource>
         <directory>native</directory>
       </resource>
-      <!-- windows specific -->
-      <resource>
-        <directory>native/bin</directory>
-        <includes>
-          <include>*.dll</include>
-        </includes>
-      </resource>
     </resources>
     <plugins>
       <plugin>

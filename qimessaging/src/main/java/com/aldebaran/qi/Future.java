@@ -4,6 +4,7 @@
 */
 package com.aldebaran.qi;
 
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -13,7 +14,7 @@ import java.util.concurrent.TimeoutException;
  *
  * @param <T>
  */
-public class Future <T>
+public class Future<T> implements java.util.concurrent.Future<T>
 {
 
   // Loading QiMessaging JNI layer
@@ -26,33 +27,44 @@ public class Future <T>
     }
   }
 
+  public interface Callback<T>
+  {
+    void onFinished(Future<T> future);
+  }
+
+  private static final int TIMEOUT_INFINITE = -1;
+
   // C++ Future
   private long  _fut;
 
   // Native C API object functions
-  private static native boolean qiFutureCallCancel(long pFuture);
-  private static native Object  qiFutureCallGet(long pFuture);
-  private static native Object  qiFutureCallGetWithTimeout(long pFuture, int timeout);
-  private static native String  qiFutureCallGetError(long pFuture);
-  private static native boolean qiFutureCallIsCancelled(long pFuture);
-  private static native boolean qiFutureCallIsDone(long pFuture);
-  private static native boolean qiFutureCallConnect(long pFuture, Object callback, String className, Object[] args);
-  private static native void    qiFutureCallWaitWithTimeout(long pFuture, int timeout);
-  private static native void    qiFutureDestroy(long pFuture);
+  private native boolean qiFutureCallCancel(long pFuture);
+  private native Object qiFutureCallGet(long pFuture, int msecs) throws ExecutionException, TimeoutException;
+  private native boolean qiFutureCallIsCancelled(long pFuture);
+  private native boolean qiFutureCallIsDone(long pFuture);
+  private native boolean qiFutureCallConnect(long pFuture, Object callback, String className, Object[] args);
+  private native void qiFutureCallWaitWithTimeout(long pFuture, int timeout);
+  private native void qiFutureDestroy(long pFuture);
+  private native void qiFutureCallConnectCallback(long pFuture, Callback<?> callback);
+  private native long qiFutureCallThen(long pFuture, QiFunction<?, ?> function);
+  private native long qiFutureCallAndThen(long pFuture, QiFunction<?, ?> function);
+  private static native long qiFutureCreate(Object value);
 
-  private Future()
-  {
-
-  }
+  private boolean cancelled;
 
   Future(long pFuture)
   {
     _fut = pFuture;
   }
 
+  public static <T> Future<T> of(T value)
+  {
+    return new Future<T>(qiFutureCreate(value));
+  }
+
   public void sync(long timeout, TimeUnit unit)
   {
-    Future.qiFutureCallWaitWithTimeout(_fut, (int) unit.toMillis(timeout));
+    qiFutureCallWaitWithTimeout(_fut, (int) unit.toMillis(timeout));
   }
 
   public void sync()
@@ -67,7 +79,8 @@ public class Future <T>
    * @return true on success.
    * @since 1.20
    */
-  public boolean addCallback(Callback<?> callback, Object ... args)
+  @Deprecated
+  public boolean addCallback(com.aldebaran.qi.Callback<?> callback, Object ... args)
   {
     String className = callback.getClass().toString();
     className = className.substring(6); // Remove "class "
@@ -76,74 +89,150 @@ public class Future <T>
     return qiFutureCallConnect(_fut, callback, className, args);
   }
 
-  public boolean cancel()
+  public void connect(Callback<T> callback)
   {
+    qiFutureCallConnectCallback(_fut, callback);
+  }
 
-    return qiFutureCallCancel(_fut);
+  @Override
+  public boolean cancel(boolean mayInterruptIfRunning)
+  {
+    // ignore mayInterruptIfRunning, can't map it to native libqi
+    return cancel();
+  }
+
+  public synchronized boolean cancel()
+  {
+    if (qiFutureCallCancel(_fut))
+      cancelled = true;
+    return cancelled;
+  }
+
+  /* package */ synchronized void setCancelled() {
+    // to be called from Promise
+    cancelled = true;
   }
 
   @SuppressWarnings("unchecked")
-  public T get() throws InterruptedException
+  private T get(int msecs) throws ExecutionException, TimeoutException
   {
 
-    Object ret = null;
-
-    try
-    {
-      ret = Future.qiFutureCallGet(_fut);
-    } catch (Exception e)
-    {
-      throw new RuntimeException(e.getMessage());
-    }
-
+    // inherited from java.util.concurrent.Future, it must match its semantics
+    // i.e. it must throw after any successful call to cancel(…)
     if (isCancelled())
-      throw new InterruptedException();
+      throw new CancellationException();
 
-    return (T) ret;
+    // there is a harmless race condition here: if cancel() is called after the
+    // check but before the call to qiFutureCallGet(), then the cancellation
+    // will be handled only after get() has returned
+
+    Object result = qiFutureCallGet(_fut, msecs);
+
+    // we don't want to keep the "cancelled" mutex during qiFutureCallGet()
+    // so we have to check again
+    if (isCancelled())
+      throw new CancellationException();
+
+    return (T) result;
   }
 
-  @SuppressWarnings("unchecked")
-  public T get(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException
+  @Override
+  public T get() throws ExecutionException
   {
-
-    Object ret = null;
-    int timeoutms = (int) unit.toMillis(timeout);
-
     try
     {
-      ret = Future.qiFutureCallGetWithTimeout(_fut, timeoutms);
-    } catch (Exception e)
+      return get(TIMEOUT_INFINITE);
+    } catch (TimeoutException e)
     {
-      throw new RuntimeException(e.getMessage());
+      // should never happen
+      throw new RuntimeException(e);
     }
-
-    if (ret == null)
-      throw new TimeoutException();
-
-    return (T) ret;
   }
 
-  public String getError()
+  @Override
+  public T get(long timeout, TimeUnit unit) throws ExecutionException, TimeoutException
   {
-    return Future.qiFutureCallGetError(_fut);
+    int msecs = (int) unit.toMillis(timeout);
+    return get(msecs);
   }
 
-  public boolean isCancelled()
+  /**
+   * Same as {@code get()}, but does not throw checked exceptions.
+   *
+   * This is especially useful for getting the value of a future that we know is
+   * complete with success.
+   *
+   * @return the future value
+   */
+  public T getValue()
   {
-    return Future.qiFutureCallIsCancelled(_fut);
+    try
+    {
+      return get();
+    } catch (ExecutionException e)
+    {
+      // this is an error to call getValue() if the future is not finished with a value
+      throw new RuntimeException(e);
+    }
   }
 
-  public boolean isDone()
+  public ExecutionException getError()
   {
-    return Future.qiFutureCallIsDone(_fut);
+    try
+    {
+      get();
+      return null;
+    } catch (ExecutionException e)
+    {
+      return e;
+    }
   }
 
-  public boolean isValid()
+  public boolean hasError()
   {
-    if (_fut == 0)
-      return false;
+    return getError() != null;
+  }
 
-    return true;
+  public String getErrorMessage()
+  {
+    // for convenience
+    ExecutionException e = getError();
+    if (e == null) {
+      return null;
+    }
+    Throwable cause = e.getCause();
+    if (cause instanceof QiException) {
+      return ((QiException) cause).getMessage();
+    }
+    return e.getMessage();
+  }
+
+  @Override
+  public synchronized boolean isCancelled()
+  {
+    // inherited from java.util.concurrent.Future, it must match its semantics
+    // i.e. it must return true after any successful call to cancel(…)
+    return cancelled;
+  }
+
+  @Override
+  public synchronized boolean isDone()
+  {
+    // inherited from java.util.concurrent.Future, it must match its semantics
+    // i.e. it must return true after any successful call to cancel(…)
+    if (cancelled)
+      return true;
+    return qiFutureCallIsDone(_fut);
+  }
+
+  public <Ret> Future<Ret> then(QiFunction<Ret, T> function)
+  {
+    return new Future<Ret>(qiFutureCallThen(_fut, function));
+  }
+
+  public <Ret> Future<Ret> andThen(QiFunction<Ret, T> function)
+  {
+    return new Future<Ret>(qiFutureCallAndThen(_fut, function));
   }
 
   /**
@@ -153,7 +242,7 @@ public class Future <T>
   @Override
   protected void finalize() throws Throwable
   {
-    Future.qiFutureDestroy(_fut);
+    qiFutureDestroy(_fut);
     super.finalize();
   }
 

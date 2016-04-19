@@ -4,7 +4,10 @@
 */
 package com.aldebaran.qi;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
+import java.util.Arrays;
 
 public class AnyObject {
 
@@ -20,14 +23,16 @@ public class AnyObject {
 
   private long    _p;
 
-  private static native long     property(long pObj, String property);
-  private static native long     setProperty(long pObj, String property, Object value);
-  private static native long     asyncCall(long pObject, String method, Object[] args);
-  private static native String   printMetaObject(long pObject);
-  private static native void     destroy(long pObj);
-  private static native long     connect(long pObject, String method, Object instance, String className, String eventName);
-  private static native long     disconnect(long pObject, long subscriberId);
-  private static native long     post(long pObject, String name, Object[] args);
+  private native long property(long pObj, String property);
+  private native long setProperty(long pObj, String property, Object value);
+  private native long asyncCall(long pObject, String method, Object[] args);
+  private native String printMetaObject(long pObject);
+  private native void destroy(long pObj);
+  private native long connect(long pObject, String method, Object instance, String className, String eventName);
+  private native long disconnect(long pObject, long subscriberId);
+  private native long connectSignal(long pObject, String signalName, QiSignalListener listener);
+  private native long disconnectSignal(long pObject, long subscriberId);
+  private native long post(long pObject, String name, Object[] args);
 
   public static native Object decodeJSON(String str);
   public static native String encodeJSON(Object obj);
@@ -42,14 +47,14 @@ public class AnyObject {
     this._p = p;
   }
 
-  public Future<Void> setProperty(String property, Object o) throws Exception
+  public Future<Void> setProperty(String property, Object o)
   {
-    return new Future<Void>(AnyObject.setProperty(_p, property, o));
+    return new Future<Void>(setProperty(_p, property, o));
   }
 
   public <T> Future<T> property(String property)
   {
-    return new Future<T>(AnyObject.property(_p, property));
+    return new Future<T>(property(_p, property));
   }
 
   /**
@@ -57,30 +62,11 @@ public class AnyObject {
    * @param method Method name to call
    * @param args Arguments to be forward to remote method
    * @return Future method return value
-   * @throws CallError
+   * @throws DynamicCallException
    */
-  public <T> Future<T> call(String method, Object ... args) throws CallError
+  public <T> Future<T> call(String method, Object... args)
   {
-    com.aldebaran.qi.Future<T> ret = null;
-
-    try
-    {
-      ret = new com.aldebaran.qi.Future<T>(AnyObject.asyncCall(_p, method, args));
-    } catch (Exception e)
-    {
-      throw new CallError(e.getMessage());
-    }
-
-    if (ret.isValid() == false)
-      throw new CallError("Future is null.");
-
-    try
-    {
-      return ret;
-    } catch (Exception e)
-    {
-      throw new CallError(e.getMessage());
-    }
+    return new Future<T>(asyncCall(_p, method, args));
   }
 
   /**
@@ -89,9 +75,9 @@ public class AnyObject {
    * @param callback Callback name
    * @param object Instance of class implementing callback
    * @return an unique subscriber id
-   * @throws Exception If callback method is not found in object instance.
    */
-  public long connect(String eventName, String callback, Object object) throws Exception
+  @Deprecated
+  public long connect(String eventName, String callback, Object object)
   {
     Class<?extends Object> c = object.getClass();
     Method[] methods = c.getDeclaredMethods();
@@ -104,10 +90,72 @@ public class AnyObject {
 
       // If method name match signature
       if (callback.contains(method.getName()) == true)
-        return AnyObject.connect(_p, callback, object, className, eventName);
+        return connect(_p, callback, object, className, eventName);
     }
 
-    throw new Exception("Cannot find " + callback + " in object " + object.toString());
+    throw new QiRuntimeException("Cannot find " + callback + " in object " + object);
+  }
+
+  public QiSignalConnection connect(String signalName, QiSignalListener listener)
+  {
+    long futurePtr = connectSignal(_p, signalName, listener);
+    return new QiSignalConnection(this, new Future<Long>(futurePtr));
+  }
+
+  public QiSignalConnection connect(String signalName, final Object annotatedSlotContainer, String slotName)
+  {
+    final Method method = findSlot(annotatedSlotContainer, slotName);
+
+    if (method == null)
+      throw new QiSlotException("Slot \"" + slotName + "\" not found in " + annotatedSlotContainer.getClass().getName()
+          + " (did you forget the @QiSlot annotation?)");
+
+    return connect(signalName, new QiSignalListener()
+    {
+      @Override
+      public void onSignalReceived(Object... args)
+      {
+        Object[] convertedArgs = null;
+        try
+        {
+          method.setAccessible(true);
+          // convert Tuples to custom @QiStruct if necessary
+          convertedArgs = StructConverter.tuplesToStructs(args, method.getGenericParameterTypes());
+          method.invoke(annotatedSlotContainer, convertedArgs);
+        } catch (IllegalAccessException e) {
+          throw new QiSlotException(e);
+        } catch (IllegalArgumentException e) {
+          String message = "Cannot call method " + method + " with parameter types " + Arrays.toString(getTypes(convertedArgs));
+          throw new QiSlotException(message, e);
+        } catch (InvocationTargetException e) {
+          throw new QiSlotException(e);
+        } catch (QiConversionException e) {
+          throw new QiSlotException(e);
+        }
+      }
+    });
+  }
+
+  private static Class<?>[] getTypes(Object[] values) {
+    Class<?>[] types = new Class[values.length];
+    for (int i = 0; i < types.length; ++i) {
+      Object value = values[i];
+      types[i] = value == null ? null : value.getClass();
+    }
+    return types;
+  }
+
+  Future<Void> disconnect(QiSignalConnection connection)
+  {
+    return connection.getFuture().andThen(new QiFunctionAdapter<Void, Long>()
+    {
+      @Override
+      public Future<Void> handleResult(Long subscriberId)
+      {
+        long futurePtr = disconnectSignal(_p, subscriberId);
+        return new Future<Void>(futurePtr);
+      }
+    });
   }
 
   /**
@@ -115,9 +163,10 @@ public class AnyObject {
    * @param subscriberId id returned by connect()
    *
    */
+  @Deprecated
   public long disconnect(long subscriberId)
   {
-    return AnyObject.disconnect(_p, subscriberId);
+    return disconnect(_p, subscriberId);
   }
 
   /**
@@ -128,12 +177,13 @@ public class AnyObject {
    */
   public void post(String eventName, Object ... args)
   {
-    AnyObject.post(_p, eventName, args);
+    post(_p, eventName, args);
   }
 
+  @Override
   public String toString()
   {
-    return AnyObject.printMetaObject(_p);
+    return printMetaObject(_p);
   }
 
   /**
@@ -143,7 +193,34 @@ public class AnyObject {
   @Override
   protected void finalize() throws Throwable
   {
-    AnyObject.destroy(_p);
+    destroy(_p);
     super.finalize();
+  }
+
+  private static Method findSlot(Object annotatedSlotContainer, String slotName)
+  {
+    Class<?> clazz = annotatedSlotContainer.getClass();
+    Method slot = null;
+    for (Method method : clazz.getDeclaredMethods()) {
+      QiSlot qiSlot = method.getAnnotation(QiSlot.class);
+
+      if (qiSlot == null)
+        // not a slot
+        continue;
+
+      String name = qiSlot.value();
+
+      if (name.isEmpty())
+        // no name defined in QiSlot, use the method name
+        name = method.getName();
+
+      if (slotName.equals(name)) {
+        if (slot != null)
+          throw new QiSlotException("More than one slot with name \"" + slotName + "\" in " + clazz.getName());
+        slot = method;
+        // continue iteration to detect duplicated slot names
+      }
+    }
+    return slot;
   }
 }

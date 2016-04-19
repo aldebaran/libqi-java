@@ -25,13 +25,14 @@ set(SOURCE
    jni/jnitools.hpp
    jni/jobjectconverter.hpp
    jni/map_jni.hpp
-   jni/enumeration_jni.hpp
    jni/list_jni.hpp
    jni/future_jni.hpp
    jni/tuple_jni.hpp
    jni/futurehandler.hpp
    jni/object_jni.hpp
    jni/object.hpp
+   jni/promise_jni.hpp
+   jni/qitools.hpp
 
    src/session_jni.cpp
    src/application_jni.cpp
@@ -42,13 +43,14 @@ set(SOURCE
    src/jnitools.cpp
    src/jobjectconverter.cpp
    src/map_jni.cpp
-   src/enumeration_jni.cpp
    src/list_jni.cpp
    src/future_jni.cpp
    src/tuple_jni.cpp
    src/futurehandler.cpp
    src/object_jni.cpp
    src/object.cpp
+   src/promise_jni.cpp
+   src/qitools.cpp
    )
 
 # Compile qimessaging java compatibility layer using jni

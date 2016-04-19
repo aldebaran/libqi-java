@@ -16,13 +16,13 @@ jlong createApplication(JNIEnv* env, jobjectArray jargs, const boost::function<j
 
 extern "C"
 {
-  JNIEXPORT jlong Java_com_aldebaran_qi_Application_qiApplicationCreate(JNIEnv *env, jclass QI_UNUSED(jobj), jobjectArray jargs, jstring jdefaultUrl, jboolean listen);
-  JNIEXPORT jlong Java_com_aldebaran_qi_Application_qiApplicationGetSession(JNIEnv *,jclass, jlong pApplication);
-  JNIEXPORT void  Java_com_aldebaran_qi_Application_qiApplicationDestroy(JNIEnv *env, jclass, jlong pApplication);
-  JNIEXPORT void  Java_com_aldebaran_qi_Application_qiApplicationStart(JNIEnv *, jclass, jlong pApplication);
-  JNIEXPORT void  Java_com_aldebaran_qi_Application_qiApplicationRun(JNIEnv *env, jclass, jlong pApplication);
-  JNIEXPORT void  Java_com_aldebaran_qi_Application_qiApplicationStop(JNIEnv *env, jclass, jlong pApplication);
-  JNIEXPORT void  Java_com_aldebaran_qi_Application_setLogCategory(JNIEnv *env, jclass, jstring category, jlong verbosity);
+  JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Application_qiApplicationCreate(JNIEnv *env, jobject obj, jobjectArray jargs, jstring jdefaultUrl, jboolean listen);
+  JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Application_qiApplicationGetSession(JNIEnv *env, jobject obj, jlong pApplication);
+  JNIEXPORT void JNICALL Java_com_aldebaran_qi_Application_qiApplicationDestroy(JNIEnv *env, jobject obj, jlong pApplication);
+  JNIEXPORT void JNICALL Java_com_aldebaran_qi_Application_qiApplicationStart(JNIEnv *env, jobject obj, jlong pApplication);
+  JNIEXPORT void JNICALL Java_com_aldebaran_qi_Application_qiApplicationRun(JNIEnv *env, jobject obj, jlong pApplication);
+  JNIEXPORT void JNICALL Java_com_aldebaran_qi_Application_qiApplicationStop(JNIEnv *env, jobject obj, jlong pApplication);
+  JNIEXPORT void JNICALL Java_com_aldebaran_qi_Application_setLogCategory(JNIEnv *env, jclass cls, jstring category, jlong verbosity);
 } // !extern "C"
 
 #endif // !_JAVA_JNI_APPLICATION_HPP_

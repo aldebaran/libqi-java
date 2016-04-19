@@ -43,7 +43,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad (JavaVM* QI_UNUSED(vm), void* QI_UNUSED(reserv
  * Unfortunately, call template cannot be retrieve on native android thread, that is why
  * type instance are stored in supportedTypes map.
  */
-void Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(JNIEnv* env, jobject QI_UNUSED(jobj), jobject str, jobject i, jobject f, jobject d, jobject l, jobject m, jobject al, jobject tuple, jobject obj, jobject b, jobject fut)
+JNIEXPORT void JNICALL Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(JNIEnv* env, jclass QI_UNUSED(cls), jobject str, jobject i, jobject f, jobject d, jobject l, jobject m, jobject al, jobject tuple, jobject obj, jobject b, jobject fut)
 {
   JVM(env);
 
@@ -63,51 +63,6 @@ void Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(JNIEnv* env, jobject QI_
   {
     if (it->second == 0)
       qiLogFatal() << it->first << ": Initialization failed.";
-  }
-}
-
-void Java_com_aldebaran_qi_EmbeddedTools_initTupleInTypeSystem(JNIEnv* env, jobject QI_UNUSED(jobj), jobject t1, jobject t2, jobject t3, jobject t4, jobject t5, jobject t6, jobject t7, jobject t8, jobject t9, jobject t10, jobject t11, jobject t12, jobject t13, jobject t14, jobject t15, jobject t16, jobject t17, jobject t18, jobject t19, jobject t20, jobject t21, jobject t22, jobject t23, jobject t24, jobject t25, jobject t26, jobject t27, jobject t28, jobject t29, jobject t30, jobject t31, jobject t32)
-{
-  JVM(env);
-
-  supportedTypes["Tuple1"] = env->NewGlobalRef(t1);
-  supportedTypes["Tuple2"] = env->NewGlobalRef(t2);
-  supportedTypes["Tuple3"] = env->NewGlobalRef(t3);
-  supportedTypes["Tuple4"] = env->NewGlobalRef(t4);
-  supportedTypes["Tuple5"] = env->NewGlobalRef(t5);
-  supportedTypes["Tuple6"] = env->NewGlobalRef(t6);
-  supportedTypes["Tuple7"] = env->NewGlobalRef(t7);
-  supportedTypes["Tuple8"] = env->NewGlobalRef(t8);
-  supportedTypes["Tuple9"] = env->NewGlobalRef(t9);
-  supportedTypes["Tuple10"] = env->NewGlobalRef(t10);
-  supportedTypes["Tuple11"] = env->NewGlobalRef(t11);
-  supportedTypes["Tuple12"] = env->NewGlobalRef(t12);
-  supportedTypes["Tuple13"] = env->NewGlobalRef(t13);
-  supportedTypes["Tuple14"] = env->NewGlobalRef(t14);
-  supportedTypes["Tuple15"] = env->NewGlobalRef(t15);
-  supportedTypes["Tuple16"] = env->NewGlobalRef(t16);
-  supportedTypes["Tuple17"] = env->NewGlobalRef(t17);
-  supportedTypes["Tuple18"] = env->NewGlobalRef(t18);
-  supportedTypes["Tuple19"] = env->NewGlobalRef(t19);
-  supportedTypes["Tuple20"] = env->NewGlobalRef(t20);
-  supportedTypes["Tuple21"] = env->NewGlobalRef(t21);
-  supportedTypes["Tuple22"] = env->NewGlobalRef(t22);
-  supportedTypes["Tuple23"] = env->NewGlobalRef(t23);
-  supportedTypes["Tuple24"] = env->NewGlobalRef(t24);
-  supportedTypes["Tuple25"] = env->NewGlobalRef(t25);
-  supportedTypes["Tuple26"] = env->NewGlobalRef(t26);
-  supportedTypes["Tuple27"] = env->NewGlobalRef(t27);
-  supportedTypes["Tuple28"] = env->NewGlobalRef(t28);
-  supportedTypes["Tuple29"] = env->NewGlobalRef(t29);
-  supportedTypes["Tuple30"] = env->NewGlobalRef(t30);
-  supportedTypes["Tuple31"] = env->NewGlobalRef(t31);
-  supportedTypes["Tuple32"] = env->NewGlobalRef(t32);
-
-
-  for (std::map<std::string, jobject>::iterator it = supportedTypes.begin(); it != supportedTypes.end(); ++it)
-  {
-    if (it->second == 0)
-      qiLogError() << it->first << ": Initialization failed.";
   }
 }
 
@@ -230,25 +185,92 @@ std::string   toJavaSignature(const std::string &signature)
   return sig;
 }
 
+jthrowable createNewException(JNIEnv *env, const char *className, const char *message, jthrowable cause)
+{
+  jstring jMessage = qi::jni::toJstring(message);
+  jobject ex = qi::jni::construct(env, className, "(Ljava/lang/String;Ljava/lang/Throwable)V", jMessage, cause);
+  return reinterpret_cast<jthrowable>(ex);
+}
+
+jthrowable createNewException(JNIEnv *env, const char *className, const char *message)
+{
+  jstring jMessage = qi::jni::toJstring(message);
+  jobject ex = qi::jni::construct(env, className, "(Ljava/lang/String;)V", jMessage);
+  return reinterpret_cast<jthrowable>(ex);
+}
+
+jthrowable createNewException(JNIEnv *env, const char *className, jthrowable cause)
+{
+  jobject ex = qi::jni::construct(env, className, "(Ljava/lang/Throwable;)V", cause);
+  if (!ex)
+  qiLogFatal() << className << " noex";
+  return reinterpret_cast<jthrowable>(ex);
+}
+
+jthrowable createNewQiException(JNIEnv *env, const char *message)
+{
+  return createNewException(env, "com/aldebaran/qi/QiException", message);
+}
+
 /**
- * @brief throwJavaError Helper function to throw generic Java exception from C++
+ * @brief throwNewException Helper function to throw generic Java exception from C++
  * @param env JNI environment
  * @param message content of exception
  * @return 0 on success, a positive number otherwise
  */
-jint throwJavaError(JNIEnv *env, const char *message)
+jint throwNew(JNIEnv *env, const char *className, const char *message)
 {
-  jclass		 exClass;
-  const char*    className = "java/lang/Exception" ;
-
-  exClass = env->FindClass(className);
-  if (exClass == NULL)
+  jclass exClass = env->FindClass(className);
+  if (!exClass)
   {
-    qiLogFatal() << "Cannot throw any exceptions";
+    qiLogFatal() << "Cannot find exception class: " << className;
     return 1;
   }
 
   return env->ThrowNew(exClass, message);
+}
+
+jint throwNewException(JNIEnv *env, const char *message)
+{
+  return throwNew(env, "java/lang/Exception", message);
+}
+
+jint throwNewRuntimeException(JNIEnv *env, const char *message)
+{
+  return throwNew(env, "java/lang/RuntimeException", message);
+}
+
+jint throwNewNullPointerException(JNIEnv *env, const char *message)
+{
+  return throwNew(env, "java/lang/NullPointerException", message);
+}
+
+jint throwNewCancellationException(JNIEnv *env, const char *message)
+{
+  return throwNew(env, "java/util/concurrent/CancellationException", message);
+}
+
+jint throwNewExecutionException(JNIEnv *env, jthrowable cause)
+{
+  jthrowable ex = createNewException(env, "java/util/concurrent/ExecutionException", cause);
+  if (!ex)
+    return 1;
+  return env->Throw(ex);
+}
+
+jint throwNewTimeoutException(JNIEnv *env, const char *message)
+{
+  return throwNew(env, "java/util/concurrent/TimeoutException", message);
+}
+
+jint throwNewDynamicCallException(JNIEnv *env, const char *message)
+{
+  return throwNew(env, "com/aldebaran/qi/DynamicCallException", message);
+}
+
+jint throwNewAdvertisementException(JNIEnv *env, const char *message)
+{
+  return throwNew(env, "com/aldebaran/qi/AdvertisementException", message);
 }
 
 /**
@@ -524,36 +546,25 @@ namespace qi {
       env->DeleteLocalRef(obj);
     }
 
-    // Return true is jobject is a QiMessaging tuple.
-    bool        isTuple(jobject object)
+    jobjectArray toJobjectArray(const std::vector<AnyReference> &values)
     {
-      JNIEnv*     env = qi::jni::env();
-      jclass      cls = 0;
-      std::string className;
-
+      JNIEnv *env = qi::jni::env();
       if (!env)
-        return false;
+        return nullptr;
 
-      for (std::map<std::string, jobject>::iterator it = supportedTypes.begin(); it != supportedTypes.end(); ++it)
+      jclass objectClass = env->FindClass("java/lang/Object");
+      jobjectArray array = env->NewObjectArray(values.size(), objectClass, nullptr);
+      qi::jni::releaseClazz(objectClass);
+      int i = 0;
+      for (const AnyReference &ref : values)
       {
-        className = it->first;
-
-        // searching for tuple
-        if (className.find("Tuple") == std::string::npos)
-          continue;
-
-        cls = env->GetObjectClass(it->second);
-        if (env->IsInstanceOf(object, cls))
-        {
-          qi::jni::releaseClazz(cls);
-          return true;
-        }
-
-        qi::jni::releaseClazz(cls);
+        std::pair<AnyReference, bool> converted = ref.convert(qi::typeOf<jobject>());
+        jobject value = *reinterpret_cast<jobject *>(converted.first.rawValue());
+        env->SetObjectArrayElement(array, i++, value);
+        if (converted.second)
+          converted.first.destroy();
       }
-
-      return false;
+      return array;
     }
-
   }// !jni
 }// !qi

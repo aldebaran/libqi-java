@@ -4,8 +4,11 @@
 */
 package com.aldebaran.qi;
 
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.aldebaran.qi.ServiceDirectory;
 import com.aldebaran.qi.Session;
@@ -63,6 +66,7 @@ public class FutureTest
     ob.advertiseMethod("echoFloatList::[m]([f])", reply, "Return the exact same list");
     ob.advertiseMethod("createObject::o()", reply, "Return a test object");
     ob.advertiseMethod("longReply::s(s)", reply, "Sleep 2s, then return given argument + 'bim !'");
+    ob.advertiseMethod("throwUp::v()", reply, "Throws");
 
     // Connect session to Service Directory
     s.connect(url).sync();
@@ -75,7 +79,7 @@ public class FutureTest
     client.connect(url).sync();
 
     // Get a proxy to serviceTest
-    proxy = client.service("serviceTest");
+    proxy = client.service("serviceTest").get();
     assertNotNull(proxy);
   }
 
@@ -92,6 +96,336 @@ public class FutureTest
   }
 
   @Test
+  public void testThenSuccess()
+  {
+    try
+    {
+      int value = client.service("serviceTest").then(new QiFunction<Integer, AnyObject>()
+      {
+        @Override
+        public Future<Integer> execute(Future<AnyObject> arg)
+        {
+          return arg.getValue().call("answer", 42);
+        }
+      }).get();
+      // answer adds 1 to the value
+      assertEquals(42 + 1, value);
+    } catch (Exception e)
+    {
+      fail("get() must not fail");
+    }
+  }
+
+  @Test
+  public void testThenFailure()
+  {
+    try
+    {
+      client.service("nonExistant").then(new QiFunction<AnyObject, AnyObject>()
+      {
+        @Override
+        public Future<AnyObject> execute(Future<AnyObject> arg)
+        {
+          try {
+            arg.get();
+            fail("get() must fail, the service does not exist");
+          } catch (Exception e)
+          {
+            // expected exception
+          }
+          return client.service("serviceTest");
+        }
+      }).get();
+    } catch (Exception e)
+    {
+      fail("get() must not fail, the second future should succeed");
+    }
+  }
+
+  @Test
+  public void testAndThenSuccess()
+  {
+    try
+    {
+      int value = client.service("serviceTest").andThen(new QiFunction<Integer, AnyObject>()
+      {
+        @Override
+        public Future<Integer> execute(Future<AnyObject> arg)
+        {
+          return arg.getValue().call("answer", 42);
+        }
+      }).get();
+      // answer adds 1 to the value
+      assertEquals(42 + 1, value);
+    } catch (Exception e)
+    {
+      fail("get() must not fail");
+    }
+  }
+
+  @Test
+  public void testAndThenFailure()
+  {
+    try
+    {
+      client.service("nonExistant").andThen(new QiFunction<Void, AnyObject>()
+      {
+        @Override
+        public Future<Void> execute(Future<AnyObject> arg)
+        {
+          fail("The first future has failed, this code should never be called");
+          return null;
+        }
+      }).get();
+      fail("get() must fail");
+    } catch (Exception e)
+    {
+      // expected exception
+    }
+  }
+
+  @Test
+  public void testQiFunctionException()
+  {
+    try
+    {
+      client.service("serviceTest").andThen(new QiFunction<Void, AnyObject>()
+      {
+        @Override
+        public Future<Void> execute(Future<AnyObject> arg)
+        {
+          throw new RuntimeException("something went wrong (fake)");
+        }
+      }).get();
+      fail("get() must fail");
+    } catch (ExecutionException e)
+    {
+      // expected exception
+      QiException cause = (QiException) e.getCause();
+      assertTrue("Exception must contain the error from the future",
+          cause.getMessage().contains("something went wrong (fake)"));
+    }
+  }
+
+  @Test
+  public void testThenAdapterSuccess()
+  {
+    try
+    {
+      int value = client.service("serviceTest").then(new QiFunctionAdapter<Integer, AnyObject>()
+      {
+        @Override
+        public Future<Integer> handleResult(AnyObject service)
+        {
+          return service.call("answer", 42);
+        }
+      }).get();
+      // answer adds 1 to the value
+      assertEquals(42 + 1, value);
+    } catch (Exception e)
+    {
+      fail("get() must not fail");
+    }
+  }
+
+  @Test
+  public void testThenAdapterFailure()
+  {
+    final AtomicBoolean handleErrorCalled = new AtomicBoolean();
+    try
+    {
+      client.service("nonExistant").then(new QiFunctionAdapter<AnyObject, AnyObject>()
+      {
+        @Override
+        public Future<AnyObject> handleResult(AnyObject service)
+        {
+          fail("handleResult() must not be called, the service does not exist");
+          return null;
+        }
+
+        @Override
+        public Future<AnyObject> handleError(ExecutionException exception) throws ExecutionException
+        {
+          handleErrorCalled.set(true);
+          return client.service("serviceTest");
+        }
+      }).get();
+    } catch (Exception e)
+    {
+      fail("get() must not fail, the second future should succeed");
+    }
+    assertTrue("handleError() must be called", handleErrorCalled.get());
+  }
+
+  @Test
+  public void testAndThenAdapterSuccess()
+  {
+    try
+    {
+      int value = client.service("serviceTest").andThen(new QiFunctionAdapter<Integer, AnyObject>()
+      {
+        @Override
+        public Future<Integer> handleResult(AnyObject service)
+        {
+          return service.call("answer", 42);
+        }
+      }).get();
+      // answer adds 1 to the value
+      assertEquals(42 + 1, value);
+    } catch (Exception e)
+    {
+      fail("get() must not fail");
+    }
+  }
+
+  @Test
+  public void testAndThenAdapterFailure()
+  {
+    try
+    {
+      client.service("nonExistant").andThen(new QiFunctionAdapter<Void, AnyObject>()
+      {
+        @Override
+        public Future<Void> handleResult(AnyObject service)
+        {
+          fail("The first future has failed, this code should never be called");
+          return null;
+        }
+      }).get();
+      fail("get() must fail");
+    } catch (Exception e)
+    {
+      // expected exception
+    }
+  }
+
+  @Test
+  public void testUnknownType() throws ExecutionException
+  {
+    class X
+    {
+      int value;
+
+      X(int value)
+      {
+        this.value = value;
+      }
+    }
+
+    Promise<X> promise = new Promise<X>();
+    promise.setValue(new X(42));
+    Future<X> future = promise.getFuture();
+    X x = future.andThen(new QiFunctionAdapter<X, X>()
+
+    {
+      @Override
+      public Future<X> handleResult(X x) throws Exception
+      {
+        return Future.of(new X(x.value + 1));
+      }
+    }).get();
+    assertEquals(43, x.value);
+  }
+
+  @Test
+  public void testImmediateValue()
+  {
+    try
+    {
+      int value = Future.of(42).get();
+      assertEquals(42, value);
+    } catch (Exception e)
+    {
+      fail("get() must not fail");
+    }
+  }
+
+  @Test
+  public void testImmediateNullValue()
+  {
+    try
+    {
+      Object value = Future.of(null).get();
+      assertNull(value);
+    } catch (Exception e)
+    {
+      fail("get() must not fail");
+    }
+  }
+
+  @Test
+  public void testConnectCallbackSuccess()
+  {
+    Future<String> future = proxy.call("longReply", "plaf");
+
+    // the callback may be called from another thread
+    final AtomicBoolean finished = new AtomicBoolean();
+
+    future.connect(new Future.Callback<String>()
+    {
+      @Override
+      public void onFinished(Future<String> future)
+      {
+        finished.set(true);
+        try
+        {
+          future.get();
+        } catch (Exception e)
+        {
+          fail("get() must not fail");
+        }
+      }
+    });
+
+    try
+    {
+      future.get();
+    } catch (Exception e)
+    {
+      fail("get() must not fail");
+    }
+
+    assertTrue(finished.get());
+  }
+
+  @Test
+  public void testConnectCallbackFailure()
+  {
+    Future<Void> future = proxy.call("throwUp");
+
+    // the callback may be called from another thread
+    final AtomicBoolean finished = new AtomicBoolean();
+
+    future.connect(new Future.Callback<Void>()
+    {
+      @Override
+      public void onFinished(Future<Void> future)
+      {
+        finished.set(true);
+        try
+        {
+          future.get();
+          fail("get() must fail");
+        } catch (Exception e)
+        {
+          // expected exception
+        }
+      }
+    });
+
+    try
+    {
+      future.get();
+      fail("get() must fail");
+    } catch (Exception e)
+    {
+      // expected exception
+    }
+
+    assertTrue(finished.get());
+  }
+
+  @Test
   public void testCallback()
   {
     AnyObject proxy = null;
@@ -101,7 +435,7 @@ public class FutureTest
     // Get a proxy to serviceTest
     try
     {
-      proxy = client.service("serviceTest");
+      proxy = client.service("serviceTest").get();
     } catch (Exception e1)
     {
       fail("Cannot get serviceTest :" + e1.getMessage());
@@ -111,7 +445,8 @@ public class FutureTest
     try
     {
       fut = proxy.call("longReply", "plaf");
-      fut.addCallback(new Callback<String>() {
+      fut.addCallback(new Callback<String>()
+      {
 
         public void onSuccess(Future<String> future, Object[] args)
         {
@@ -132,7 +467,7 @@ public class FutureTest
           assertEquals(2, args[1]);
         }
       }, 1, 2);
-    } catch (CallError e)
+    } catch (DynamicCallException e)
     {
       fail("Error calling answer function : " + e.getMessage());
     }
@@ -157,7 +492,7 @@ public class FutureTest
     try
     {
       fut = proxy.call("longReply", "plaf");
-    } catch (CallError e)
+    } catch (DynamicCallException e)
     {
       fail("Error calling answer function : " + e.getMessage());
     }
@@ -196,7 +531,7 @@ public class FutureTest
     try
     {
       fut = proxy.call("longReply", "plaf");
-    } catch (CallError e)
+    } catch (DynamicCallException e)
     {
       System.out.println("Error calling answer function : " + e.getMessage());
       return;
@@ -233,7 +568,7 @@ public class FutureTest
     try
     {
       fut = proxy.call("longReply", "plaf");
-    } catch (CallError e)
+    } catch (DynamicCallException e)
     {
       System.out.println("Error calling answer function : " + e.getMessage());
       return;
@@ -256,7 +591,7 @@ public class FutureTest
   }
 
   @Test
-  public void testTimeout() throws InterruptedException, CallError
+  public void testTimeout() throws ExecutionException
   {
     System.out.println("testTimeout...");
     Future<Void> fut = null;
@@ -292,5 +627,24 @@ public class FutureTest
 
     assertFalse(fut.isDone());
     assertFalse(test.isConnected());
+  }
+
+  public void testExecutionException()
+  {
+    try {
+      proxy.call("throwUp").get();
+    } catch (ExecutionException e) {
+      assertTrue("ExecutionException cause should extend QiException", e.getCause() instanceof QiException);
+      return;
+    }
+    fail("Must have thrown ExecutionException");
+  }
+
+  @Test(expected=CancellationException.class)
+  public void testCancelMatchesJavaFutureSemantics() throws ExecutionException
+  {
+    Future<Void> future = proxy.call("longReply", "plaf");
+    future.cancel(false);
+    future.get();
   }
 }

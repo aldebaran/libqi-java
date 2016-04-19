@@ -19,40 +19,35 @@ public class Session
     }
   }
 
+  public interface ConnectionListener
+  {
+    void onConnected();
+    void onDisconnected(String reason);
+  }
+
   // Native function
-  private static native long    qiSessionCreate();
-  private static native void    qiSessionDestroy(long pSession);
-  private static native long    qiSessionConnect(long pSession, String url);
-  private static native boolean qiSessionIsConnected(long pSession);
-  private static native void    qiSessionClose(long pSession);
-  private static native AnyObject  service(long pSession, String name);
-  private static native int     registerService(long pSession, String name, AnyObject obj);
-  private static native void    unregisterService(long pSession, int idx);
-  private static native void    onDisconnected(long pSession, String callback, Object obj);
-  private static native void    setClientAuthenticatorFactory(long pSession, ClientAuthenticatorFactory factory);
+  private native long qiSessionCreate();
+  private native void qiSessionDestroy(long pSession);
+  private native long qiSessionConnect(long pSession, String url);
+  private native boolean qiSessionIsConnected(long pSession);
+  private native void qiSessionClose(long pSession);
+  private native long service(long pSession, String name);
+  private native int registerService(long pSession, String name, AnyObject obj);
+  private native void unregisterService(long pSession, int idx);
+  private native void onDisconnected(long pSession, String callback, Object obj);
+  private native void addConnectionListener(long pSession, ConnectionListener listener);
+  private native void setClientAuthenticatorFactory(long pSession, ClientAuthenticatorFactory factory);
 
   // Members
   private long _session;
   private boolean _destroy;
 
   /**
-   * Create session and try to connect to given address.
-   * @param sdAddr Address to connect to.
-   * @throws Exception on error.
-   */
-  public Session(String sdAddr) throws Exception
-  {
-    _session = Session.qiSessionCreate();
-    this.connect(sdAddr).sync();
-    _destroy = true;
-  }
-
-  /**
    * Create a qimessaging session.
    */
   public Session()
   {
-    _session = Session.qiSessionCreate();
+    _session = qiSessionCreate();
     _destroy = true;
   }
 
@@ -70,7 +65,7 @@ public class Session
     if (_session == 0)
       return false;
 
-    return Session.qiSessionIsConnected(_session);
+    return qiSessionIsConnected(_session);
   }
 
   /**
@@ -78,29 +73,29 @@ public class Session
    * @param serviceDirectoryAddress Address to connect to.
    * @throws Exception on error.
    */
-  public Future<Void> connect(String serviceDirectoryAddress) throws Exception
+  public Future<Void> connect(String serviceDirectoryAddress)
   {
-    long pFuture = Session.qiSessionConnect(_session, serviceDirectoryAddress);
-    com.aldebaran.qi.Future<Void> future = new com.aldebaran.qi.Future<Void>(pFuture);
-    return future;
+    long pFuture = qiSessionConnect(_session, serviceDirectoryAddress);
+    return new Future<Void>(pFuture);
   }
 
   /**
    * Ask for remote service to Service Directory.
    * @param name Name of service.
-   * @return Proxy on remote service on success, null on error.
+   * @return the AnyObject future
    */
-  public AnyObject  service(String name) throws Exception
+  public Future<AnyObject> service(String name)
   {
-    return (AnyObject) Session.service(_session, name);
+    long pFuture = service(_session, name);
+    return new Future<AnyObject>(pFuture);
   }
 
   /**
    * Close connection to Service Directory
    */
-  public void 	close()
+  public void close()
   {
-    Session.qiSessionClose(_session);
+    qiSessionClose(_session);
   }
 
   /**
@@ -123,7 +118,7 @@ public class Session
    */
   public int registerService(String name, AnyObject object)
   {
-    return Session.registerService(_session, name, object);
+    return registerService(_session, name, object);
   }
 
   /**
@@ -133,16 +128,35 @@ public class Session
    */
   public void unregisterService(int idx)
   {
-    Session.unregisterService(_session, idx);
+    unregisterService(_session, idx);
   }
 
+  @Deprecated
   public void onDisconnected(String callback, Object object)
   {
-    Session.onDisconnected(_session, callback, object);
+    onDisconnected(_session, callback, object);
+  }
+
+  public void addConnectionListener(ConnectionListener listener)
+  {
+    addConnectionListener(_session, listener);
   }
 
   public void setClientAuthenticatorFactory(ClientAuthenticatorFactory factory)
   {
-    Session.setClientAuthenticatorFactory(_session, factory);
+    setClientAuthenticatorFactory(_session, factory);
+  }
+
+  public void setClientAuthenticator(final ClientAuthenticator authenticator)
+  {
+    setClientAuthenticatorFactory(new ClientAuthenticatorFactory()
+    {
+      @Override
+      public ClientAuthenticator newAuthenticator()
+      {
+        // always return the same instance
+        return authenticator;
+      }
+    });
   }
 }
