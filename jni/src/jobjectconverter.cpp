@@ -49,45 +49,13 @@ struct toJObject
       // Clear all remaining exceptions
       env->ExceptionClear();
 
-      // Get Integer class template
-      // ... or Boolean if byteSize is 0
-      const char *type;
-      const char *ctorSig;
-      if (byteSize == 0) {
-        type = "Boolean";
-        ctorSig = "(Z)V";
-      } else if (byteSize <= JAVA_INT_NBYTES) {
-        type = "Integer";
-        ctorSig = "(I)V";
-      } else {
-        type = "Long";
-        ctorSig = "(J)V";
-      }
-      jclass cls = qi::jni::clazz(type);
-      if (env->ExceptionCheck())
-      {
-        qi::jni::releaseClazz(cls);
-        throwNewException(env, "AnyValue to Integer : FindClass error");
-        return;
-      }
-
-      // Find constructor method ID
-      jmethodID mid = env->GetMethodID(cls, "<init>", ctorSig);
-      if (!mid)
-      {
-        qi::jni::releaseClazz(cls);
-        throwNewException(env, "AnyValue to Integer : GetMethodID error");
-        return;
-      }
-
       if (byteSize == 0)
-        *result = env->NewObject(cls, mid, static_cast<jboolean>(value));
+        *result = qi::jni::construct(env, "java/lang/Boolean", "(Z)V", static_cast<jboolean>(value));
       else if (byteSize <= JAVA_INT_NBYTES)
-        *result = env->NewObject(cls, mid, static_cast<jint>(value));
+        *result = qi::jni::construct(env, "java/lang/Integer", "(I)V", static_cast<jint>(value));
       else
-        *result = env->NewObject(cls, mid, static_cast<jlong>(value));
+        *result = qi::jni::construct(env, "java/lang/Long", "(J)V", static_cast<jlong>(value));
       checkForError();
-      qi::jni::releaseClazz(cls);
     }
 
     void visitString(char *data, size_t len)
