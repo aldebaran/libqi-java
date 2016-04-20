@@ -80,8 +80,12 @@ struct toJObject
         return;
       }
 
-      // Instanciate new Integer, yeah !
-      *result = env->NewObject(cls, mid, value);
+      if (byteSize == 0)
+        *result = env->NewObject(cls, mid, static_cast<jboolean>(value));
+      else if (byteSize <= JAVA_INT_NBYTES)
+        *result = env->NewObject(cls, mid, static_cast<jint>(value));
+      else
+        *result = env->NewObject(cls, mid, static_cast<jlong>(value));
       checkForError();
       qi::jni::releaseClazz(cls);
     }
