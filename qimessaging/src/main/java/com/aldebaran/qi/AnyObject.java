@@ -8,6 +8,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.Arrays;
+import java.util.concurrent.ExecutionException;
 
 public class AnyObject {
 
@@ -49,7 +50,14 @@ public class AnyObject {
 
   public Future<Void> setProperty(String property, Object o)
   {
-    return new Future<Void>(setProperty(_p, property, o));
+    try {
+      // convert custom structs to tuples if necessary
+      Object convertedProperty = StructConverter.structsToTuples(o);
+      return new Future<Void>(setProperty(_p, property, convertedProperty));
+    } catch (QiConversionException e)
+    {
+      throw new QiRuntimeException(e);
+    }
   }
 
   public <T> Future<T> property(String property)
@@ -67,6 +75,46 @@ public class AnyObject {
   public <T> Future<T> call(String method, Object... args)
   {
     return new Future<T>(asyncCall(_p, method, args));
+  }
+
+  /**
+   * Convert structs in {@code args} to tuples if necessary, then call
+   * {@code method} asynchronously. The result will convert tuples to structs
+   * according to the {@code targetType}.
+   *
+   * @param targetType
+   *          the target result type
+   * @param method
+   *          the method
+   * @param args
+   *          the method arguments
+   * @return a future to the converted result
+   */
+  public <T> Future<T> call(final Type targetType, String method, Object... args)
+  {
+    try
+    {
+      Object[] convertedArgs = StructConverter.structsToTuplesInArray(args);
+      return this.call(method, convertedArgs).andThen(new QiFunctionAdapter<T, Object>()
+      {
+        @Override
+        public Future<T> handleResult(Object result) throws Exception
+        {
+          @SuppressWarnings("unchecked")
+          T convertedResult = (T) StructConverter.tuplesToStructs(result, targetType);
+          return Future.of(convertedResult);
+        }
+      });
+    } catch (QiConversionException e)
+    {
+      throw new QiRuntimeException(e);
+    }
+  }
+
+  public <T> Future<T> call(Class<T> targetType, String method, Object... args)
+  {
+    // Specialization to use type inference when targetType is a Class
+    return this.<T>call((Type) targetType, method, args);
   }
 
   /**
@@ -119,7 +167,7 @@ public class AnyObject {
         try
         {
           method.setAccessible(true);
-          // convert Tuples to custom @QiStruct if necessary
+          // convert tuples to custom structs if necessary
           convertedArgs = StructConverter.tuplesToStructs(args, method.getGenericParameterTypes());
           method.invoke(annotatedSlotContainer, convertedArgs);
         } catch (IllegalAccessException e) {

@@ -18,6 +18,17 @@ public class StructConverterTest
     String firstName;
     String lastName;
     int age;
+
+    public Person()
+    {
+    }
+
+    public Person(String firstName, String lastName, int age)
+    {
+      this.firstName = firstName;
+      this.lastName = lastName;
+      this.age = age;
+    }
   }
 
   @Test
@@ -115,21 +126,89 @@ public class StructConverterTest
     assertEquals(12, unchanged.get(2));
   }
 
+  @Test
+  public void testStructToTuple() throws QiConversionException
+  {
+    Person person = new Person("aaa", "bbb", 12);
+    Tuple tuple = StructConverter.structToTuple(person);
+    assertEquals("aaa", tuple.get(0));
+    assertEquals("bbb", tuple.get(1));
+    assertEquals(12, tuple.get(2));
+  }
+
+  @Test
+  public void testStructsToTuples() throws QiConversionException
+  {
+    Person person = new Person("aaa", "bbb", 12);
+    Tuple tuple = (Tuple) StructConverter.structsToTuples(person);
+    assertEquals("aaa", tuple.get(0));
+    assertEquals("bbb", tuple.get(1));
+    assertEquals(12, tuple.get(2));
+  }
+
+  @Test
+  public void testStructsToTuplesInList() throws QiConversionException
+  {
+    List<Person> persons = new ArrayList<Person>();
+    persons.add(new Person("aaa", "bbb", 12));
+    persons.add(new Person("ccc", "ddd", 21));
+    @SuppressWarnings("unchecked")
+    List<Tuple> tuples = (List<Tuple>) StructConverter.structsToTuplesInList(persons);
+    Tuple tuple = tuples.get(0);
+    assertEquals("aaa", tuple.get(0));
+    assertEquals("bbb", tuple.get(1));
+    assertEquals(12, tuple.get(2));
+  }
+
+  @Test
+  public void testListStructsToTuples() throws QiConversionException
+  {
+    List<Person> persons = new ArrayList<Person>();
+    persons.add(new Person("aaa", "bbb", 12));
+    persons.add(new Person("ccc", "ddd", 21));
+    @SuppressWarnings("unchecked")
+    List<Tuple> tuples = (List<Tuple>) StructConverter.structsToTuples(persons);
+    Tuple tuple = tuples.get(0);
+    assertEquals("aaa", tuple.get(0));
+    assertEquals("bbb", tuple.get(1));
+    assertEquals(12, tuple.get(2));
+  }
+
+  @Test
+  public void testStructsToTuplesInMap() throws QiConversionException
+  {
+    Map<String, Person> persons = new HashMap<String, Person>();
+    persons.put("first", new Person("aaa", "bbb", 12));
+    persons.put("second", new Person("ccc", "ddd", 21));
+    @SuppressWarnings("unchecked")
+    Map<String, Tuple> tuples = (Map<String, Tuple>) StructConverter.structsToTuplesInMap(persons);
+    Tuple tuple = tuples.get("first");
+    assertEquals("aaa", tuple.get(0));
+    assertEquals("bbb", tuple.get(1));
+    assertEquals(12, tuple.get(2));
+  }
+
+  @Test
+  public void testMapStructsToTuples() throws QiConversionException
+  {
+    Map<String, Person> persons = new HashMap<String, Person>();
+    persons.put("first", new Person("aaa", "bbb", 12));
+    persons.put("second", new Person("ccc", "ddd", 21));
+    @SuppressWarnings("unchecked")
+    Map<String, Tuple> tuples = (Map<String, Tuple>) StructConverter.structsToTuples(persons);
+    Tuple tuple = tuples.get("first");
+    assertEquals("aaa", tuple.get(0));
+    assertEquals("bbb", tuple.get(1));
+    assertEquals(12, tuple.get(2));
+  }
+
   private static Type getListOfPersonsType()
   {
-    class X
-    {
-      List<Person> list;
-    }
-    return X.class.getDeclaredFields()[0].getGenericType();
+    return new TypeToken<List<Person>>() {}.getType();
   }
 
   private static Type getMapOfStringPersonsType()
   {
-    class X
-    {
-      Map<String, Person> map;
-    }
-    return X.class.getDeclaredFields()[0].getGenericType();
+    return new TypeToken<Map<String, Person>>() {}.getType();
   }
 }

@@ -113,6 +113,83 @@ public class StructConverter
     return convertedMap;
   }
 
+  public static Object structsToTuples(Object source) throws QiConversionException
+  {
+    if (source == null)
+      return null;
+
+    if (source instanceof Object[])
+      return structsToTuplesInArray((Object[]) source);
+
+    if (source instanceof List)
+      return structsToTuplesInList((List<?>) source);
+
+    if (source instanceof Map)
+      return structsToTuplesInMap((Map<?, ?>) source);
+
+    if (isQiStruct(source.getClass()))
+      return structToTuple(source);
+
+    // do not convert
+    return source;
+  }
+
+  public static Tuple structToTuple(Object struct) throws QiConversionException
+  {
+    Class<?> cls = struct.getClass();
+    if (!isQiStruct(cls))
+      throw new QiConversionException(cls + " has no @QiStruct annotation");
+
+    try
+    {
+      Field[] fields = cls.getDeclaredFields();
+      Object[] values = new Object[fields.length];
+      for (int i = 0; i < fields.length; ++i)
+      {
+        Field field = fields[i];
+        field.setAccessible(true);
+        Object value = field.get(struct);
+        Object convertedValue = structsToTuples(value);
+        values[i] = convertedValue;
+      }
+      return Tuple.of(values);
+    } catch (IllegalAccessException e)
+    {
+      throw new QiConversionException(e);
+    }
+  }
+
+  public static Object[] structsToTuplesInArray(Object[] array) throws QiConversionException
+  {
+    Object[] convertedArray = new Object[array.length];
+    for (int i = 0; i < array.length; ++i)
+      convertedArray[i] = structsToTuples(array[i]);
+    return convertedArray;
+  }
+
+  public static List<?> structsToTuplesInList(List<?> list) throws QiConversionException
+  {
+    List<Object> convertedList = new ArrayList<Object>();
+    for (Object item : list)
+    {
+      Object convertedItem = structsToTuples(item);
+      convertedList.add(convertedItem);
+    }
+    return convertedList;
+  }
+
+  public static Map<?, ?> structsToTuplesInMap(Map<?, ?> map) throws QiConversionException
+  {
+    Map<Object, Object> convertedMap = new HashMap<Object, Object>();
+    for (Map.Entry<?, ?> entry : map.entrySet())
+    {
+      Object convertedKey = structsToTuples(entry.getKey());
+      Object convertedValue = structsToTuples(entry.getValue());
+      convertedMap.put(convertedKey, convertedValue);
+    }
+    return convertedMap;
+  }
+
   private static boolean isQiStruct(Class<?> cls)
   {
     return cls.getAnnotation(QiStruct.class) != null;

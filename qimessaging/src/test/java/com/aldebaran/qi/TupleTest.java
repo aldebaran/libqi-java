@@ -86,7 +86,7 @@ public class TupleTest
 
     try
     {
-      tuple.<String>get(4);
+      tuple.get(4);
     } catch (Exception e)
     {
       exceptionRaised = true;
@@ -140,7 +140,7 @@ public class TupleTest
 
     try
     {
-      str = tuple.<String>get(0);
+      str = (String) tuple.get(0);
     } catch (Exception e)
     {
       fail("Exception must not be thrown : " + e.getMessage());
@@ -150,7 +150,7 @@ public class TupleTest
 
     try
     {
-      i = tuple.<Integer>get(1);
+      i = (Integer) tuple.get(1);
     } catch (Exception e)
     {
       fail("Exception must not be thrown : " + e.getMessage());
@@ -160,7 +160,7 @@ public class TupleTest
 
     try
     {
-      b = tuple.<Boolean>get(2);
+      b = (Boolean) tuple.get(2);
     } catch (Exception e)
     {
       fail("Exception must not be thrown : " + e.getMessage());
@@ -174,7 +174,7 @@ public class TupleTest
   {
     Tuple tuple = Tuple.of("42", 42, null);
 
-    tuple.<String>get(42);
+    tuple.get(42);
   }
 
 
@@ -184,16 +184,7 @@ public class TupleTest
     Tuple tuple = Tuple.of("42", 42, new HashMap<Integer, String>());
 
     @SuppressWarnings("unused")
-    ReplyService tmp = tuple.<ReplyService>get(0);
-  }
-
-  public void testIllegalArgumentException() throws IndexOutOfBoundsException, ClassCastException, IllegalArgumentException, IllegalAccessException
-  {
-    Tuple tuple = Tuple.of("42", new Session(), new HashMap<AnyObject, Session>());
-
-    tuple.<Long>set(0, new Long(1234567890));
-    tuple.<Long>set(1, new Long(1234567890));
-    tuple.<Long>set(2, new Long(1234567890));
+    ReplyService tmp = (ReplyService) tuple.get(0);
   }
 
   @Test
@@ -215,7 +206,7 @@ public class TupleTest
 
     try
     {
-      str = ret.<String>get(0);
+      str = (String) ret.get(0);
     } catch (Exception e)
     {
       fail("Exception must not be thrown : " + e.getMessage());
@@ -223,7 +214,7 @@ public class TupleTest
 
     try
     {
-      i = ret.<Integer>get(1);
+      i = (Integer) ret.get(1);
     } catch (Exception e)
     {
       fail("Exception must not be thrown : " + e.getMessage());
@@ -231,7 +222,7 @@ public class TupleTest
 
     try
     {
-      b = ret.<Boolean>get(2);
+      b = (Boolean) ret.get(2);
     } catch (Exception e)
     {
       fail("Exception must not be thrown : " + e.getMessage());
