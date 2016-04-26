@@ -16,6 +16,7 @@ public class StructConverterTest
   static class Person
   {
     String firstName;
+    transient int mustBeIgnored;
     String lastName;
     int age;
 
