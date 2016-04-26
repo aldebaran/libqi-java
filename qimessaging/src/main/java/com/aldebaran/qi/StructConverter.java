@@ -1,6 +1,7 @@
 package com.aldebaran.qi;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -70,12 +71,14 @@ public class StructConverter
     {
       T struct = target.newInstance();
       Field[] fields = target.getDeclaredFields();
-      int commonSize = Math.min(fields.length, tuple.size());
-      for (int i = 0; i < commonSize; ++i)
-      {
-        Field field = fields[i];
+      int tupleIndex = 0;
+      for (Field field : fields) {
+        if (tupleIndex >= tuple.size())
+          break;
+        if (isTransient(field))
+          continue;
         Type fieldType = field.getGenericType();
-        Object value = tuple.get(i);
+        Object value = tuple.get(tupleIndex++);
         Object convertedValue = tuplesToStructs(value, fieldType);
         field.setAccessible(true);
         field.set(struct, convertedValue);
@@ -143,16 +146,16 @@ public class StructConverter
     try
     {
       Field[] fields = cls.getDeclaredFields();
-      Object[] values = new Object[fields.length];
-      for (int i = 0; i < fields.length; ++i)
-      {
-        Field field = fields[i];
+      List<Object> values = new ArrayList<Object>();
+      for (Field field : fields) {
+        if (isTransient(field))
+          continue;
         field.setAccessible(true);
         Object value = field.get(struct);
         Object convertedValue = structsToTuples(value);
-        values[i] = convertedValue;
+        values.add(convertedValue);
       }
-      return Tuple.of(values);
+      return Tuple.of(values.toArray());
     } catch (IllegalAccessException e)
     {
       throw new QiConversionException(e);
@@ -193,5 +196,9 @@ public class StructConverter
   private static boolean isQiStruct(Class<?> cls)
   {
     return cls.getAnnotation(QiStruct.class) != null;
+  }
+
+  private static boolean isTransient(Field field) {
+    return (field.getModifiers() & Modifier.TRANSIENT) != 0;
   }
 }
