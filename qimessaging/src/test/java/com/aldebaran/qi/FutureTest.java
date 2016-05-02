@@ -647,4 +647,90 @@ public class FutureTest
     future.cancel(false);
     future.get();
   }
+
+  private static class AsyncWait implements Runnable
+  {
+    enum Type
+    {
+      VALUE, ERROR, CANCEL
+    }
+
+    private Promise<Long> promise;
+    private long milliseconds;
+    private Type finishType;
+
+    AsyncWait(Promise<Long> promise, long milliseconds, Type finishType)
+    {
+      this.promise = promise;
+      this.milliseconds = milliseconds;
+      this.finishType = finishType;
+    }
+
+    @Override
+    public void run()
+    {
+      try
+      {
+        Thread.sleep(milliseconds);
+      } catch (InterruptedException e)
+      {
+        throw new RuntimeException(e);
+      }
+      switch (finishType)
+      {
+      case VALUE:
+        promise.setValue(milliseconds);
+        break;
+      case ERROR:
+        promise.setError("Mock error after " + milliseconds);
+        break;
+      case CANCEL:
+        promise.setCancelled();
+      }
+    }
+  }
+
+  @Test
+  public void testWaitAll() throws ExecutionException, TimeoutException {
+    Promise<Long> p1 = new Promise<Long>();
+    Promise<Long> p2 = new Promise<Long>();
+    Promise<Long> p3 = new Promise<Long>();
+    new Thread(new AsyncWait(p1, 100, AsyncWait.Type.VALUE)).start();
+    new Thread(new AsyncWait(p2, 200, AsyncWait.Type.VALUE)).start();
+    p3.setValue(42L);
+    Future<Long> f1 = p1.getFuture();
+    Future<Long> f2 = p2.getFuture();
+    Future<Long> f3 = p3.getFuture();
+    Future.waitAll(f1, f2, f3).get();
+    assertEquals(100, (long) f1.get(0, TimeUnit.SECONDS));
+    assertEquals(200, (long) f2.get(0, TimeUnit.SECONDS));
+    assertEquals(42, (long) f3.get(0, TimeUnit.SECONDS));
+  }
+
+  @Test(expected=ExecutionException.class)
+  public void testWaitAllWithError() throws ExecutionException, TimeoutException {
+    Promise<Long> p1 = new Promise<Long>();
+    Promise<Long> p2 = new Promise<Long>();
+    new Thread(new AsyncWait(p1, 100, AsyncWait.Type.ERROR)).start();
+    new Thread(new AsyncWait(p2, 200, AsyncWait.Type.VALUE)).start();
+    Future<Long> f1 = p1.getFuture();
+    Future<Long> f2 = p2.getFuture();
+    Future.waitAll(f1, f2).get();
+  }
+
+  @Test(expected=CancellationException.class)
+  public void testWaitAllWithCancellation() throws ExecutionException, TimeoutException {
+    Promise<Long> p1 = new Promise<Long>();
+    Promise<Long> p2 = new Promise<Long>();
+    new Thread(new AsyncWait(p1, 100, AsyncWait.Type.CANCEL)).start();
+    new Thread(new AsyncWait(p2, 200, AsyncWait.Type.VALUE)).start();
+    Future<Long> f1 = p1.getFuture();
+    Future<Long> f2 = p2.getFuture();
+    Future.waitAll(f1, f2).get();
+  }
+
+  @Test
+  public void testWaitAllEmpty() throws ExecutionException, TimeoutException {
+    Future.waitAll().get(1, TimeUnit.SECONDS);
+  }
 }
