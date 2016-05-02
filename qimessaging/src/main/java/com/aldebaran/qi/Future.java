@@ -185,6 +185,8 @@ public class Future<T> implements java.util.concurrent.Future<T>
     } catch (ExecutionException e)
     {
       return e;
+    } catch (CancellationException e) {
+      return null;
     }
   }
 
@@ -233,6 +235,62 @@ public class Future<T> implements java.util.concurrent.Future<T>
   public <Ret> Future<Ret> andThen(QiFunction<Ret, T> function)
   {
     return new Future<Ret>(qiFutureCallAndThen(_fut, function));
+  }
+
+  /**
+   * Wait for all {@code futures} to complete.
+   *
+   * The returning future finishes successfully if and only if all of the
+   * futures it waits for finish successfully.
+   *
+   * Otherwise, it takes the state of the first failing future (due to
+   * cancellation or error).
+   *
+   * @param futures
+   *          the futures to wait for
+   * @return a future waiting for all the others
+   */
+  public static Future<Void> waitAll(final Future<?>... futures)
+  {
+    if (futures.length == 0)
+      return Future.of(null);
+
+    class WaitData
+    {
+      int runningFutures = futures.length;
+      boolean stopped;
+    }
+    final WaitData waitData = new WaitData();
+    final Promise<Void> promise = new Promise<Void>();
+    for (Future<?> future : futures)
+    {
+      @SuppressWarnings("unchecked")
+      Future<Object> objectFuture = (Future<Object>) future;
+      objectFuture.connect(new Future.Callback<Object>()
+      {
+        @Override
+        public void onFinished(Future<Object> future)
+        {
+          synchronized (waitData)
+          {
+            if (!waitData.stopped)
+            {
+              if (future.isCancelled())
+              {
+                promise.setCancelled();
+                waitData.stopped = true;
+              } else if (future.hasError())
+              {
+                promise.setError(future.getErrorMessage());
+                waitData.stopped = true;
+              } else if (--waitData.runningFutures == 0)
+                promise.setValue(null);
+            }
+          }
+        }
+      });
+    }
+    return promise.getFuture();
   }
 
   /**
