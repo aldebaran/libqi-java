@@ -246,8 +246,7 @@ public class ObjectTest
     assertEquals("forty-two", item.s);
 
     Type listOfItemsType = new TypeToken<List<Item>>() {}.getType();
-    @SuppressWarnings("unchecked")
-    List<Item> items = (List<Item>) proxy.call(listOfItemsType, "genTuples").get();
+    List<Item> items = proxy.<List<Item>>call(listOfItemsType, "genTuples").get();
     item = items.get(0);
     assertEquals(42, item.i);
     assertEquals("forty-two", item.s);
