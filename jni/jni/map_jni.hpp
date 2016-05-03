@@ -20,7 +20,6 @@ class JNIMap
   public:
     JNIMap();
     JNIMap(jobject obj);
-    ~JNIMap();
 
     int     size();
     jobjectArray keys();
@@ -30,7 +29,6 @@ class JNIMap
 
   private:
     jobject _obj;
-    jclass  _cls;
     JNIEnv* _env;
 
 };
