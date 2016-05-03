@@ -20,7 +20,6 @@ class JNIList
   public:
     JNIList(jobject obj);
     JNIList();
-    ~JNIList();
 
     int size();
     jobject get(int index);
@@ -30,7 +29,6 @@ class JNIList
   private:
     jobject _obj;
     JNIEnv* _env;
-    jclass  _cls;
 };
 
 #endif // !_JAVA_JNI_LIST_HPP_

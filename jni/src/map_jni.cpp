@@ -17,34 +17,27 @@ qiLogCategory("qimessaging.jni");
 
 JNIMap::JNIMap()
 {
-   JVM()->GetEnv((void**) &_env, QI_JNI_MIN_VERSION);
-  _cls = _env->FindClass("java/util/HashMap");
+  JVM()->GetEnv((void**) &_env, QI_JNI_MIN_VERSION);
 
-  jmethodID mid = _env->GetMethodID(_cls, "<init>", "()V");
+  jmethodID mid = _env->GetMethodID(cls_hashmap, "<init>", "()V");
   if (!mid)
   {
     qiLogFatal() << "JNIMap::JNIMap : Cannot call constructor";
     throw std::runtime_error("JNIMap::JNIMap : Cannot call constructor");
   }
 
-  _obj = _env->NewObject(_cls, mid);
+  _obj = _env->NewObject(cls_hashmap, mid);
 }
 
 JNIMap::JNIMap(jobject obj)
 {
-   JVM()->GetEnv((void**) &_env, QI_JNI_MIN_VERSION);
-   _obj = obj;
-  _cls = _env->FindClass("java/util/Map");
-}
-
-JNIMap::~JNIMap()
-{
-  _env->DeleteLocalRef(_cls);
+  JVM()->GetEnv((void**) &_env, QI_JNI_MIN_VERSION);
+  _obj = obj;
 }
 
 void JNIMap::put(jobject key, jobject value)
 {
-  jmethodID mid = _env->GetMethodID(_cls, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+  jmethodID mid = _env->GetMethodID(cls_map, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
 
   if (!key || !value)
   {
@@ -68,7 +61,7 @@ jobject JNIMap::object()
 
 int     JNIMap::size()
 {
-  jmethodID mid = _env->GetMethodID(_cls, "size", "()I");
+  jmethodID mid = _env->GetMethodID(cls_map, "size", "()I");
 
   if (!mid) // or throw std::runtime_error ?
     return (-1);
@@ -89,7 +82,7 @@ jobjectArray JNIMap::keys()
 
 jobject JNIMap::get(jobject key)
 {
-  jmethodID mid = _env->GetMethodID(_cls, "get", "(Ljava/lang/Object;)Ljava/lang/Object;");
+  jmethodID mid = _env->GetMethodID(cls_map, "get", "(Ljava/lang/Object;)Ljava/lang/Object;");
 
   if (!key)
   {
