@@ -66,6 +66,36 @@ public class AnyObject {
   }
 
   /**
+   * Retrieve the value of {@code property} asynchronously. Tuples will be
+   * converted to structs in the result, according to the {@code targetType}.
+   *
+   * @param targetType
+   *          the target result type
+   * @param property
+   *          the property
+   * @return a future to the converted result
+   */
+  public <T> Future<T> getProperty(final Type targetType, String property)
+  {
+    return property(property).andThen(new QiFunctionAdapter<T, Object>()
+    {
+      @Override
+      public Future<T> handleResult(Object result) throws Exception
+      {
+        @SuppressWarnings("unchecked")
+        T convertedResult = (T) StructConverter.tuplesToStructs(result, targetType);
+        return Future.of(convertedResult);
+      }
+    });
+  }
+
+  public <T> Future<T> getProperty(Class<T> targetType, String property)
+  {
+    // Specialization to benefit from type inference when targetType is a Class
+    return this.<T>getProperty((Type) targetType, property);
+  }
+
+  /**
    * Perform asynchronous call and return Future return value
    * @param method Method name to call
    * @param args Arguments to be forward to remote method
@@ -79,8 +109,8 @@ public class AnyObject {
 
   /**
    * Convert structs in {@code args} to tuples if necessary, then call
-   * {@code method} asynchronously. The result will convert tuples to structs
-   * according to the {@code targetType}.
+   * {@code method} asynchronously. Tuples will be converted to structs in the
+   * result, according to the {@code targetType}.
    *
    * @param targetType
    *          the target result type
@@ -113,7 +143,7 @@ public class AnyObject {
 
   public <T> Future<T> call(Class<T> targetType, String method, Object... args)
   {
-    // Specialization to use type inference when targetType is a Class
+    // Specialization to benefit from type inference when targetType is a Class
     return this.<T>call((Type) targetType, method, args);
   }
 
