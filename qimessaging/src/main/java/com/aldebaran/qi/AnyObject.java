@@ -10,6 +10,8 @@ import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 
+import com.aldebaran.qi.serialization.QiSerializer;
+
 public class AnyObject {
 
   static
@@ -52,7 +54,7 @@ public class AnyObject {
   {
     try {
       // convert custom structs to tuples if necessary
-      Object convertedProperty = StructConverter.structsToTuples(o);
+      Object convertedProperty = QiSerializer.serialize(o);
       return new Future<Void>(setProperty(_p, property, convertedProperty));
     } catch (QiConversionException e)
     {
@@ -83,7 +85,7 @@ public class AnyObject {
       public Future<T> handleResult(Object result) throws Exception
       {
         @SuppressWarnings("unchecked")
-        T convertedResult = (T) StructConverter.tuplesToStructs(result, targetType);
+        T convertedResult = (T) QiSerializer.deserialize(result, targetType);
         return Future.of(convertedResult);
       }
     });
@@ -124,14 +126,14 @@ public class AnyObject {
   {
     try
     {
-      Object[] convertedArgs = StructConverter.structsToTuplesInArray(args);
+      Object[] convertedArgs = QiSerializer.serializeArray(args);
       return this.call(method, convertedArgs).andThen(new QiFunctionAdapter<T, Object>()
       {
         @Override
         public Future<T> handleResult(Object result) throws Exception
         {
           @SuppressWarnings("unchecked")
-          T convertedResult = (T) StructConverter.tuplesToStructs(result, targetType);
+          T convertedResult = (T) QiSerializer.deserialize(result, targetType);
           return Future.of(convertedResult);
         }
       });
@@ -198,7 +200,7 @@ public class AnyObject {
         {
           method.setAccessible(true);
           // convert tuples to custom structs if necessary
-          convertedArgs = StructConverter.tuplesToStructs(args, method.getGenericParameterTypes());
+          convertedArgs = QiSerializer.deserialize(args, method.getGenericParameterTypes());
           method.invoke(annotatedSlotContainer, convertedArgs);
         } catch (IllegalAccessException e) {
           throw new QiSlotException(e);

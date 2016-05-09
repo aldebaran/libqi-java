@@ -1,4 +1,4 @@
-package com.aldebaran.qi;
+package com.aldebaran.qi.serialization;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -11,29 +11,35 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.aldebaran.qi.QiConversionException;
+import com.aldebaran.qi.QiStruct;
+import com.aldebaran.qi.Tuple;
+
 /**
- * Provide methods to automatically convert (recursively) {@link Tuple}s to
- * {@link QiStruct}s.
+ * Provide methods to serialize and deserialize custom objects to and from supported
+ * types.
+ *
+ * This includes structs/tuples conversion.
  */
-public class StructConverter
+public class QiSerializer
 {
-  private StructConverter()
+  private QiSerializer()
   {
     // not instantiable
   }
 
-  public static Object[] tuplesToStructs(Object[] sources, Type[] sourceTypes) throws QiConversionException
+  public static Object[] deserialize(Object[] sources, Type[] sourceTypes) throws QiConversionException
   {
     if (sources.length != sourceTypes.length)
       throw new IllegalArgumentException(
           "Sources and sourceTypes length don't match (" + sources.length + " != " + sourceTypes.length + ")");
     Object[] converted = new Object[sources.length];
     for (int i = 0; i < sources.length; ++i)
-      converted[i] = tuplesToStructs(sources[i], sourceTypes[i]);
+      converted[i] = deserialize(sources[i], sourceTypes[i]);
     return converted;
   }
 
-  public static Object tuplesToStructs(Object source, Type targetType) throws QiConversionException
+  public static Object deserialize(Object source, Type targetType) throws QiConversionException
   {
     if (source == null)
       return null;
@@ -42,7 +48,7 @@ public class StructConverter
     {
       Class<?> cls = (Class<?>) targetType;
       if (isQiStruct(cls))
-        return tupleToStruct((Tuple) source, cls);
+        return deserializeTuple((Tuple) source, cls);
     } else if (targetType instanceof ParameterizedType)
     {
       ParameterizedType parameterizedType = (ParameterizedType) targetType;
@@ -51,7 +57,7 @@ public class StructConverter
       {
         List<?> list = (List<?>) source;
         Type itemType = parameterizedType.getActualTypeArguments()[0];
-        return tuplesToStructsInList(list, itemType);
+        return deserializeList(list, itemType);
       }
       if (Map.class == rawType)
       {
@@ -59,7 +65,7 @@ public class StructConverter
         Type[] types = parameterizedType.getActualTypeArguments();
         Type keyType = types[0];
         Type valueType = types[1];
-        return tuplesToStructsInMap(map, keyType, valueType);
+        return deserializeMap(map, keyType, valueType);
       }
     }
 
@@ -67,7 +73,7 @@ public class StructConverter
     return source;
   }
 
-  public static <T> T tupleToStruct(Tuple tuple, Class<T> target) throws QiConversionException
+  public static <T> T deserializeTuple(Tuple tuple, Class<T> target) throws QiConversionException
   {
     try
     {
@@ -84,7 +90,7 @@ public class StructConverter
           continue;
         Type fieldType = field.getGenericType();
         Object value = tuple.get(tupleIndex++);
-        Object convertedValue = tuplesToStructs(value, fieldType);
+        Object convertedValue = deserialize(value, fieldType);
         field.setAccessible(true);
         field.set(struct, convertedValue);
       }
@@ -104,51 +110,51 @@ public class StructConverter
     }
   }
 
-  public static List<?> tuplesToStructsInList(List<?> list, Type itemType) throws QiConversionException
+  public static List<?> deserializeList(List<?> list, Type itemType) throws QiConversionException
   {
     List<Object> convertedList = new ArrayList<Object>();
     for (Object item : list)
     {
-      Object convertedItem = tuplesToStructs(item, itemType);
+      Object convertedItem = deserialize(item, itemType);
       convertedList.add(convertedItem);
     }
     return convertedList;
   }
 
-  public static Map<?, ?> tuplesToStructsInMap(Map<?, ?> map, Type keyType, Type valueType) throws QiConversionException
+  public static Map<?, ?> deserializeMap(Map<?, ?> map, Type keyType, Type valueType) throws QiConversionException
   {
     Map<Object, Object> convertedMap = new HashMap<Object, Object>();
     for (Map.Entry<?, ?> entry : map.entrySet())
     {
-      Object convertedKey = tuplesToStructs(entry.getKey(), keyType);
-      Object convertedValue = tuplesToStructs(entry.getValue(), valueType);
+      Object convertedKey = deserialize(entry.getKey(), keyType);
+      Object convertedValue = deserialize(entry.getValue(), valueType);
       convertedMap.put(convertedKey, convertedValue);
     }
     return convertedMap;
   }
 
-  public static Object structsToTuples(Object source) throws QiConversionException
+  public static Object serialize(Object source) throws QiConversionException
   {
     if (source == null)
       return null;
 
     if (source instanceof Object[])
-      return structsToTuplesInArray((Object[]) source);
+      return serializeArray((Object[]) source);
 
     if (source instanceof List)
-      return structsToTuplesInList((List<?>) source);
+      return serializeList((List<?>) source);
 
     if (source instanceof Map)
-      return structsToTuplesInMap((Map<?, ?>) source);
+      return serializeMap((Map<?, ?>) source);
 
     if (isQiStruct(source.getClass()))
-      return structToTuple(source);
+      return serializeStruct(source);
 
     // do not convert
     return source;
   }
 
-  public static Tuple structToTuple(Object struct) throws QiConversionException
+  public static Tuple serializeStruct(Object struct) throws QiConversionException
   {
     Class<?> cls = struct.getClass();
     if (!isQiStruct(cls))
@@ -163,7 +169,7 @@ public class StructConverter
           continue;
         field.setAccessible(true);
         Object value = field.get(struct);
-        Object convertedValue = structsToTuples(value);
+        Object convertedValue = serialize(value);
         values.add(convertedValue);
       }
       return Tuple.of(values.toArray());
@@ -173,32 +179,32 @@ public class StructConverter
     }
   }
 
-  public static Object[] structsToTuplesInArray(Object[] array) throws QiConversionException
+  public static Object[] serializeArray(Object[] array) throws QiConversionException
   {
     Object[] convertedArray = new Object[array.length];
     for (int i = 0; i < array.length; ++i)
-      convertedArray[i] = structsToTuples(array[i]);
+      convertedArray[i] = serialize(array[i]);
     return convertedArray;
   }
 
-  public static List<?> structsToTuplesInList(List<?> list) throws QiConversionException
+  public static List<?> serializeList(List<?> list) throws QiConversionException
   {
     List<Object> convertedList = new ArrayList<Object>();
     for (Object item : list)
     {
-      Object convertedItem = structsToTuples(item);
+      Object convertedItem = serialize(item);
       convertedList.add(convertedItem);
     }
     return convertedList;
   }
 
-  public static Map<?, ?> structsToTuplesInMap(Map<?, ?> map) throws QiConversionException
+  public static Map<?, ?> serializeMap(Map<?, ?> map) throws QiConversionException
   {
     Map<Object, Object> convertedMap = new HashMap<Object, Object>();
     for (Map.Entry<?, ?> entry : map.entrySet())
     {
-      Object convertedKey = structsToTuples(entry.getKey());
-      Object convertedValue = structsToTuples(entry.getValue());
+      Object convertedKey = serialize(entry.getKey());
+      Object convertedValue = serialize(entry.getValue());
       convertedMap.put(convertedKey, convertedValue);
     }
     return convertedMap;
