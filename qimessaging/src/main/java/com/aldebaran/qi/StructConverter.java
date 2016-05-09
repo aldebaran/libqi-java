@@ -1,6 +1,8 @@
 package com.aldebaran.qi;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -69,10 +71,13 @@ public class StructConverter
   {
     try
     {
-      T struct = target.newInstance();
+      Constructor<T> constructor = target.getDeclaredConstructor();
+      constructor.setAccessible(true);
+      T struct = constructor.newInstance();
       Field[] fields = target.getDeclaredFields();
       int tupleIndex = 0;
-      for (Field field : fields) {
+      for (Field field : fields)
+      {
         if (tupleIndex >= tuple.size())
           break;
         if (isTransient(field))
@@ -88,6 +93,12 @@ public class StructConverter
     {
       throw new QiConversionException(e);
     } catch (IllegalAccessException e)
+    {
+      throw new QiConversionException(e);
+    } catch (InvocationTargetException e)
+    {
+      throw new QiConversionException(e);
+    } catch (NoSuchMethodException e)
     {
       throw new QiConversionException(e);
     }
