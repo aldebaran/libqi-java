@@ -3,6 +3,7 @@ package com.aldebaran.qi;
 import java.util.Arrays;
 
 import com.aldebaran.qi.serialization.QiSerializer;
+import com.aldebaran.qi.serialization.StructConverter;
 
 public class Tuple
 {
@@ -23,7 +24,7 @@ public class Tuple
   }
 
   public static Tuple fromStruct(Object struct) throws QiConversionException {
-    return QiSerializer.serializeStruct(struct);
+    return new StructConverter().serialize(QiSerializer.getDefault(), struct);
   }
 
   // called from native

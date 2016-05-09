@@ -8,7 +8,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.Arrays;
-import java.util.concurrent.ExecutionException;
 
 import com.aldebaran.qi.serialization.QiSerializer;
 
@@ -23,6 +22,8 @@ public class AnyObject {
       loader.loadEmbeddedLibraries();
     }
   }
+
+  private static final QiSerializer serializer = QiSerializer.getDefault();
 
   private long    _p;
 
@@ -54,7 +55,7 @@ public class AnyObject {
   {
     try {
       // convert custom structs to tuples if necessary
-      Object convertedProperty = QiSerializer.serialize(o);
+      Object convertedProperty = serializer.serialize(o);
       return new Future<Void>(setProperty(_p, property, convertedProperty));
     } catch (QiConversionException e)
     {
@@ -85,7 +86,7 @@ public class AnyObject {
       public Future<T> handleResult(Object result) throws Exception
       {
         @SuppressWarnings("unchecked")
-        T convertedResult = (T) QiSerializer.deserialize(result, targetType);
+        T convertedResult = (T) serializer.deserialize(result, targetType);
         return Future.of(convertedResult);
       }
     });
@@ -126,14 +127,14 @@ public class AnyObject {
   {
     try
     {
-      Object[] convertedArgs = QiSerializer.serializeArray(args);
+      Object[] convertedArgs = (Object[]) serializer.serialize(args);
       return this.call(method, convertedArgs).andThen(new QiFunctionAdapter<T, Object>()
       {
         @Override
         public Future<T> handleResult(Object result) throws Exception
         {
           @SuppressWarnings("unchecked")
-          T convertedResult = (T) QiSerializer.deserialize(result, targetType);
+          T convertedResult = (T) serializer.deserialize(result, targetType);
           return Future.of(convertedResult);
         }
       });
@@ -200,7 +201,7 @@ public class AnyObject {
         {
           method.setAccessible(true);
           // convert tuples to custom structs if necessary
-          convertedArgs = QiSerializer.deserialize(args, method.getGenericParameterTypes());
+          convertedArgs = serializer.deserialize(args, method.getGenericParameterTypes());
           method.invoke(annotatedSlotContainer, convertedArgs);
         } catch (IllegalAccessException e) {
           throw new QiSlotException(e);
