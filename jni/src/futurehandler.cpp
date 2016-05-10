@@ -103,7 +103,6 @@ namespace qi {
     {
       if ((*it).second == info)
       {
-        jclass futureCls = 0;
         jmethodID init = 0;
 
         if ((init = env->GetMethodID(cls_future, "<init>", "(J)V")) == 0)
