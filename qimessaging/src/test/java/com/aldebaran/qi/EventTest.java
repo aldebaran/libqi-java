@@ -231,20 +231,25 @@ public class EventTest
   @QiStruct
   static class X
   {
+    @QiField(0)
     String s;
+    @QiField(1)
     Tuple raw;
   }
 
   @QiStruct
   static class Y
   {
+    @QiField(0)
     X head;
+    @QiField(1)
     List<X> tail;
   }
 
   @QiStruct
   static class Z
   {
+    @QiField(0)
     Map<String, Y> map;
   }
 

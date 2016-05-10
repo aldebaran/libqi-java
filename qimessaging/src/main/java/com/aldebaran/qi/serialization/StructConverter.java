@@ -3,12 +3,10 @@ package com.aldebaran.qi.serialization;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.List;
 
 import com.aldebaran.qi.QiConversionException;
+import com.aldebaran.qi.QiField;
 import com.aldebaran.qi.QiStruct;
 import com.aldebaran.qi.Tuple;
 
@@ -28,17 +26,19 @@ public class StructConverter implements QiSerializer.Converter
     try
     {
       Field[] fields = cls.getDeclaredFields();
-      List<Object> values = new ArrayList<Object>();
+      int valuesLength = computeMaxTupleIndex(fields) + 1;
+      Object[] values = new Object[valuesLength];
       for (Field field : fields)
       {
-        if (isTransient(field))
+        int tupleIndex = getTupleIndex(field);
+        if (tupleIndex < 0)
           continue;
         field.setAccessible(true);
         Object value = field.get(object);
         Object convertedValue = serializer.serialize(value);
-        values.add(convertedValue);
+        values[tupleIndex] = convertedValue;
       }
-      return Tuple.of(values.toArray());
+      return Tuple.of(values);
     } catch (IllegalAccessException e)
     {
       throw new QiConversionException(e);
@@ -66,15 +66,13 @@ public class StructConverter implements QiSerializer.Converter
       constructor.setAccessible(true);
       Object struct = constructor.newInstance();
       Field[] fields = targetClass.getDeclaredFields();
-      int tupleIndex = 0;
       for (Field field : fields)
       {
-        if (tupleIndex >= tuple.size())
-          break;
-        if (isTransient(field))
+        int tupleIndex = getTupleIndex(field);
+        if (tupleIndex < 0 || tupleIndex >= tuple.size())
           continue;
         Type fieldType = field.getGenericType();
-        Object value = tuple.get(tupleIndex++);
+        Object value = tuple.get(tupleIndex);
         Object convertedValue = serializer.deserialize(value, fieldType);
         field.setAccessible(true);
         field.set(struct, convertedValue);
@@ -100,8 +98,19 @@ public class StructConverter implements QiSerializer.Converter
     return cls.getAnnotation(QiStruct.class) != null;
   }
 
-  private static boolean isTransient(Field field)
+  private static int getTupleIndex(Field field)
   {
-    return (field.getModifiers() & Modifier.TRANSIENT) != 0;
+    QiField qiField = field.getAnnotation(QiField.class);
+    if (qiField == null)
+      return -1;
+    return qiField.value();
+  }
+
+  private static int computeMaxTupleIndex(Field[] fields)
+  {
+    int max = -1;
+    for (Field field : fields)
+      max = Math.max(max, getTupleIndex(field));
+    return max;
   }
 }
