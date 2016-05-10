@@ -23,7 +23,6 @@ class JNIObject
     JNIObject(const qi::AnyObject& o);
     JNIObject(qi::AnyObject* o);
     JNIObject(jobject value);
-    ~JNIObject();
 
     jobject object();
     qi::AnyObject      objectPtr();
@@ -34,7 +33,6 @@ class JNIObject
     qi::jni::JNIAttach attach;
 
     jobject _obj;
-    jclass  _cls;
     JNIEnv* _env;
 };
 
