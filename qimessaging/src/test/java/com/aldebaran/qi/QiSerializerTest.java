@@ -23,9 +23,12 @@ public class QiSerializerTest
   @QiStruct
   public static class Person
   {
+    @QiField(0)
     String firstName;
-    transient int mustBeIgnored;
+    int mustBeIgnored;
+    @QiField(1)
     String lastName;
+    @QiField(2)
     int age;
 
     public Person()

@@ -220,7 +220,9 @@ public class ObjectTest
   @QiStruct
   static class Item
   {
+    @QiField(0)
     int i;
+    @QiField(1)
     String s;
 
     Item()
