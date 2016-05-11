@@ -58,6 +58,8 @@ public class StructConverter implements QiSerializer.Converter
   @Override
   public Object deserialize(QiSerializer serializer, Object object, Type targetType) throws QiConversionException
   {
+    if (!(object instanceof Tuple))
+      throw new QiConversionException("Cannot convert instance of " + object.getClass() + " to " + targetType);
     Tuple tuple = (Tuple) object;
     Class<?> targetClass = (Class<?>) targetType;
     try

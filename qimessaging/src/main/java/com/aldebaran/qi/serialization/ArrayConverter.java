@@ -37,6 +37,8 @@ public class ArrayConverter implements QiSerializer.Converter
   @Override
   public Object[] deserialize(QiSerializer serializer, Object object, Type targetType) throws QiConversionException
   {
+    if (!(object instanceof Object[]))
+      throw new QiConversionException("Cannot convert instance of " + object.getClass() + " to " + targetType);
     Object[] array = (Object[]) object;
     Class<?> cls = (Class<?>) targetType;
     Class<?> componentType = cls.getComponentType();
