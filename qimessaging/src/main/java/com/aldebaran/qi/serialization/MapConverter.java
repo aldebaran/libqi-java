@@ -43,6 +43,8 @@ public class MapConverter implements QiSerializer.Converter
   @Override
   public Map<?, ?> deserialize(QiSerializer serializer, Object object, Type targetType) throws QiConversionException
   {
+    if (!(object instanceof Map))
+      throw new QiConversionException("Cannot convert instance of " + object.getClass() + " to " + targetType);
     Map<?, ?> map = (Map<?, ?>) object;
     ParameterizedType parameterizedType = (ParameterizedType) targetType;
     Type[] types = parameterizedType.getActualTypeArguments();

@@ -42,6 +42,8 @@ public class ListConverter implements QiSerializer.Converter
   @Override
   public List<?> deserialize(QiSerializer serializer, Object object, Type targetType) throws QiConversionException
   {
+    if (!(object instanceof List))
+      throw new QiConversionException("Cannot convert instance of " + object.getClass() + " to " + targetType);
     List<?> list = (List<?>) object;
     ParameterizedType parameterizedType = (ParameterizedType) targetType;
     Type itemType = parameterizedType.getActualTypeArguments()[0];
