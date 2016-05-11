@@ -33,7 +33,7 @@
       <profile>
         <id>arm-only</id>
         <properties>
-          <nativeResourceFilter>lib/armeabi/*.so</nativeResourceFilter>
+          <nativeResourceFilter>lib/arm*/*.so</nativeResourceFilter>
           <finalName>libqi-java-android-arm</finalName>
         </properties>
       </profile>
