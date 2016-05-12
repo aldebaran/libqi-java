@@ -172,6 +172,7 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_connectSignal(JNIEnv *en
         const char *methodSig = "([Ljava/lang/Object;)V";
         jobjectArray jparams = qi::jni::toJobjectArray(params);
         qi::jni::Call<void>::invoke(env, listener, method, methodSig, jparams);
+        env->DeleteLocalRef(jparams);
         jthrowable exception = env->ExceptionOccurred();
         if (exception)
         {
