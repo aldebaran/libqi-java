@@ -187,10 +187,15 @@ JNIEXPORT void JNICALL Java_com_aldebaran_qi_Future_qiFutureDestroy(JNIEnv* QI_U
   delete fut;
 }
 
-JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Future_qiFutureCreate(JNIEnv *env, jclass cls, jobject value)
+static jlong create(jobject value)
 {
     auto future = new qi::Future<qi::AnyValue>(qi::AnyValue::from<jobject>(value));
     return reinterpret_cast<jlong>(future);
+}
+
+JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Future_qiFutureCreate(JNIEnv *QI_UNUSED(env), jclass QI_UNUSED(cls), jobject value)
+{
+  return create(value);
 }
 
 static inline qi::Future<qi::AnyValue> createErrorFuture(const std::string &error)
@@ -254,14 +259,16 @@ qi::Future<qi::AnyValue> QiFunctionFunctor<Param>::operator()(Param) const
     env->ExceptionClear();
     return toErrorFuture(env, exception);
   }
-  if (!future) {
-    return createErrorFuture("QiFunction.execute() returned null");
-  }
 
-  jlong pFuture = qi::jni::getField<jlong>(env, future, "_fut");
-  if (env->ExceptionCheck() == JNI_TRUE) {
-    qiLogError() << "Field not found: Future._fut";
-    return {};
+  jlong pFuture;
+  if (future) {
+    pFuture = qi::jni::getField<jlong>(env, future, "_fut");
+    if (env->ExceptionCheck() == JNI_TRUE) {
+      qiLogError() << "Field not found: Future._fut";
+      return {};
+    }
+  } else {
+    pFuture = create(nullptr);
   }
 
   return *reinterpret_cast<qi::Future<qi::AnyValue>*>(pFuture);

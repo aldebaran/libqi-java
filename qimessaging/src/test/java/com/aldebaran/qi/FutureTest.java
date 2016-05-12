@@ -143,6 +143,26 @@ public class FutureTest
   }
 
   @Test
+  public void testThenReturnNull()
+  {
+    try
+    {
+      Void result = client.service("serviceTest").then(new QiFunction<Void, AnyObject>()
+      {
+        @Override
+        public Future<Void> execute(Future<AnyObject> arg)
+        {
+          return null;
+        }
+      }).get();
+      assertNull(result);
+    } catch (Exception e)
+    {
+      fail("get() must not fail");
+    }
+  }
+
+  @Test
   public void testAndThenSuccess()
   {
     try
@@ -181,6 +201,26 @@ public class FutureTest
     } catch (Exception e)
     {
       // expected exception
+    }
+  }
+
+  @Test
+  public void testAndThenReturnNull()
+  {
+    try
+    {
+      Void result = client.service("serviceTest").andThen(new QiFunction<Void, AnyObject>()
+      {
+        @Override
+        public Future<Void> execute(Future<AnyObject> arg)
+        {
+          return null;
+        }
+      }).get();
+      assertNull(result);
+    } catch (Exception e)
+    {
+      fail("get() must not fail");
     }
   }
 
