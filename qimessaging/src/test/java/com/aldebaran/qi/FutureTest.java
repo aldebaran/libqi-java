@@ -100,7 +100,7 @@ public class FutureTest
   {
     try
     {
-      int value = client.service("serviceTest").then(new QiFunction<Integer, AnyObject>()
+      int value = client.service("serviceTest").then(new FutureFunction<Integer, AnyObject>()
       {
         @Override
         public Future<Integer> execute(Future<AnyObject> arg)
@@ -121,7 +121,7 @@ public class FutureTest
   {
     try
     {
-      client.service("nonExistant").then(new QiFunction<AnyObject, AnyObject>()
+      client.service("nonExistant").then(new FutureFunction<AnyObject, AnyObject>()
       {
         @Override
         public Future<AnyObject> execute(Future<AnyObject> arg)
@@ -147,7 +147,7 @@ public class FutureTest
   {
     try
     {
-      Void result = client.service("serviceTest").then(new QiFunction<Void, AnyObject>()
+      Void result = client.service("serviceTest").then(new FutureFunction<Void, AnyObject>()
       {
         @Override
         public Future<Void> execute(Future<AnyObject> arg)
@@ -167,7 +167,7 @@ public class FutureTest
   {
     try
     {
-      int value = client.service("serviceTest").andThen(new QiFunction<Integer, AnyObject>()
+      int value = client.service("serviceTest").andThen(new FutureFunction<Integer, AnyObject>()
       {
         @Override
         public Future<Integer> execute(Future<AnyObject> arg)
@@ -188,7 +188,7 @@ public class FutureTest
   {
     try
     {
-      client.service("nonExistant").andThen(new QiFunction<Void, AnyObject>()
+      client.service("nonExistant").andThen(new FutureFunction<Void, AnyObject>()
       {
         @Override
         public Future<Void> execute(Future<AnyObject> arg)
@@ -209,7 +209,7 @@ public class FutureTest
   {
     try
     {
-      Void result = client.service("serviceTest").andThen(new QiFunction<Void, AnyObject>()
+      Void result = client.service("serviceTest").andThen(new FutureFunction<Void, AnyObject>()
       {
         @Override
         public Future<Void> execute(Future<AnyObject> arg)
@@ -229,7 +229,7 @@ public class FutureTest
   {
     try
     {
-      client.service("serviceTest").andThen(new QiFunction<Void, AnyObject>()
+      client.service("serviceTest").andThen(new FutureFunction<Void, AnyObject>()
       {
         @Override
         public Future<Void> execute(Future<AnyObject> arg)
@@ -252,10 +252,10 @@ public class FutureTest
   {
     try
     {
-      int value = client.service("serviceTest").then(new QiFunctionAdapter<Integer, AnyObject>()
+      int value = client.service("serviceTest").then(new QiFunction<Integer, AnyObject>()
       {
         @Override
-        public Future<Integer> handleResult(AnyObject service)
+        public Future<Integer> onResult(AnyObject service)
         {
           return service.call("answer", 42);
         }
@@ -271,22 +271,22 @@ public class FutureTest
   @Test
   public void testThenAdapterFailure()
   {
-    final AtomicBoolean handleErrorCalled = new AtomicBoolean();
+    final AtomicBoolean onErrorCalled = new AtomicBoolean();
     try
     {
-      client.service("nonExistant").then(new QiFunctionAdapter<AnyObject, AnyObject>()
+      client.service("nonExistant").then(new QiFunction<AnyObject, AnyObject>()
       {
         @Override
-        public Future<AnyObject> handleResult(AnyObject service)
+        public Future<AnyObject> onResult(AnyObject service)
         {
-          fail("handleResult() must not be called, the service does not exist");
+          fail("onResult() must not be called, the service does not exist");
           return null;
         }
 
         @Override
-        public Future<AnyObject> handleError(ExecutionException exception) throws ExecutionException
+        public Future<AnyObject> onError(Throwable error) throws ExecutionException
         {
-          handleErrorCalled.set(true);
+          onErrorCalled.set(true);
           return client.service("serviceTest");
         }
       }).get();
@@ -294,7 +294,7 @@ public class FutureTest
     {
       fail("get() must not fail, the second future should succeed");
     }
-    assertTrue("handleError() must be called", handleErrorCalled.get());
+    assertTrue("onError() must be called", onErrorCalled.get());
   }
 
   @Test
@@ -302,10 +302,10 @@ public class FutureTest
   {
     try
     {
-      int value = client.service("serviceTest").andThen(new QiFunctionAdapter<Integer, AnyObject>()
+      int value = client.service("serviceTest").andThen(new QiFunction<Integer, AnyObject>()
       {
         @Override
-        public Future<Integer> handleResult(AnyObject service)
+        public Future<Integer> onResult(AnyObject service)
         {
           return service.call("answer", 42);
         }
@@ -323,13 +323,12 @@ public class FutureTest
   {
     try
     {
-      client.service("nonExistant").andThen(new QiFunctionAdapter<Void, AnyObject>()
+      client.service("nonExistant").andThen(new QiCallback<AnyObject>()
       {
         @Override
-        public Future<Void> handleResult(AnyObject service)
+        public void onResult(AnyObject service)
         {
           fail("The first future has failed, this code should never be called");
-          return null;
         }
       }).get();
       fail("get() must fail");
@@ -337,6 +336,21 @@ public class FutureTest
     {
       // expected exception
     }
+  }
+
+  @Test
+  public void testThenVoidFunction() throws Exception {
+    final AtomicBoolean called = new AtomicBoolean();
+    client.service("serviceTest").andThen(new QiCallback<AnyObject>()
+    {
+      @Override
+      public void onResult(AnyObject service)
+      {
+        called.set(true);
+      }
+    }).get();
+    // answer adds 1 to the value
+    assertTrue(called.get());
   }
 
   @Test
@@ -355,11 +369,11 @@ public class FutureTest
     Promise<X> promise = new Promise<X>();
     promise.setValue(new X(42));
     Future<X> future = promise.getFuture();
-    X x = future.andThen(new QiFunctionAdapter<X, X>()
+    X x = future.andThen(new QiFunction<X, X>()
 
     {
       @Override
-      public Future<X> handleResult(X x) throws Exception
+      public Future<X> onResult(X x) throws Exception
       {
         return Future.of(new X(x.value + 1));
       }
