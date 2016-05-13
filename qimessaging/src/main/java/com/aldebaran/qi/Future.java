@@ -27,6 +27,7 @@ public class Future<T> implements java.util.concurrent.Future<T>
     }
   }
 
+  @Deprecated
   public interface Callback<T>
   {
     void onFinished(Future<T> future);
@@ -46,8 +47,8 @@ public class Future<T> implements java.util.concurrent.Future<T>
   private native void qiFutureCallWaitWithTimeout(long pFuture, int timeout);
   private native void qiFutureDestroy(long pFuture);
   private native void qiFutureCallConnectCallback(long pFuture, Callback<?> callback);
-  private native long qiFutureCallThen(long pFuture, QiFunction<?, ?> function);
-  private native long qiFutureCallAndThen(long pFuture, QiFunction<?, ?> function);
+  private native long qiFutureCallThen(long pFuture, FutureFunction<?, ?> function);
+  private native long qiFutureCallAndThen(long pFuture, FutureFunction<?, ?> function);
   private static native long qiFutureCreate(Object value);
 
   private boolean cancelled;
@@ -60,6 +61,13 @@ public class Future<T> implements java.util.concurrent.Future<T>
   public static <T> Future<T> of(T value)
   {
     return new Future<T>(qiFutureCreate(value));
+  }
+
+  public static <T> Future<T> cancelled()
+  {
+    Promise<T> promise = new Promise<T>();
+    promise.setCancelled();
+    return promise.getFuture();
   }
 
   public void sync(long timeout, TimeUnit unit)
@@ -89,6 +97,10 @@ public class Future<T> implements java.util.concurrent.Future<T>
     return qiFutureCallConnect(_fut, callback, className, args);
   }
 
+  /**
+   * Use {@link #then(FutureFunction)} instead (e.g. {@link QiCallback}).
+   */
+  @Deprecated
   public void connect(Callback<T> callback)
   {
     qiFutureCallConnectCallback(_fut, callback);
@@ -227,12 +239,12 @@ public class Future<T> implements java.util.concurrent.Future<T>
     return qiFutureCallIsDone(_fut);
   }
 
-  public <Ret> Future<Ret> then(QiFunction<Ret, T> function)
+  public <Ret> Future<Ret> then(FutureFunction<Ret, T> function)
   {
     return new Future<Ret>(qiFutureCallThen(_fut, function));
   }
 
-  public <Ret> Future<Ret> andThen(QiFunction<Ret, T> function)
+  public <Ret> Future<Ret> andThen(FutureFunction<Ret, T> function)
   {
     return new Future<Ret>(qiFutureCallAndThen(_fut, function));
   }

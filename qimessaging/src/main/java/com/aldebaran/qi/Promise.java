@@ -50,6 +50,31 @@ public class Promise<T>
     future.setCancelled();
   }
 
+  public void connectFromFuture(Future<T> future)
+  {
+    future.then(new QiCallback<T>()
+    {
+
+      @Override
+      public void onResult(T result) throws Exception
+      {
+        setValue(result);
+      }
+
+      @Override
+      public void onError(Throwable error) throws Exception
+      {
+        setError(error.getMessage());
+      }
+
+      @Override
+      public void onCancel() throws Exception
+      {
+        setCancelled();
+      }
+    });
+  }
+
   private native long _newPromise();
 
   private native long _getFuture(long promisePtr);

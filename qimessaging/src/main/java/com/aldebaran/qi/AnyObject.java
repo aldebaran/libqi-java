@@ -80,10 +80,10 @@ public class AnyObject {
    */
   public <T> Future<T> getProperty(final Type targetType, String property)
   {
-    return property(property).andThen(new QiFunctionAdapter<T, Object>()
+    return property(property).andThen(new QiFunction<T, Object>()
     {
       @Override
-      public Future<T> handleResult(Object result) throws Exception
+      public Future<T> onResult(Object result) throws Exception
       {
         @SuppressWarnings("unchecked")
         T convertedResult = (T) serializer.deserialize(result, targetType);
@@ -128,10 +128,10 @@ public class AnyObject {
     try
     {
       Object[] convertedArgs = (Object[]) serializer.serialize(args);
-      return this.call(method, convertedArgs).andThen(new QiFunctionAdapter<T, Object>()
+      return this.call(method, convertedArgs).andThen(new QiFunction<T, Object>()
       {
         @Override
-        public Future<T> handleResult(Object result) throws Exception
+        public Future<T> onResult(Object result) throws Exception
         {
           @SuppressWarnings("unchecked")
           T convertedResult = (T) serializer.deserialize(result, targetType);
@@ -228,10 +228,10 @@ public class AnyObject {
 
   Future<Void> disconnect(QiSignalConnection connection)
   {
-    return connection.getFuture().andThen(new QiFunctionAdapter<Void, Long>()
+    return connection.getFuture().andThen(new QiFunction<Void, Long>()
     {
       @Override
-      public Future<Void> handleResult(Long subscriberId)
+      public Future<Void> onResult(Long subscriberId)
       {
         long futurePtr = disconnectSignal(_p, subscriberId);
         return new Future<Void>(futurePtr);
