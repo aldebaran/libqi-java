@@ -23,8 +23,6 @@ public class AnyObject {
     }
   }
 
-  private static final QiSerializer serializer = QiSerializer.getDefault();
-
   private long    _p;
 
   private native long property(long pObj, String property);
@@ -51,7 +49,7 @@ public class AnyObject {
     this._p = p;
   }
 
-  public Future<Void> setProperty(String property, Object o)
+  public Future<Void> setProperty(QiSerializer serializer, String property, Object o)
   {
     try {
       // convert custom structs to tuples if necessary
@@ -61,6 +59,11 @@ public class AnyObject {
     {
       throw new QiRuntimeException(e);
     }
+  }
+
+  public Future<Void> setProperty(String property, Object o)
+  {
+    return setProperty(QiSerializer.getDefault(), property, o);
   }
 
   public <T> Future<T> property(String property)
@@ -78,7 +81,7 @@ public class AnyObject {
    *          the property
    * @return a future to the converted result
    */
-  public <T> Future<T> getProperty(final Type targetType, String property)
+  public <T> Future<T> getProperty(final QiSerializer serializer, final Type targetType, String property)
   {
     return property(property).andThen(new QiFunction<T, Object>()
     {
@@ -92,10 +95,21 @@ public class AnyObject {
     });
   }
 
+  public <T> Future<T> getProperty(Type targetType, String property)
+  {
+    return getProperty(QiSerializer.getDefault(), targetType, property);
+  }
+
+  public <T> Future<T> getProperty(QiSerializer serializer, Class<T> targetType, String property)
+  {
+    // Specialization to benefit from type inference when targetType is a Class
+    return getProperty(serializer, (Type) targetType, property);
+  }
+
   public <T> Future<T> getProperty(Class<T> targetType, String property)
   {
     // Specialization to benefit from type inference when targetType is a Class
-    return this.<T>getProperty((Type) targetType, property);
+    return getProperty((Type) targetType, property);
   }
 
   /**
@@ -123,7 +137,7 @@ public class AnyObject {
    *          the method arguments
    * @return a future to the converted result
    */
-  public <T> Future<T> call(final Type targetType, String method, Object... args)
+  public <T> Future<T> call(final QiSerializer serializer, final Type targetType, String method, Object... args)
   {
     try
     {
@@ -144,10 +158,21 @@ public class AnyObject {
     }
   }
 
+  public <T> Future<T> call(final Type targetType, String method, Object... args)
+  {
+    return call(QiSerializer.getDefault(), targetType, method, args);
+  }
+
+  public <T> Future<T> call(QiSerializer serializer, Class<T> targetType, String method, Object... args)
+  {
+    // Specialization to benefit from type inference when targetType is a Class
+    return call(serializer, (Type) targetType, method, args);
+  }
+
   public <T> Future<T> call(Class<T> targetType, String method, Object... args)
   {
     // Specialization to benefit from type inference when targetType is a Class
-    return this.<T>call((Type) targetType, method, args);
+    return call((Type) targetType, method, args);
   }
 
   /**
@@ -183,7 +208,7 @@ public class AnyObject {
     return new QiSignalConnection(this, new Future<Long>(futurePtr));
   }
 
-  public QiSignalConnection connect(String signalName, final Object annotatedSlotContainer, String slotName)
+  public QiSignalConnection connect(final QiSerializer serializer, String signalName, final Object annotatedSlotContainer, String slotName)
   {
     final Method method = findSlot(annotatedSlotContainer, slotName);
 
@@ -215,6 +240,11 @@ public class AnyObject {
         }
       }
     });
+  }
+
+  public QiSignalConnection connect(String signalName, final Object annotatedSlotContainer, String slotName)
+  {
+    return connect(QiSerializer.getDefault(), signalName, annotatedSlotContainer, slotName);
   }
 
   private static Class<?>[] getTypes(Object[] values) {
