@@ -43,7 +43,6 @@ public class RawApplication
 
   /**
    * Stop RawApplication eventloops and calls atStop() callbacks.
-   * @since 1.20
    */
   public void stop()
   {
@@ -55,7 +54,6 @@ public class RawApplication
    * Return when :
    * - Eventloop is stopped.
    * - RawApplication.stop() is called
-   * @since 1.20
    */
   public void run()
   {
