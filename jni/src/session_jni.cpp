@@ -188,7 +188,7 @@ public:
   Java_ClientAuthenticator(JNIEnv* env, jobject object)
   {
     env->GetJavaVM(&_jvm);
-    _jobject = env->NewGlobalRef(object);
+    _jobjectRef = qi::jni::makeSharedGlobalRef(env, object);
   }
 
   qi::CapabilityMap initialAuthData()
@@ -199,6 +199,7 @@ public:
 #else
     _jvm->AttachCurrentThread(&env, nullptr);
 #endif
+    jobject _jobject = _jobjectRef.get();
     jobject ca = qi::jni::Call<jobject>::invoke(env, _jobject, "initialAuthData", "()Ljava/util/Map;");
     auto result = JNI_JavaMaptoMap(env, ca);
     env->DeleteLocalRef(ca);
@@ -213,6 +214,7 @@ public:
 #else
     _jvm->AttachCurrentThread(&env, nullptr);
 #endif
+    jobject _jobject = _jobjectRef.get();
     jobject jmap = JNI_MapToJavaMap(env, authData);
     jobject ca = qi::jni::Call<jobject>::invoke(env, _jobject, "_processAuth", "(Ljava/util/Map;)Ljava/util/Map;", jmap);
     env->DeleteLocalRef(jmap);
@@ -223,7 +225,7 @@ public:
 
 private:
   JavaVM* _jvm;
-  jobject _jobject;
+  qi::jni::SharedGlobalRef _jobjectRef;
 
   static qi::CapabilityMap JNI_JavaMaptoMap(JNIEnv* env, jobject jmap)
   {
