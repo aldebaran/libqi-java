@@ -7,7 +7,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation indicating that a class represent a conversion from a
+ * Annotation indicating that a class represents a conversion from a
  * {@link Tuple}.
  *
  * A class having this annotation must annotate fields with {@code QiField} with
