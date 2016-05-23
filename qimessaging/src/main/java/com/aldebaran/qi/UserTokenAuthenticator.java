@@ -55,14 +55,14 @@ public class UserTokenAuthenticator implements ClientAuthenticator
   }
 
   @Override
-  public Map<String, Object> initialAuthData()
+  public synchronized Map<String, Object> initialAuthData()
   {
     hasNewToken = false;
     return createMap(user, token);
   }
 
   @Override
-  public Map<String, Object> _processAuth(Map<String, Object> authData)
+  public synchronized Map<String, Object> _processAuth(Map<String, Object> authData)
   {
     // If no token was provided by initialAuthData(), the gateway
     // generates and provides it the very first time (it trusts on first
@@ -80,7 +80,7 @@ public class UserTokenAuthenticator implements ClientAuthenticator
    *
    * @return {@©ode true} if a new token has been retrieved, {@false} otherwise
    */
-  public boolean hasNewToken()
+  public synchronized boolean hasNewToken()
   {
     return hasNewToken;
   }
@@ -90,7 +90,7 @@ public class UserTokenAuthenticator implements ClientAuthenticator
    *
    * @return the token
    */
-  public String getToken()
+  public synchronized String getToken()
   {
     return token;
   }
