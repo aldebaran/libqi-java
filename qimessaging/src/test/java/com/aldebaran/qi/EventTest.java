@@ -321,4 +321,43 @@ public class EventTest
     assertTrue(connectedCalled.get());
     assertTrue(disconnectedCalled.get());
   }
+
+  @Test
+  public void testMultipleSessionConnectionListeners() throws ExecutionException, InterruptedException
+  {
+    Session session = new Session();
+    final AtomicInteger connectedCount = new AtomicInteger();
+    final AtomicInteger disconnectedCount = new AtomicInteger();
+    class Counter implements Session.ConnectionListener
+    {
+      @Override
+      public void onConnected()
+      {
+        connectedCount.incrementAndGet();
+      }
+
+      @Override
+      public void onDisconnected(String reason)
+      {
+        disconnectedCount.incrementAndGet();
+      }
+    }
+
+    Counter counter = new Counter();
+
+    // 3 ConnectionListeners during connected
+    session.addConnectionListener(new Counter());
+    session.addConnectionListener(new Counter());
+    session.addConnectionListener(counter);
+
+    session.connect(sd.listenUrl()).get();
+
+    // 2 ConnectionListeners during disconnected
+    session.removeConnectionListener(counter);
+
+    session.close();
+    Thread.sleep(100);
+    assertEquals(3, connectedCount.get());
+    assertEquals(2, disconnectedCount.get());
+  }
 }
