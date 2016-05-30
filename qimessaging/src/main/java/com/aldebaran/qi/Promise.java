@@ -17,10 +17,15 @@ public class Promise<T>
 
   private Future<T> future;
 
+  public Promise(FutureCallbackType type)
+  {
+    promisePtr = _newPromise(type.nativeValue);
+    future = new Future<T>(_getFuture(promisePtr));
+  }
+
   public Promise()
   {
-    promisePtr = _newPromise();
-    future = new Future<T>(_getFuture(promisePtr));
+    this(FutureCallbackType.Auto);
   }
 
   public Future<T> getFuture()
@@ -75,7 +80,7 @@ public class Promise<T>
     });
   }
 
-  private native long _newPromise();
+  private native long _newPromise(int futureCallbackType);
 
   private native long _getFuture(long promisePtr);
 
