@@ -1,8 +1,10 @@
 package com.aldebaran.qi;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -69,5 +71,36 @@ public class PromiseTest
     }
     int value = future.get();
     Assert.assertEquals(42, value);
+  }
+
+  public static boolean isCallbackExecutedOnSameThread(FutureCallbackType futureCallbackType) throws InterruptedException
+  {
+    Promise<Void> promise = new Promise<Void>(futureCallbackType);
+    promise.setValue(null);
+    final CountDownLatch countDownLatch = new CountDownLatch(1);
+    final AtomicLong callbackThreadId = new AtomicLong();
+    promise.getFuture().andThen(new QiCallback<Void>()
+    {
+      @Override
+      public void onResult(Void result)
+      {
+        callbackThreadId.set(Thread.currentThread().getId());
+        countDownLatch.countDown();
+      }
+    });
+    countDownLatch.await();
+    return Thread.currentThread().getId() == callbackThreadId.get();
+  }
+
+  @Test
+  public void testAsyncType() throws InterruptedException
+  {
+    Assert.assertFalse(isCallbackExecutedOnSameThread(FutureCallbackType.Async));
+  }
+
+  @Test
+  public void testSyncType() throws InterruptedException
+  {
+    Assert.assertTrue(isCallbackExecutedOnSameThread(FutureCallbackType.Sync));
   }
 }

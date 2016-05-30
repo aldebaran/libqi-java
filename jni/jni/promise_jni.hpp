@@ -13,7 +13,7 @@ extern "C" {
  * Signature: ()J
  */
 JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Promise__1newPromise
-  (JNIEnv *, jobject);
+  (JNIEnv *, jobject, jint);
 
 /*
  * Class:     com_aldebaran_qi_Promise
