@@ -32,7 +32,6 @@ set(SOURCE
    jni/object_jni.hpp
    jni/object.hpp
    jni/promise_jni.hpp
-   jni/qitools.hpp
 
    src/session_jni.cpp
    src/application_jni.cpp
@@ -50,7 +49,6 @@ set(SOURCE
    src/object_jni.cpp
    src/object.cpp
    src/promise_jni.cpp
-   src/qitools.cpp
    )
 
 # Compile qimessaging java compatibility layer using jni
