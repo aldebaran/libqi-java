@@ -27,7 +27,6 @@ public class Future<T> implements java.util.concurrent.Future<T>
     }
   }
 
-  @Deprecated
   public interface Callback<T>
   {
     void onFinished(Future<T> future);
@@ -47,8 +46,6 @@ public class Future<T> implements java.util.concurrent.Future<T>
   private native void qiFutureCallWaitWithTimeout(long pFuture, int timeout);
   private native void qiFutureDestroy(long pFuture);
   private native void qiFutureCallConnectCallback(long pFuture, Callback<?> callback);
-  private native long qiFutureCallThen(long pFuture, FutureFunction<?, ?> function);
-  private native long qiFutureCallAndThen(long pFuture, FutureFunction<?, ?> function);
   private static native long qiFutureCreate(Object value);
 
   private boolean cancelled;
@@ -67,6 +64,13 @@ public class Future<T> implements java.util.concurrent.Future<T>
   {
     Promise<T> promise = new Promise<T>();
     promise.setCancelled();
+    return promise.getFuture();
+  }
+
+  public static <T> Future<T> fromError(String errorMessage)
+  {
+    Promise<T> promise = new Promise<T>();
+    promise.setError(errorMessage);
     return promise.getFuture();
   }
 
@@ -98,9 +102,8 @@ public class Future<T> implements java.util.concurrent.Future<T>
   }
 
   /**
-   * Use {@link #then(FutureFunction)} instead (e.g. {@link QiCallback}).
+   * Prefer {@link #then(FutureFunction)} instead (e.g. {@link QiCallback}).
    */
-  @Deprecated
   public void connect(Callback<T> callback)
   {
     qiFutureCallConnectCallback(_fut, callback);
@@ -239,14 +242,89 @@ public class Future<T> implements java.util.concurrent.Future<T>
     return qiFutureCallIsDone(_fut);
   }
 
+  private <Ret> Future<Ret> _then(final FutureFunction<Ret, T> function, final boolean chainOnFailure)
+  {
+    final Promise<Ret> promiseToNotify = new Promise<Ret>();
+    connect(new Callback<T>()
+    {
+      @Override
+      public void onFinished(Future<T> future)
+      {
+        if (chainOnFailure || !notifyIfFailed(future, promiseToNotify))
+          chainFuture(future, function, promiseToNotify);
+      }
+    });
+    return promiseToNotify.getFuture();
+  }
+
   public <Ret> Future<Ret> then(FutureFunction<Ret, T> function)
   {
-    return new Future<Ret>(qiFutureCallThen(_fut, function));
+    return _then(function, true);
   }
 
   public <Ret> Future<Ret> andThen(FutureFunction<Ret, T> function)
   {
-    return new Future<Ret>(qiFutureCallAndThen(_fut, function));
+    return _then(function, false);
+  }
+
+  private static <Ret, Arg> Future<Ret> getNextFuture(Future<Arg> future, FutureFunction<Ret, Arg> function)
+  {
+    try {
+      Future<Ret> result = function.execute(future);
+      // for convenience, the function can return null, which means a future with a null value
+      if (result == null)
+        result = Future.of(null);
+      return result;
+    } catch (Throwable t) {
+      // print the trace because the future error is a string, so the stack trace is lost
+      t.printStackTrace();
+      return fromError(t.toString());
+    }
+  }
+
+  private static <T> void notifyPromiseFromFuture(Future<T> future, Promise<T> promiseToNotify)
+  {
+    // we must lock the mutex, because the future can be cancelled at any time
+    synchronized (future)
+    {
+      if (future.hasError())
+        promiseToNotify.setError(future.getErrorMessage());
+      else if (future.isCancelled())
+        promiseToNotify.setCancelled();
+      else
+        promiseToNotify.setValue(future.getValue());
+    }
+  }
+
+  private static <Ret, Arg> void chainFuture(Future<Arg> future, FutureFunction<Ret, Arg> function,
+      final Promise<Ret> promiseToNotify)
+  {
+    getNextFuture(future, function).connect(new Callback<Ret>()
+    {
+      @Override
+      public void onFinished(Future<Ret> future)
+      {
+        notifyPromiseFromFuture(future, promiseToNotify);
+      }
+    });
+  }
+
+  private static <T> boolean notifyIfFailed(Future<T> future, Promise<?> promiseToNotify)
+  {
+    synchronized (future)
+    {
+      if (future.hasError())
+      {
+        promiseToNotify.setError(future.getErrorMessage());
+        return true;
+      }
+      if (future.isCancelled())
+      {
+        promiseToNotify.setCancelled();
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
