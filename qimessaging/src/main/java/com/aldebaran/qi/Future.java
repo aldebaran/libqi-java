@@ -45,7 +45,7 @@ public class Future<T> implements java.util.concurrent.Future<T>
   private native boolean qiFutureCallConnect(long pFuture, Object callback, String className, Object[] args);
   private native void qiFutureCallWaitWithTimeout(long pFuture, int timeout);
   private native void qiFutureDestroy(long pFuture);
-  private native void qiFutureCallConnectCallback(long pFuture, Callback<?> callback);
+  private native void qiFutureCallConnectCallback(long pFuture, Callback<?> callback, int futureCallbackType);
   private static native long qiFutureCreate(Object value);
 
   private boolean cancelled;
@@ -102,11 +102,16 @@ public class Future<T> implements java.util.concurrent.Future<T>
   }
 
   /**
-   * Prefer {@link #then(FutureFunction)} instead (e.g. {@link QiCallback}).
+   * Prefer {@link #then(FutureFunction, FutureCallbackType)} instead (e.g. {@link QiCallback}).
    */
+  public void connect(Callback<T> callback, FutureCallbackType futureCallbackType)
+  {
+    qiFutureCallConnectCallback(_fut, callback, futureCallbackType.nativeValue);
+  }
+
   public void connect(Callback<T> callback)
   {
-    qiFutureCallConnectCallback(_fut, callback);
+    connect(callback, FutureCallbackType.Auto);
   }
 
   @Override
@@ -242,9 +247,11 @@ public class Future<T> implements java.util.concurrent.Future<T>
     return qiFutureCallIsDone(_fut);
   }
 
-  private <Ret> Future<Ret> _then(final FutureFunction<Ret, T> function, final boolean chainOnFailure)
+  private <Ret> Future<Ret> _then(final FutureFunction<Ret, T> function, final boolean chainOnFailure,
+      FutureCallbackType type)
   {
-    final Promise<Ret> promiseToNotify = new Promise<Ret>();
+    // the promise must be sync according to the Callback (which may be Sync or Async according to the caller)
+    final Promise<Ret> promiseToNotify = new Promise<Ret>(FutureCallbackType.Sync);
     connect(new Callback<T>()
     {
       @Override
@@ -253,18 +260,28 @@ public class Future<T> implements java.util.concurrent.Future<T>
         if (chainOnFailure || !notifyIfFailed(future, promiseToNotify))
           chainFuture(future, function, promiseToNotify);
       }
-    });
+    }, type);
     return promiseToNotify.getFuture();
+  }
+
+  public <Ret> Future<Ret> then(FutureFunction<Ret, T> function, FutureCallbackType type)
+  {
+    return _then(function, true, type);
   }
 
   public <Ret> Future<Ret> then(FutureFunction<Ret, T> function)
   {
-    return _then(function, true);
+    return _then(function, true, FutureCallbackType.Auto);
+  }
+
+  public <Ret> Future<Ret> andThen(FutureFunction<Ret, T> function, FutureCallbackType type)
+  {
+    return _then(function, false, type);
   }
 
   public <Ret> Future<Ret> andThen(FutureFunction<Ret, T> function)
   {
-    return _then(function, false);
+    return _then(function, false, FutureCallbackType.Auto);
   }
 
   private static <Ret, Arg> Future<Ret> getNextFuture(Future<Arg> future, FutureFunction<Ret, Arg> function)

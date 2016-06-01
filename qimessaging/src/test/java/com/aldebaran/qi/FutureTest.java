@@ -5,10 +5,12 @@
 package com.aldebaran.qi;
 
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.aldebaran.qi.ServiceDirectory;
 import com.aldebaran.qi.Session;
@@ -351,6 +353,51 @@ public class FutureTest
     }).get();
     // answer adds 1 to the value
     assertTrue(called.get());
+  }
+
+  public static boolean isCallbackExecutedOnSameThread(FutureCallbackType promiseType, FutureCallbackType thenType) throws InterruptedException
+  {
+    Promise<Void> promise = new Promise<Void>(promiseType);
+    promise.setValue(null);
+    final CountDownLatch countDownLatch = new CountDownLatch(1);
+    final AtomicLong callbackThreadId = new AtomicLong();
+    promise.getFuture().andThen(new QiCallback<Void>()
+    {
+      @Override
+      public void onResult(Void result)
+      {
+        callbackThreadId.set(Thread.currentThread().getId());
+        countDownLatch.countDown();
+      }
+    }, thenType);
+    countDownLatch.await();
+    return Thread.currentThread().getId() == callbackThreadId.get();
+  }
+
+  private static void expectSync(FutureCallbackType promiseType, FutureCallbackType thenType) throws InterruptedException {
+    assertTrue(isCallbackExecutedOnSameThread(promiseType, thenType));
+  }
+
+  private static void expectAsync(FutureCallbackType promiseType, FutureCallbackType thenType) throws InterruptedException {
+    assertFalse(isCallbackExecutedOnSameThread(promiseType, thenType));
+  }
+
+  @Test
+  public void testFutureCallbackTypes() throws InterruptedException
+  {
+    // the type of "then" is Sync, so the resulting type is always Sync
+    expectSync(FutureCallbackType.Sync, FutureCallbackType.Sync);
+    expectSync(FutureCallbackType.Async, FutureCallbackType.Sync);
+    expectSync(FutureCallbackType.Auto, FutureCallbackType.Sync);
+
+    // the type of "then" is Async, so the resulting type is always Async
+    expectAsync(FutureCallbackType.Sync, FutureCallbackType.Async);
+    expectAsync(FutureCallbackType.Async, FutureCallbackType.Async);
+    expectAsync(FutureCallbackType.Auto, FutureCallbackType.Async);
+
+    // the type of "then" is Auto, so the resulting type is the promise type
+    expectSync(FutureCallbackType.Sync, FutureCallbackType.Auto);
+    expectAsync(FutureCallbackType.Async, FutureCallbackType.Auto);
   }
 
   @Test

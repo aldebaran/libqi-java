@@ -139,12 +139,13 @@ struct CallbackFunctor
   void operator()(const qi::Future<qi::AnyValue> &future) const;
 };
 
-JNIEXPORT void JNICALL Java_com_aldebaran_qi_Future_qiFutureCallConnectCallback(JNIEnv *env, jobject thisFuture, jlong pFuture, jobject callback)
+JNIEXPORT void JNICALL Java_com_aldebaran_qi_Future_qiFutureCallConnectCallback(JNIEnv *env, jobject thisFuture, jlong pFuture, jobject callback, jint futureCallbackType)
 {
   qi::Future<qi::AnyValue>* future = reinterpret_cast<qi::Future<qi::AnyValue>*>(pFuture);
   auto gThisFuture = qi::jni::makeSharedGlobalRef(env, thisFuture);
   auto gCallback = qi::jni::makeSharedGlobalRef(env, callback);
-  future->connect(CallbackFunctor{ gThisFuture, gCallback });
+  qi::FutureCallbackType type = static_cast<qi::FutureCallbackType>(futureCallbackType);
+  future->connect(CallbackFunctor{ gThisFuture, gCallback }, type);
 }
 
 JNIEXPORT void JNICALL Java_com_aldebaran_qi_Future_qiFutureDestroy(JNIEnv* QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pFuture)
