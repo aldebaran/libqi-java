@@ -808,8 +808,9 @@ public class FutureTest
     assertEquals(42, (long) f3.get(0, TimeUnit.SECONDS));
   }
 
-  @Test(expected=ExecutionException.class)
-  public void testWaitAllWithError() throws ExecutionException, TimeoutException {
+  @Test(expected = ExecutionException.class)
+  public void testWaitAllWithError() throws ExecutionException, TimeoutException
+  {
     Promise<Long> p1 = new Promise<Long>();
     Promise<Long> p2 = new Promise<Long>();
     new Thread(new AsyncWait(p1, 100, AsyncWait.Type.ERROR)).start();
@@ -819,8 +820,9 @@ public class FutureTest
     Future.waitAll(f1, f2).get();
   }
 
-  @Test(expected=CancellationException.class)
-  public void testWaitAllWithCancellation() throws ExecutionException, TimeoutException {
+  @Test(expected = CancellationException.class)
+  public void testWaitAllWithCancellation() throws ExecutionException, TimeoutException
+  {
     Promise<Long> p1 = new Promise<Long>();
     Promise<Long> p2 = new Promise<Long>();
     new Thread(new AsyncWait(p1, 100, AsyncWait.Type.CANCEL)).start();
@@ -831,7 +833,20 @@ public class FutureTest
   }
 
   @Test
-  public void testWaitAllEmpty() throws ExecutionException, TimeoutException {
+  public void testWaitAllEmpty() throws ExecutionException, TimeoutException
+  {
     Future.waitAll().get(1, TimeUnit.SECONDS);
+  }
+
+  @Test
+  public void testFutureWaitFor() throws ExecutionException, TimeoutException
+  {
+    Promise<Long> p = new Promise<Long>();
+    Future<Integer> future = Future.of(42).waitFor(p.getFuture());
+    new Thread(new AsyncWait(p, 50, AsyncWait.Type.VALUE)).start();
+    assertFalse(future.isDone());
+    future.sync();
+    assertTrue(p.getFuture().isDone());
+    p.getFuture().get(0, TimeUnit.SECONDS); // must not throw
   }
 }
