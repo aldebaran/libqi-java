@@ -401,6 +401,44 @@ public class Future<T> implements java.util.concurrent.Future<T>
   }
 
   /**
+   * Return a version of {@code this} future that waits until {@code futures} to
+   * finish.
+   *
+   * The returning future finishes successfully if and only if {@code this}
+   * future and {@code futures} finish successfully.
+   *
+   * Otherwise, it takes the state of {@code this} if it failed, or the first
+   * failing future from {@code futures}.
+   *
+   * If {@code this} future does not finish successfully, it does not wait for
+   * {@code futures}.
+   *
+   * @param futures
+   *          the futures to wait for
+   * @return future returning this future value when all {@code futures} are
+   *         finished successfully
+   */
+  public Future<T> waitFor(final Future<?>... futures)
+  {
+    // do not wait for futures if this does not finish successfully
+    return andThen(new FutureFunction<T, T>()
+    {
+      @Override
+      public Future<T> execute(Future<T> future)
+      {
+        return waitAll(futures).andThen(new FutureFunction<T, Void>()
+        {
+          @Override
+          public Future<T> execute(Future<Void> future)
+          {
+            return Future.this;
+          }
+        });
+      }
+    });
+  }
+
+  /**
    * Called by garbage collector
    * Finalize is overriden to manually delete C++ data
    */
