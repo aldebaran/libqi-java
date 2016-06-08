@@ -301,15 +301,20 @@ public class Future<T> implements java.util.concurrent.Future<T>
 
   private static <T> void notifyPromiseFromFuture(Future<T> future, Promise<T> promiseToNotify)
   {
-    // we must lock the mutex, because the future can be cancelled at any time
-    synchronized (future)
+    FutureResult<T> result = future.getResult();
+    switch (result.type)
     {
-      if (future.hasError())
-        promiseToNotify.setError(future.getErrorMessage());
-      else if (future.isCancelled())
-        promiseToNotify.setCancelled();
-      else
-        promiseToNotify.setValue(future.getValue());
+    case FutureResult.TYPE_ERROR:
+      promiseToNotify.setError(result.errorMessage);
+      break;
+    case FutureResult.TYPE_CANCELLED:
+      promiseToNotify.setCancelled();
+      break;
+    case FutureResult.TYPE_VALUE:
+      promiseToNotify.setValue(result.value);
+      break;
+    default:
+      throw new UnsupportedOperationException("Unsupported result type");
     }
   }
 
@@ -328,18 +333,15 @@ public class Future<T> implements java.util.concurrent.Future<T>
 
   private static <T> boolean notifyIfFailed(Future<T> future, Promise<?> promiseToNotify)
   {
-    synchronized (future)
+    FutureResult<T> result = future.getResult();
+    switch (result.type)
     {
-      if (future.hasError())
-      {
-        promiseToNotify.setError(future.getErrorMessage());
-        return true;
-      }
-      if (future.isCancelled())
-      {
-        promiseToNotify.setCancelled();
-        return true;
-      }
+    case FutureResult.TYPE_ERROR:
+      promiseToNotify.setError(result.errorMessage);
+      return true;
+    case FutureResult.TYPE_CANCELLED:
+      promiseToNotify.setCancelled();
+      return true;
     }
     return false;
   }
@@ -378,20 +380,28 @@ public class Future<T> implements java.util.concurrent.Future<T>
         @Override
         public void onFinished(Future<Object> future)
         {
+          FutureResult<Object> result = future.getResult();
           synchronized (waitData)
           {
             if (!waitData.stopped)
             {
-              if (future.isCancelled())
+              switch (result.type)
               {
+              case FutureResult.TYPE_CANCELLED:
                 promise.setCancelled();
                 waitData.stopped = true;
-              } else if (future.hasError())
-              {
-                promise.setError(future.getErrorMessage());
+                break;
+              case FutureResult.TYPE_ERROR:
+                promise.setError(result.errorMessage);
                 waitData.stopped = true;
-              } else if (--waitData.runningFutures == 0)
-                promise.setValue(null);
+                break;
+              case FutureResult.TYPE_VALUE:
+                if (--waitData.runningFutures == 0)
+                  promise.setValue(null);
+                break;
+              default:
+                throw new UnsupportedOperationException("Unsupported result type");
+              }
             }
           }
         }
@@ -438,6 +448,15 @@ public class Future<T> implements java.util.concurrent.Future<T>
     });
   }
 
+  private synchronized FutureResult<T> getResult() {
+    assert isDone(); // do not check at runtime, it is private
+    if (hasError())
+      return FutureResult.error(getErrorMessage());
+    if (isCancelled())
+      return FutureResult.cancelled();
+    return FutureResult.value(getValue());
+  }
+
   /**
    * Called by garbage collector
    * Finalize is overriden to manually delete C++ data
@@ -449,4 +468,35 @@ public class Future<T> implements java.util.concurrent.Future<T>
     super.finalize();
   }
 
+  private static class FutureResult<T>
+  {
+    static final int TYPE_VALUE = 0;
+    static final int TYPE_ERROR = 1;
+    static final int TYPE_CANCELLED = 2;
+    int type;
+    T value;
+    String errorMessage;
+
+    private FutureResult(int type, T value, String errorMessage)
+    {
+      this.type = type;
+      this.value = value;
+      this.errorMessage = errorMessage;
+    }
+
+    static <T> FutureResult<T> value(T value)
+    {
+      return new FutureResult<T>(TYPE_VALUE, value, null);
+    }
+
+    static <T> FutureResult<T> error(String errorMessage)
+    {
+      return new FutureResult<T>(TYPE_ERROR, null, errorMessage);
+    }
+
+    static <T> FutureResult<T> cancelled()
+    {
+      return new FutureResult<T>(TYPE_CANCELLED, null, null);
+    }
+  }
 }
