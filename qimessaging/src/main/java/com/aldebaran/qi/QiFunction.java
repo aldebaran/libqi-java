@@ -18,7 +18,7 @@ public abstract class QiFunction<Ret, Arg> implements FutureFunction<Ret, Arg>
 {
 
   @Override
-  public final Future<Ret> execute(Future<Arg> future) throws Exception
+  public final Future<Ret> execute(Future<Arg> future) throws Throwable
   {
     try
     {
@@ -32,18 +32,14 @@ public abstract class QiFunction<Ret, Arg> implements FutureFunction<Ret, Arg>
     }
   }
 
-  public abstract Future<Ret> onResult(Arg result) throws Exception;
+  public abstract Future<Ret> onResult(Arg result) throws Throwable;
 
-  public Future<Ret> onError(Throwable error) throws Exception
+  public Future<Ret> onError(Throwable error) throws Throwable
   {
-    if (error instanceof Exception)
-      throw (Exception) error;
-    if (error instanceof Error)
-      throw (Error) error;
-    throw new Error(error);
+    throw error;
   }
 
-  public Future<Ret> onCancel() throws Exception
+  public Future<Ret> onCancel() throws Throwable
   {
     return Future.cancelled();
   }
