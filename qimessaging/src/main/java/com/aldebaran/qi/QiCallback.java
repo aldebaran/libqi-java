@@ -18,7 +18,7 @@ import java.util.concurrent.ExecutionException;
 public abstract class QiCallback<T> implements FutureFunction<Void, T>
 {
   @Override
-  public final Future<Void> execute(Future<T> future) throws Exception
+  public final Future<Void> execute(Future<T> future) throws Throwable
   {
     try
     {
@@ -28,11 +28,7 @@ public abstract class QiCallback<T> implements FutureFunction<Void, T>
     {
       Throwable t = e.getCause();
       onError(t);
-      if (t instanceof Exception)
-        throw (Exception) t;
-      if (t instanceof Error)
-        throw (Error) t;
-      throw new Error(t);
+      throw t;
     } catch (CancellationException e)
     {
       onCancel();
@@ -40,14 +36,14 @@ public abstract class QiCallback<T> implements FutureFunction<Void, T>
     }
   }
 
-  public abstract void onResult(T result) throws Exception;
+  public abstract void onResult(T result) throws Throwable;
 
-  public void onError(Throwable error) throws Exception
+  public void onError(Throwable error) throws Throwable
   {
     // do nothing
   }
 
-  public void onCancel() throws Exception
+  public void onCancel() throws Throwable
   {
     // do nothing
   }
