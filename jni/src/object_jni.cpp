@@ -36,13 +36,7 @@ JNIObject::JNIObject(jobject value)
 {
   _env = attach.get();
 
-  _cls = _env->FindClass(QI_OBJECT_CLASS);
   _obj = value;
-}
-
-JNIObject::~JNIObject()
-{
-  _env->DeleteLocalRef(_cls);
 }
 
 jobject JNIObject::object()
@@ -52,7 +46,7 @@ jobject JNIObject::object()
 
 qi::AnyObject      JNIObject::objectPtr()
 {
-  jfieldID fid = _env->GetFieldID(_cls, "_p", "J");
+  jfieldID fid = _env->GetFieldID(cls_anyobject, "_p", "J");
 
   if (!fid)
   {
@@ -68,8 +62,7 @@ void JNIObject::build(qi::AnyObject *newO)
 {
   _env = attach.get();
 
-  _cls = _env->FindClass(QI_OBJECT_CLASS);
-  jmethodID mid = _env->GetMethodID(_cls, "<init>", "(J)V");
+  jmethodID mid = _env->GetMethodID(cls_anyobject, "<init>", "(J)V");
 
   if (!mid)
   {
@@ -79,7 +72,7 @@ void JNIObject::build(qi::AnyObject *newO)
 
   jlong pObj = (long) newO;
 
-  _obj = _env->NewObject(_cls, mid, pObj);
+  _obj = _env->NewObject(cls_anyobject, mid, pObj);
 
   // Keep a global ref on this object to avoid destruction EVER
   _env->NewGlobalRef(_obj);

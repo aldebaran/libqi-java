@@ -19,8 +19,6 @@ class JNITuple
 {
   public:
     JNITuple(jobject obj);
-    JNITuple(int size);
-    ~JNITuple();
 
     int size();
     jobject get(int index);
@@ -30,7 +28,6 @@ class JNITuple
   private:
 
     jobject _obj;
-    jclass  _cls;
     JNIEnv* _env;
 };
 

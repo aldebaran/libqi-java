@@ -188,7 +188,7 @@ public:
   Java_ClientAuthenticator(JNIEnv* env, jobject object)
   {
     env->GetJavaVM(&_jvm);
-    _jobject = env->NewGlobalRef(object);
+    _jobjectRef = qi::jni::makeSharedGlobalRef(env, object);
   }
 
   qi::CapabilityMap initialAuthData()
@@ -199,8 +199,11 @@ public:
 #else
     _jvm->AttachCurrentThread(&env, nullptr);
 #endif
+    jobject _jobject = _jobjectRef.get();
     jobject ca = qi::jni::Call<jobject>::invoke(env, _jobject, "initialAuthData", "()Ljava/util/Map;");
-    return JNI_JavaMaptoMap(env, ca);
+    auto result = JNI_JavaMaptoMap(env, ca);
+    env->DeleteLocalRef(ca);
+    return result;
   }
 
   qi::CapabilityMap _processAuth(const qi::CapabilityMap &authData)
@@ -211,14 +214,18 @@ public:
 #else
     _jvm->AttachCurrentThread(&env, nullptr);
 #endif
+    jobject _jobject = _jobjectRef.get();
     jobject jmap = JNI_MapToJavaMap(env, authData);
     jobject ca = qi::jni::Call<jobject>::invoke(env, _jobject, "_processAuth", "(Ljava/util/Map;)Ljava/util/Map;", jmap);
-    return JNI_JavaMaptoMap(env, ca);
+    env->DeleteLocalRef(jmap);
+    auto result = JNI_JavaMaptoMap(env, ca);
+    env->DeleteLocalRef(ca);
+    return result;
   }
 
 private:
   JavaVM* _jvm;
-  jobject _jobject;
+  qi::jni::SharedGlobalRef _jobjectRef;
 
   static qi::CapabilityMap JNI_JavaMaptoMap(JNIEnv* env, jobject jmap)
   {
@@ -316,7 +323,9 @@ public:
     _jvm->AttachCurrentThread(&env, nullptr);
 #endif
     jobject ca = qi::jni::Call<jobject>::invoke(env, _jobject, "newAuthenticator", "()Lcom/aldebaran/qi/ClientAuthenticator;");
-    return boost::make_shared<Java_ClientAuthenticator>(env, ca);
+    auto result = boost::make_shared<Java_ClientAuthenticator>(env, ca);
+    env->DeleteLocalRef(ca);
+    return result;
   }
 
 private:

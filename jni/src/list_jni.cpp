@@ -15,33 +15,26 @@
 JNIList::JNIList()
 {
   JVM()->GetEnv((void**) &_env, QI_JNI_MIN_VERSION);
- _cls = qi::jni::clazz("List");
 
- jmethodID mid = _env->GetMethodID(_cls, "<init>", "()V");
- if (!mid)
- {
-   qiLogFatal("qimessaging.jni") << "JNIList::JNIList: Cannot call constructor";
-   throw std::runtime_error("JNIList::JNIList: Cannot call constructor");
- }
+  jmethodID mid = _env->GetMethodID(cls_arraylist, "<init>", "()V");
+  if (!mid)
+  {
+    qiLogFatal("qimessaging.jni") << "JNIList::JNIList: Cannot call constructor";
+    throw std::runtime_error("JNIList::JNIList: Cannot call constructor");
+  }
 
- _obj = _env->NewObject(_cls, mid);
+  _obj = _env->NewObject(cls_arraylist, mid);
 }
 
 JNIList::JNIList(jobject obj)
 {
   JVM()->GetEnv((void**) &_env, QI_JNI_MIN_VERSION);
- _obj = obj;
- _cls = qi::jni::clazz("List");
-}
-
-JNIList::~JNIList()
-{
-  qi::jni::releaseClazz(_cls);
+  _obj = obj;
 }
 
 int JNIList::size()
 {
-  jmethodID mid = _env->GetMethodID(_cls, "size", "()I");
+  jmethodID mid = _env->GetMethodID(cls_list, "size", "()I");
 
   if (!mid)
   {
@@ -54,7 +47,7 @@ int JNIList::size()
 
 jobject JNIList::get(int index)
 {
-  jmethodID mid = _env->GetMethodID(_cls, "get", "(I)Ljava/lang/Object;");
+  jmethodID mid = _env->GetMethodID(cls_list, "get", "(I)Ljava/lang/Object;");
 
   if (!mid)
   {
@@ -72,7 +65,7 @@ jobject JNIList::object()
 
 bool JNIList::push_back(jobject current)
 {
-  jmethodID mid = _env->GetMethodID(_cls, "add", "(Ljava/lang/Object;)Z");
+  jmethodID mid = _env->GetMethodID(cls_list, "add", "(Ljava/lang/Object;)Z");
 
   if (!mid)
   {

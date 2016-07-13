@@ -4,6 +4,9 @@
 */
 package com.aldebaran.qi;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.aldebaran.qi.ClientAuthenticatorFactory;
 
 public class Session
@@ -41,6 +44,8 @@ public class Session
   // Members
   private long _session;
   private boolean _destroy;
+
+  private List<ConnectionListener> listeners;
 
   /**
    * Create a qimessaging session.
@@ -137,9 +142,66 @@ public class Session
     onDisconnected(_session, callback, object);
   }
 
-  public void addConnectionListener(ConnectionListener listener)
+  public synchronized void addConnectionListener(ConnectionListener listener)
   {
-    addConnectionListener(_session, listener);
+    initializeListeners();
+    listeners.add(listener);
+  }
+
+  public synchronized void removeConnectionListener(ConnectionListener listener)
+  {
+    listeners.remove(listener);
+  }
+
+  private synchronized void fireConnected()
+  {
+    for (ConnectionListener listener : listeners)
+    {
+      try
+      {
+        listener.onConnected();
+      } catch (Exception e)
+      {
+        // log exceptions from callbacks, bug ignore them
+        e.printStackTrace();
+      }
+    }
+  }
+
+  private synchronized void fireDisconnected(String reason)
+  {
+    for (ConnectionListener listener : listeners)
+    {
+      try
+      {
+        listener.onDisconnected(reason);
+      } catch (Exception e)
+      {
+        // log exceptions from callbacks, bug ignore them
+        e.printStackTrace();
+      }
+    }
+  }
+  private void initializeListeners() {
+    if (listeners != null)
+      return;
+
+    listeners = new ArrayList<ConnectionListener>();
+    // register only 1 listener to the native part, and dispatch to local listeners
+    addConnectionListener(_session, new ConnectionListener()
+    {
+      @Override
+      public void onDisconnected(String reason)
+      {
+        fireDisconnected(reason);
+      }
+
+      @Override
+      public void onConnected()
+      {
+        fireConnected();
+      }
+    });
   }
 
   public void setClientAuthenticatorFactory(ClientAuthenticatorFactory factory)

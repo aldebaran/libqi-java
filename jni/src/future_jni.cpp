@@ -14,8 +14,6 @@
 #include <future_jni.hpp>
 #include <callbridge.hpp>
 
-#include "qitools.hpp"
-
 qiLogCategory("qimessaging.java");
 
 void      java_future_callback(const qi::Future<qi::AnyValue>& future)
@@ -141,44 +139,13 @@ struct CallbackFunctor
   void operator()(const qi::Future<qi::AnyValue> &future) const;
 };
 
-JNIEXPORT void JNICALL Java_com_aldebaran_qi_Future_qiFutureCallConnectCallback(JNIEnv *env, jobject thisFuture, jlong pFuture, jobject callback)
+JNIEXPORT void JNICALL Java_com_aldebaran_qi_Future_qiFutureCallConnectCallback(JNIEnv *env, jobject thisFuture, jlong pFuture, jobject callback, jint futureCallbackType)
 {
   qi::Future<qi::AnyValue>* future = reinterpret_cast<qi::Future<qi::AnyValue>*>(pFuture);
   auto gThisFuture = qi::jni::makeSharedGlobalRef(env, thisFuture);
   auto gCallback = qi::jni::makeSharedGlobalRef(env, callback);
-  future->connect(CallbackFunctor{ gThisFuture, gCallback });
-}
-
-template <typename Param>
-struct QiFunctionFunctor
-{
-  qi::jni::SharedGlobalRef _argFuture;
-  qi::jni::SharedGlobalRef _qiFunction;
-  qi::Future<qi::AnyValue> operator()(Param) const;
-};
-using ThenFunctor = QiFunctionFunctor<qi::Future<qi::AnyValue>>;
-using AndThenFunctor = QiFunctionFunctor<qi::AnyValue>;
-
-JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Future_qiFutureCallThen(JNIEnv *env, jobject thisFuture, jlong pFuture, jobject qiFunction)
-{
-  qi::jni::JNIAttach attach(env);
-  qi::Future<qi::AnyValue>* future = reinterpret_cast<qi::Future<qi::AnyValue>*>(pFuture);
-  auto gThisFuture = qi::jni::makeSharedGlobalRef(env, thisFuture);
-  auto gQiFunction = qi::jni::makeSharedGlobalRef(env, qiFunction);
-  ThenFunctor functor{ gThisFuture, gQiFunction };
-  auto result = new qi::Future<qi::AnyValue>{ qi::localThen(*future, functor) };
-  return reinterpret_cast<jlong>(result);
-}
-
-JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Future_qiFutureCallAndThen(JNIEnv *env, jobject thisFuture, jlong pFuture, jobject qiFunction)
-{
-  qi::jni::JNIAttach attach(env);
-  qi::Future<qi::AnyValue>* future = reinterpret_cast<qi::Future<qi::AnyValue>*>(pFuture);
-  auto gThisFuture = qi::jni::makeSharedGlobalRef(env, thisFuture);
-  auto gQiFunction = qi::jni::makeSharedGlobalRef(env, qiFunction);
-  AndThenFunctor functor{ gThisFuture, gQiFunction };
-  auto result = new qi::Future<qi::AnyValue>{ qi::localAndThen(*future, functor) };
-  return reinterpret_cast<jlong>(result);
+  qi::FutureCallbackType type = static_cast<qi::FutureCallbackType>(futureCallbackType);
+  future->connect(CallbackFunctor{ gThisFuture, gCallback }, type);
 }
 
 JNIEXPORT void JNICALL Java_com_aldebaran_qi_Future_qiFutureDestroy(JNIEnv* QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pFuture)
@@ -187,24 +154,10 @@ JNIEXPORT void JNICALL Java_com_aldebaran_qi_Future_qiFutureDestroy(JNIEnv* QI_U
   delete fut;
 }
 
-JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Future_qiFutureCreate(JNIEnv *env, jclass cls, jobject value)
+JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Future_qiFutureCreate(JNIEnv *QI_UNUSED(env), jclass QI_UNUSED(cls), jobject value)
 {
-    auto future = new qi::Future<qi::AnyValue>(qi::AnyValue::from<jobject>(value));
-    return reinterpret_cast<jlong>(future);
-}
-
-static inline qi::Future<qi::AnyValue> createErrorFuture(const std::string &error)
-{
-  qi::Promise<qi::AnyValue> promise;
-  promise.setError(error);
-  return promise.future();
-}
-
-static inline qi::Future<qi::AnyValue> toErrorFuture(JNIEnv *env, jthrowable exception)
-{
-  jobject str = qi::jni::Call<jobject>::invoke(env, exception, "toString", "()Ljava/lang/String;");
-  jstring jstr = reinterpret_cast<jstring>(str);
-  return createErrorFuture(qi::jni::toString(jstr));
+  auto future = new qi::Future<qi::AnyValue>(qi::AnyValue::from<jobject>(value));
+  return reinterpret_cast<jlong>(future);
 }
 
 void CallbackFunctor::operator()(const qi::Future<qi::AnyValue> &QI_UNUSED(future)) const
@@ -226,43 +179,4 @@ void CallbackFunctor::operator()(const qi::Future<qi::AnyValue> &QI_UNUSED(futur
     // the callback threw an exception, it must have no impact on the caller
     env->ExceptionClear();
   }
-}
-
-template <typename Param>
-qi::Future<qi::AnyValue> QiFunctionFunctor<Param>::operator()(Param) const
-{
-  // We ignore the parameter in order to use the same QiFunction for both
-  // and() and andThen(), while the parameter differ in C++.
-  // Instead, we always use the original future "argFuture".
-
-  jobject argFuture = _argFuture.get();
-  jobject qiFunction = _qiFunction.get();
-
-  qi::jni::JNIAttach attach;
-  JNIEnv *env = attach.get();
-
-  // call QiFunction
-  const char *method = "execute";
-  const char *methodSig = "(Lcom/aldebaran/qi/Future;)Lcom/aldebaran/qi/Future;";
-
-  jobject future = qi::jni::Call<jobject>::invoke(env, qiFunction, method, methodSig, argFuture);
-  jthrowable exception = env->ExceptionOccurred();
-  if (exception)
-  {
-    env->ExceptionDescribe();
-    // we report it in the future, so we ignore it here
-    env->ExceptionClear();
-    return toErrorFuture(env, exception);
-  }
-  if (!future) {
-    return createErrorFuture("QiFunction.execute() returned null");
-  }
-
-  jlong pFuture = qi::jni::getField<jlong>(env, future, "_fut");
-  if (env->ExceptionCheck() == JNI_TRUE) {
-    qiLogError() << "Field not found: Future._fut";
-    return {};
-  }
-
-  return *reinterpret_cast<qi::Future<qi::AnyValue>*>(pFuture);
 }

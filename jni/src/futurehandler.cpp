@@ -103,17 +103,9 @@ namespace qi {
     {
       if ((*it).second == info)
       {
-        jclass futureCls = 0;
         jmethodID init = 0;
 
-        futureCls = qi::jni::clazz("Future");
-        if (!futureCls)
-        {
-          qiLogError("qimessaging.jni") << "Cannot find com.aldebaran.qi.Future class";
-          return 0;
-        }
-
-        if ((init = env->GetMethodID(futureCls, "<init>", "(J)V")) == 0)
+        if ((init = env->GetMethodID(cls_future, "<init>", "(J)V")) == 0)
         {
           qiLogError("qimessaging.jni") << "Cannot find com.aldebaran.qi.Future.<init>(J) constructor";
           return 0;
@@ -121,7 +113,7 @@ namespace qi {
 
         // Create a new Future class.
         // Add a new global ref to object to avoid destruction before entry into Java code.
-        jobject future = env->NewObject(futureCls, init, (*it).first);
+        jobject future = env->NewObject(cls_future, init, (*it).first);
 #ifdef ANDROID
         return env->NewGlobalRef(future);
 #else

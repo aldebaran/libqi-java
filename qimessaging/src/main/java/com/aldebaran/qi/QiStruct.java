@@ -7,15 +7,22 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation indicating that a class represent a conversion from a
+ * Annotation indicating that a class represents a conversion from a
  * {@link Tuple}.
  *
- * A class having this annotation must declare fields in the same order as the
- * one in the Tuple it represents.
+ * A class having this annotation must annotate fields with {@code QiField} with
+ * the matching index in the Tuple it represents.
  *
- * For instance, if it must be created from a Tuple of
- * <code>{ int, String }</code>, it must first declare a field of type
- * {@code int} then a field having type {@code String}.
+ * Here is an example:
+ * <pre>
+ * @QiStruct
+ * class Person {
+ *     @QiField(0)
+ *     String firstName;
+ *     @QiField(1)
+ *     String lastName;
+ * }
+ * </pre>
  *
  * Field names are irrelevant.
  */

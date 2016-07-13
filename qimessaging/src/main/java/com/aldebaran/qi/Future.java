@@ -45,9 +45,7 @@ public class Future<T> implements java.util.concurrent.Future<T>
   private native boolean qiFutureCallConnect(long pFuture, Object callback, String className, Object[] args);
   private native void qiFutureCallWaitWithTimeout(long pFuture, int timeout);
   private native void qiFutureDestroy(long pFuture);
-  private native void qiFutureCallConnectCallback(long pFuture, Callback<?> callback);
-  private native long qiFutureCallThen(long pFuture, QiFunction<?, ?> function);
-  private native long qiFutureCallAndThen(long pFuture, QiFunction<?, ?> function);
+  private native void qiFutureCallConnectCallback(long pFuture, Callback<?> callback, int futureCallbackType);
   private static native long qiFutureCreate(Object value);
 
   private boolean cancelled;
@@ -60,6 +58,20 @@ public class Future<T> implements java.util.concurrent.Future<T>
   public static <T> Future<T> of(T value)
   {
     return new Future<T>(qiFutureCreate(value));
+  }
+
+  public static <T> Future<T> cancelled()
+  {
+    Promise<T> promise = new Promise<T>();
+    promise.setCancelled();
+    return promise.getFuture();
+  }
+
+  public static <T> Future<T> fromError(String errorMessage)
+  {
+    Promise<T> promise = new Promise<T>();
+    promise.setError(errorMessage);
+    return promise.getFuture();
   }
 
   public void sync(long timeout, TimeUnit unit)
@@ -89,9 +101,17 @@ public class Future<T> implements java.util.concurrent.Future<T>
     return qiFutureCallConnect(_fut, callback, className, args);
   }
 
+  /**
+   * Prefer {@link #then(FutureFunction, FutureCallbackType)} instead (e.g. {@link QiCallback}).
+   */
+  public void connect(Callback<T> callback, FutureCallbackType futureCallbackType)
+  {
+    qiFutureCallConnectCallback(_fut, callback, futureCallbackType.nativeValue);
+  }
+
   public void connect(Callback<T> callback)
   {
-    qiFutureCallConnectCallback(_fut, callback);
+    connect(callback, FutureCallbackType.Auto);
   }
 
   @Override
@@ -227,14 +247,103 @@ public class Future<T> implements java.util.concurrent.Future<T>
     return qiFutureCallIsDone(_fut);
   }
 
-  public <Ret> Future<Ret> then(QiFunction<Ret, T> function)
+  private <Ret> Future<Ret> _then(final FutureFunction<Ret, T> function, final boolean chainOnFailure,
+      FutureCallbackType type)
   {
-    return new Future<Ret>(qiFutureCallThen(_fut, function));
+    // the promise must be sync according to the Callback (which may be Sync or Async according to the caller)
+    final Promise<Ret> promiseToNotify = new Promise<Ret>(FutureCallbackType.Sync);
+    connect(new Callback<T>()
+    {
+      @Override
+      public void onFinished(Future<T> future)
+      {
+        if (chainOnFailure || !notifyIfFailed(future, promiseToNotify))
+          chainFuture(future, function, promiseToNotify);
+      }
+    }, type);
+    return promiseToNotify.getFuture();
   }
 
-  public <Ret> Future<Ret> andThen(QiFunction<Ret, T> function)
+  public <Ret> Future<Ret> then(FutureFunction<Ret, T> function, FutureCallbackType type)
   {
-    return new Future<Ret>(qiFutureCallAndThen(_fut, function));
+    return _then(function, true, type);
+  }
+
+  public <Ret> Future<Ret> then(FutureFunction<Ret, T> function)
+  {
+    return _then(function, true, FutureCallbackType.Auto);
+  }
+
+  public <Ret> Future<Ret> andThen(FutureFunction<Ret, T> function, FutureCallbackType type)
+  {
+    return _then(function, false, type);
+  }
+
+  public <Ret> Future<Ret> andThen(FutureFunction<Ret, T> function)
+  {
+    return _then(function, false, FutureCallbackType.Auto);
+  }
+
+  private static <Ret, Arg> Future<Ret> getNextFuture(Future<Arg> future, FutureFunction<Ret, Arg> function)
+  {
+    try {
+      Future<Ret> result = function.execute(future);
+      // for convenience, the function can return null, which means a future with a null value
+      if (result == null)
+        result = Future.of(null);
+      return result;
+    } catch (Throwable t) {
+      // print the trace because the future error is a string, so the stack trace is lost
+      t.printStackTrace();
+      return fromError(t.toString());
+    }
+  }
+
+  private static <T> void notifyPromiseFromFuture(Future<T> future, Promise<T> promiseToNotify)
+  {
+    FutureResult<T> result = future.getResult();
+    switch (result.type)
+    {
+    case FutureResult.TYPE_ERROR:
+      promiseToNotify.setError(result.errorMessage);
+      break;
+    case FutureResult.TYPE_CANCELLED:
+      promiseToNotify.setCancelled();
+      break;
+    case FutureResult.TYPE_VALUE:
+      promiseToNotify.setValue(result.value);
+      break;
+    default:
+      throw new UnsupportedOperationException("Unsupported result type");
+    }
+  }
+
+  private static <Ret, Arg> void chainFuture(Future<Arg> future, FutureFunction<Ret, Arg> function,
+      final Promise<Ret> promiseToNotify)
+  {
+    getNextFuture(future, function).connect(new Callback<Ret>()
+    {
+      @Override
+      public void onFinished(Future<Ret> future)
+      {
+        notifyPromiseFromFuture(future, promiseToNotify);
+      }
+    });
+  }
+
+  private static <T> boolean notifyIfFailed(Future<T> future, Promise<?> promiseToNotify)
+  {
+    FutureResult<T> result = future.getResult();
+    switch (result.type)
+    {
+    case FutureResult.TYPE_ERROR:
+      promiseToNotify.setError(result.errorMessage);
+      return true;
+    case FutureResult.TYPE_CANCELLED:
+      promiseToNotify.setCancelled();
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -271,26 +380,81 @@ public class Future<T> implements java.util.concurrent.Future<T>
         @Override
         public void onFinished(Future<Object> future)
         {
+          FutureResult<Object> result = future.getResult();
           synchronized (waitData)
           {
             if (!waitData.stopped)
             {
-              if (future.isCancelled())
+              switch (result.type)
               {
+              case FutureResult.TYPE_CANCELLED:
                 promise.setCancelled();
                 waitData.stopped = true;
-              } else if (future.hasError())
-              {
-                promise.setError(future.getErrorMessage());
+                break;
+              case FutureResult.TYPE_ERROR:
+                promise.setError(result.errorMessage);
                 waitData.stopped = true;
-              } else if (--waitData.runningFutures == 0)
-                promise.setValue(null);
+                break;
+              case FutureResult.TYPE_VALUE:
+                if (--waitData.runningFutures == 0)
+                  promise.setValue(null);
+                break;
+              default:
+                throw new UnsupportedOperationException("Unsupported result type");
+              }
             }
           }
         }
       });
     }
     return promise.getFuture();
+  }
+
+  /**
+   * Return a version of {@code this} future that waits until {@code futures} to
+   * finish.
+   *
+   * The returning future finishes successfully if and only if {@code this}
+   * future and {@code futures} finish successfully.
+   *
+   * Otherwise, it takes the state of {@code this} if it failed, or the first
+   * failing future from {@code futures}.
+   *
+   * If {@code this} future does not finish successfully, it does not wait for
+   * {@code futures}.
+   *
+   * @param futures
+   *          the futures to wait for
+   * @return future returning this future value when all {@code futures} are
+   *         finished successfully
+   */
+  public Future<T> waitFor(final Future<?>... futures)
+  {
+    // do not wait for futures if this does not finish successfully
+    return andThen(new FutureFunction<T, T>()
+    {
+      @Override
+      public Future<T> execute(Future<T> future)
+      {
+        return waitAll(futures).andThen(new FutureFunction<T, Void>()
+        {
+          @Override
+          public Future<T> execute(Future<Void> future)
+          {
+            return Future.this;
+          }
+        });
+      }
+    });
+  }
+
+  private synchronized FutureResult<T> getResult() {
+    assert isDone(); // do not check at runtime, it is private
+    if (hasError())
+      return FutureResult.error(getErrorMessage());
+    if (isCancelled())
+      return FutureResult.cancelled();
+    return FutureResult.value(getValue());
   }
 
   /**
@@ -304,4 +468,35 @@ public class Future<T> implements java.util.concurrent.Future<T>
     super.finalize();
   }
 
+  private static class FutureResult<T>
+  {
+    static final int TYPE_VALUE = 0;
+    static final int TYPE_ERROR = 1;
+    static final int TYPE_CANCELLED = 2;
+    int type;
+    T value;
+    String errorMessage;
+
+    private FutureResult(int type, T value, String errorMessage)
+    {
+      this.type = type;
+      this.value = value;
+      this.errorMessage = errorMessage;
+    }
+
+    static <T> FutureResult<T> value(T value)
+    {
+      return new FutureResult<T>(TYPE_VALUE, value, null);
+    }
+
+    static <T> FutureResult<T> error(String errorMessage)
+    {
+      return new FutureResult<T>(TYPE_ERROR, null, errorMessage);
+    }
+
+    static <T> FutureResult<T> cancelled()
+    {
+      return new FutureResult<T>(TYPE_CANCELLED, null, null);
+    }
+  }
 }

@@ -5,9 +5,6 @@
 package com.aldebaran.qi;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Tool class providing QiMessaging<->Java type system loading and
@@ -21,36 +18,7 @@ public class EmbeddedTools
   private File tmpDir = null;
 
   public static boolean LOADED_EMBEDDED_LIBRARY = false;
-  private static native void initTypeSystem(Object str, Object i, Object f, Object d, Object l, Object m, Object al, Object t, Object o, Object b, Object fut);
-
-  /**
-   * To work correctly, QiMessaging<->java type system needs to compare type class template.
-   * Unfortunately, call template cannot be retrieve on native android thread.
-   * The only available way to do is to store instance of wanted object
-   * and get fresh class template from it right before using it.
-   */
-  private boolean initTypeSystem()
-  {
-    String  str = new String();
-    Integer i   = new Integer(0);
-    Float   f   = new Float(0);
-    Double  d   = new Double(0);
-    Long    l   = new Long(0);
-    Tuple   t   = new Tuple(0);
-    Boolean b   = new Boolean(true);
-    Future<Object> fut = new Future<Object>(0);
-
-    DynamicObjectBuilder ob = new DynamicObjectBuilder();
-    AnyObject obj  = ob.object();
-
-    Map<Object, Object> m  = new HashMap<Object, Object>();
-    ArrayList<Object>             al = new ArrayList<Object>();
-
-    // Initialize generic type system
-    EmbeddedTools.initTypeSystem(str, i, f, d, l, m, al, t, obj, b, fut);
-
-    return true;
-  }
+  private static native void initTypeSystem();
 
   /**
    * Override directory where native libraries are extracted.
@@ -125,12 +93,7 @@ public class EmbeddedTools
 
     System.out.printf("Libraries loaded. Initializing type system...\n");
     LOADED_EMBEDDED_LIBRARY = true;
-    if (initTypeSystem() == false)
-    {
-      System.out.printf("Cannot initialize type system\n");
-      LOADED_EMBEDDED_LIBRARY = false;
-      return false;
-    }
+    initTypeSystem();
 
     return true;
   }

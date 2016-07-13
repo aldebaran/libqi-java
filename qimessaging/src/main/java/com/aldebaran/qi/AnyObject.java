@@ -8,7 +8,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.Arrays;
-import java.util.concurrent.ExecutionException;
+
+import com.aldebaran.qi.serialization.QiSerializer;
 
 public class AnyObject {
 
@@ -48,11 +49,11 @@ public class AnyObject {
     this._p = p;
   }
 
-  public Future<Void> setProperty(String property, Object o)
+  public Future<Void> setProperty(QiSerializer serializer, String property, Object o)
   {
     try {
       // convert custom structs to tuples if necessary
-      Object convertedProperty = StructConverter.structsToTuples(o);
+      Object convertedProperty = serializer.serialize(o);
       return new Future<Void>(setProperty(_p, property, convertedProperty));
     } catch (QiConversionException e)
     {
@@ -60,9 +61,55 @@ public class AnyObject {
     }
   }
 
+  public Future<Void> setProperty(String property, Object o)
+  {
+    return setProperty(QiSerializer.getDefault(), property, o);
+  }
+
   public <T> Future<T> property(String property)
   {
     return new Future<T>(property(_p, property));
+  }
+
+  /**
+   * Retrieve the value of {@code property} asynchronously. Tuples will be
+   * converted to structs in the result, according to the {@code targetType}.
+   *
+   * @param targetType
+   *          the target result type
+   * @param property
+   *          the property
+   * @return a future to the converted result
+   */
+  public <T> Future<T> getProperty(final QiSerializer serializer, final Type targetType, String property)
+  {
+    return property(property).andThen(new QiFunction<T, Object>()
+    {
+      @Override
+      public Future<T> onResult(Object result) throws Exception
+      {
+        @SuppressWarnings("unchecked")
+        T convertedResult = (T) serializer.deserialize(result, targetType);
+        return Future.of(convertedResult);
+      }
+    });
+  }
+
+  public <T> Future<T> getProperty(Type targetType, String property)
+  {
+    return getProperty(QiSerializer.getDefault(), targetType, property);
+  }
+
+  public <T> Future<T> getProperty(QiSerializer serializer, Class<T> targetType, String property)
+  {
+    // Specialization to benefit from type inference when targetType is a Class
+    return getProperty(serializer, (Type) targetType, property);
+  }
+
+  public <T> Future<T> getProperty(Class<T> targetType, String property)
+  {
+    // Specialization to benefit from type inference when targetType is a Class
+    return getProperty((Type) targetType, property);
   }
 
   /**
@@ -79,8 +126,8 @@ public class AnyObject {
 
   /**
    * Convert structs in {@code args} to tuples if necessary, then call
-   * {@code method} asynchronously. The result will convert tuples to structs
-   * according to the {@code targetType}.
+   * {@code method} asynchronously. Tuples will be converted to structs in the
+   * result, according to the {@code targetType}.
    *
    * @param targetType
    *          the target result type
@@ -90,18 +137,18 @@ public class AnyObject {
    *          the method arguments
    * @return a future to the converted result
    */
-  public <T> Future<T> call(final Type targetType, String method, Object... args)
+  public <T> Future<T> call(final QiSerializer serializer, final Type targetType, String method, Object... args)
   {
     try
     {
-      Object[] convertedArgs = StructConverter.structsToTuplesInArray(args);
-      return this.call(method, convertedArgs).andThen(new QiFunctionAdapter<T, Object>()
+      Object[] convertedArgs = (Object[]) serializer.serialize(args);
+      return this.call(method, convertedArgs).andThen(new QiFunction<T, Object>()
       {
         @Override
-        public Future<T> handleResult(Object result) throws Exception
+        public Future<T> onResult(Object result) throws Exception
         {
           @SuppressWarnings("unchecked")
-          T convertedResult = (T) StructConverter.tuplesToStructs(result, targetType);
+          T convertedResult = (T) serializer.deserialize(result, targetType);
           return Future.of(convertedResult);
         }
       });
@@ -111,10 +158,21 @@ public class AnyObject {
     }
   }
 
+  public <T> Future<T> call(final Type targetType, String method, Object... args)
+  {
+    return call(QiSerializer.getDefault(), targetType, method, args);
+  }
+
+  public <T> Future<T> call(QiSerializer serializer, Class<T> targetType, String method, Object... args)
+  {
+    // Specialization to benefit from type inference when targetType is a Class
+    return call(serializer, (Type) targetType, method, args);
+  }
+
   public <T> Future<T> call(Class<T> targetType, String method, Object... args)
   {
-    // Specialization to use type inference when targetType is a Class
-    return this.<T>call((Type) targetType, method, args);
+    // Specialization to benefit from type inference when targetType is a Class
+    return call((Type) targetType, method, args);
   }
 
   /**
@@ -150,7 +208,7 @@ public class AnyObject {
     return new QiSignalConnection(this, new Future<Long>(futurePtr));
   }
 
-  public QiSignalConnection connect(String signalName, final Object annotatedSlotContainer, String slotName)
+  public QiSignalConnection connect(final QiSerializer serializer, String signalName, final Object annotatedSlotContainer, String slotName)
   {
     final Method method = findSlot(annotatedSlotContainer, slotName);
 
@@ -168,7 +226,7 @@ public class AnyObject {
         {
           method.setAccessible(true);
           // convert tuples to custom structs if necessary
-          convertedArgs = StructConverter.tuplesToStructs(args, method.getGenericParameterTypes());
+          convertedArgs = serializer.deserialize(args, method.getGenericParameterTypes());
           method.invoke(annotatedSlotContainer, convertedArgs);
         } catch (IllegalAccessException e) {
           throw new QiSlotException(e);
@@ -184,6 +242,11 @@ public class AnyObject {
     });
   }
 
+  public QiSignalConnection connect(String signalName, final Object annotatedSlotContainer, String slotName)
+  {
+    return connect(QiSerializer.getDefault(), signalName, annotatedSlotContainer, slotName);
+  }
+
   private static Class<?>[] getTypes(Object[] values) {
     Class<?>[] types = new Class[values.length];
     for (int i = 0; i < types.length; ++i) {
@@ -195,10 +258,10 @@ public class AnyObject {
 
   Future<Void> disconnect(QiSignalConnection connection)
   {
-    return connection.getFuture().andThen(new QiFunctionAdapter<Void, Long>()
+    return connection.getFuture().andThen(new QiFunction<Void, Long>()
     {
       @Override
-      public Future<Void> handleResult(Long subscriberId)
+      public Future<Void> onResult(Long subscriberId)
       {
         long futurePtr = disconnectSignal(_p, subscriberId);
         return new Future<Void>(futurePtr);

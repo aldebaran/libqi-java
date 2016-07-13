@@ -17,10 +17,15 @@ public class Promise<T>
 
   private Future<T> future;
 
+  public Promise(FutureCallbackType type)
+  {
+    promisePtr = _newPromise(type.nativeValue);
+    future = new Future<T>(_getFuture(promisePtr));
+  }
+
   public Promise()
   {
-    promisePtr = _newPromise();
-    future = new Future<T>(_getFuture(promisePtr));
+    this(FutureCallbackType.Auto);
   }
 
   public Future<T> getFuture()
@@ -50,7 +55,32 @@ public class Promise<T>
     future.setCancelled();
   }
 
-  private native long _newPromise();
+  public void connectFromFuture(Future<T> future)
+  {
+    future.then(new QiCallback<T>()
+    {
+
+      @Override
+      public void onResult(T result) throws Exception
+      {
+        setValue(result);
+      }
+
+      @Override
+      public void onError(Throwable error) throws Exception
+      {
+        setError(error.getMessage());
+      }
+
+      @Override
+      public void onCancel() throws Exception
+      {
+        setCancelled();
+      }
+    });
+  }
+
+  private native long _newPromise(int futureCallbackType);
 
   private native long _getFuture(long promisePtr);
 

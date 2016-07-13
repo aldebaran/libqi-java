@@ -6,6 +6,8 @@ package com.aldebaran.qi;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -198,9 +200,19 @@ public class TypeTest
    * Test Map conversion
    */
   @Test
-  public void testIntegerBooleanMap()
+  public void testIntegerBooleanHashMap()
   {
-    Map<Integer, Boolean> args = new HashMap<Integer, Boolean>();
+    _testIntegerBooleanMap(new HashMap<Integer, Boolean>());
+  }
+
+  @Test
+  public void testIntegerBooleanHashtable()
+  {
+    _testIntegerBooleanMap(new Hashtable<Integer, Boolean>());
+  }
+
+  private void _testIntegerBooleanMap(Map<Integer, Boolean> args)
+  {
     args.put(4, true);
     args.put(3, false);
     args.put(2, false);
@@ -208,7 +220,7 @@ public class TypeTest
 
     Map<Integer, Boolean> ret = null;
     try {
-      ret = proxy.<HashMap<Integer, Boolean> >call("abacus", args).get();
+      ret = proxy.<Map<Integer, Boolean>>call("abacus", args).get();
     }
     catch (Exception e)
     {
@@ -231,7 +243,7 @@ public class TypeTest
 
     List<Float> ret = null;
     try {
-      ret = proxy.<ArrayList<Float> >call("echoFloatList", args).get();
+      ret = proxy.<List<Float>>call("echoFloatList", args).get();
     }
     catch (Exception e)
     {
@@ -245,9 +257,17 @@ public class TypeTest
    * Test List conversion
    */
   @Test
-  public void testIntegerList()
+  public void testFloatArrayList() {
+    _testFloatList(new ArrayList<Float>());
+  }
+
+  @Test
+  public void testFloatLinkedList() {
+    _testFloatList(new LinkedList<Float>());
+  }
+
+  private void _testFloatList(List<Float> args)
   {
-    List<Float> args = new ArrayList<Float>();
     args.add(13.3f);
     args.add(1342.3f);
     args.add(13.4f);

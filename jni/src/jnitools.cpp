@@ -18,7 +18,22 @@
 
 qiLogCategory("qimessaging.jni");
 
-std::map<std::string, jobject> supportedTypes;
+jclass cls_string;
+jclass cls_integer;
+jclass cls_float;
+jclass cls_double;
+jclass cls_long;
+jclass cls_boolean;
+
+jclass cls_future;
+jclass cls_anyobject;
+jclass cls_tuple;
+
+jclass cls_list;
+jclass cls_arraylist;
+
+jclass cls_map;
+jclass cls_hashmap;
 
 static void emergency()
 {
@@ -38,32 +53,35 @@ JNIEXPORT jint JNICALL JNI_OnLoad (JavaVM* QI_UNUSED(vm), void* QI_UNUSED(reserv
   return QI_JNI_MIN_VERSION;
 }
 
-/*
- * To work correctly, QiMessaging<->java type system needs to compare type class template.
- * Unfortunately, call template cannot be retrieve on native android thread, that is why
- * type instance are stored in supportedTypes map.
- */
-JNIEXPORT void JNICALL Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(JNIEnv* env, jclass QI_UNUSED(cls), jobject str, jobject i, jobject f, jobject d, jobject l, jobject m, jobject al, jobject tuple, jobject obj, jobject b, jobject fut)
+static inline jclass loadClass(JNIEnv *env, const char *className)
+{
+  return reinterpret_cast<jclass>(env->NewGlobalRef(env->FindClass(className)));
+}
+
+static void init_classes(JNIEnv *env)
+{
+  cls_string = loadClass(env, "java/lang/String");
+  cls_integer = loadClass(env, "java/lang/Integer");
+  cls_float = loadClass(env, "java/lang/Float");
+  cls_double = loadClass(env, "java/lang/Double");
+  cls_long = loadClass(env, "java/lang/Long");
+  cls_boolean = loadClass(env, "java/lang/Boolean");
+
+  cls_future = loadClass(env, "com/aldebaran/qi/Future");
+  cls_anyobject = loadClass(env, "com/aldebaran/qi/AnyObject");
+  cls_tuple = loadClass(env, "com/aldebaran/qi/Tuple");
+
+  cls_list = loadClass(env, "java/util/List");
+  cls_arraylist = loadClass(env, "java/util/ArrayList");
+
+  cls_map = loadClass(env, "java/util/Map");
+  cls_hashmap = loadClass(env, "java/util/HashMap");
+}
+
+JNIEXPORT void JNICALL Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(JNIEnv* env, jclass QI_UNUSED(cls))
 {
   JVM(env);
-
-  supportedTypes["String"] = env->NewGlobalRef(str);
-  supportedTypes["Integer"] = env->NewGlobalRef(i);
-  supportedTypes["Float"] = env->NewGlobalRef(f);
-  supportedTypes["Double"] = env->NewGlobalRef(d);
-  supportedTypes["Long"] = env->NewGlobalRef(l);
-  supportedTypes["Map"] = env->NewGlobalRef(m);
-  supportedTypes["List"] = env->NewGlobalRef(al);
-  supportedTypes["Tuple"] = env->NewGlobalRef(tuple);
-  supportedTypes["Object"] = env->NewGlobalRef(obj);
-  supportedTypes["Boolean"] = env->NewGlobalRef(b);
-  supportedTypes["Future"] = env->NewGlobalRef(fut);
-
-  for (std::map<std::string, jobject>::iterator it = supportedTypes.begin(); it != supportedTypes.end(); ++it)
-  {
-    if (it->second == 0)
-      qiLogFatal() << it->first << ": Initialization failed.";
-  }
+  init_classes(env);
 }
 
 /*
@@ -283,61 +301,39 @@ std::string propertyBaseSignature(JNIEnv* env, jclass propertyBase)
 {
   std::string sig;
 
-  jclass stringClass = qi::jni::clazz("String");
-  jclass int32Class = qi::jni::clazz("Integer");
-  jclass floatClass = qi::jni::clazz("Float");
-  jclass doubleClass = qi::jni::clazz("Double");
-  jclass boolClass = qi::jni::clazz("Boolean");
-  jclass longClass = qi::jni::clazz("Long");
-  jclass mapClass = qi::jni::clazz("Map");
-  jclass listClass = qi::jni::clazz("List");
-  jclass tupleClass = qi::jni::clazz("Tuple");
-  jclass objectClass = qi::jni::clazz("Object");
-
-  if (env->IsAssignableFrom(propertyBase, stringClass) == true)
+  if (env->IsAssignableFrom(propertyBase, cls_string))
     sig = static_cast<char>(qi::Signature::Type_String);
-  if (env->IsAssignableFrom(propertyBase, int32Class) == true)
+  if (env->IsAssignableFrom(propertyBase, cls_integer))
     sig = static_cast<char>(qi::Signature::Type_Int32);
-  if (env->IsAssignableFrom(propertyBase, floatClass) == true)
+  if (env->IsAssignableFrom(propertyBase, cls_float))
     sig = static_cast<char>(qi::Signature::Type_Float);
-  if (env->IsAssignableFrom(propertyBase, boolClass) == true)
+  if (env->IsAssignableFrom(propertyBase, cls_boolean))
     sig = static_cast<char>(qi::Signature::Type_Bool);
-  if (env->IsAssignableFrom(propertyBase, longClass) == true)
+  if (env->IsAssignableFrom(propertyBase, cls_long))
     sig = static_cast<char>(qi::Signature::Type_Int64);
-  if (env->IsAssignableFrom(propertyBase, objectClass) == true)
+  if (env->IsAssignableFrom(propertyBase, cls_anyobject))
     sig = static_cast<char>(qi::Signature::Type_Object);
-  if (env->IsAssignableFrom(propertyBase, doubleClass) == true)
+  if (env->IsAssignableFrom(propertyBase, cls_double))
     sig = static_cast<char>(qi::Signature::Type_Float);
-  if (env->IsAssignableFrom(propertyBase, mapClass) == true)
+  if (env->IsAssignableFrom(propertyBase, cls_map))
   {
     sig = static_cast<char>(qi::Signature::Type_Map);
     sig += static_cast<char>(qi::Signature::Type_Dynamic);
     sig += static_cast<char>(qi::Signature::Type_Dynamic);
     sig += static_cast<char>(qi::Signature::Type_Map_End);
   }
-  if (env->IsAssignableFrom(propertyBase, listClass) == true)
+  if (env->IsAssignableFrom(propertyBase, cls_list))
   {
     sig = static_cast<char>(qi::Signature::Type_List);
     sig += static_cast<char>(qi::Signature::Type_Dynamic);
     sig += static_cast<char>(qi::Signature::Type_List_End);
   }
-  if (env->IsAssignableFrom(propertyBase, tupleClass) == true)
+  if (env->IsAssignableFrom(propertyBase, cls_tuple))
   {
     sig = static_cast<char>(qi::Signature::Type_Tuple);
     sig += static_cast<char>(qi::Signature::Type_Dynamic);
     sig += static_cast<char>(qi::Signature::Type_Tuple_End);
   }
-
-  qi::jni::releaseClazz(stringClass);
-  qi::jni::releaseClazz(int32Class);
-  qi::jni::releaseClazz(floatClass);
-  qi::jni::releaseClazz(doubleClass);
-  qi::jni::releaseClazz(boolClass);
-  qi::jni::releaseClazz(longClass);
-  qi::jni::releaseClazz(mapClass);
-  qi::jni::releaseClazz(listClass);
-  qi::jni::releaseClazz(tupleClass);
-  qi::jni::releaseClazz(objectClass);
 
   return sig;
 }
@@ -440,28 +436,6 @@ namespace qi {
       return env;
     }
 
-    // JNIEnv.FindClass has not same behavior on desktop and android.
-    // Here is a little wrapper to find wanted class anywhere.
-    jclass     clazz(const std::string& className)
-    {
-      JNIEnv*   env = qi::jni::env();
-      jclass   cls = 0;
-
-      if (!env)
-        return 0;
-
-      jobject obj = supportedTypes[className];
-      if (!obj)
-      {
-        qiLogError() << className << " unknown in type system";
-        return cls;
-      }
-
-      return env->GetObjectClass(obj);
-    }
-
-    // JNIEnv.FindClass has not same behavior on desktop and android.
-    // Here is a little wrapper to find wanted class anywhere.
     jclass      clazz(jobject object)
     {
       JNIEnv*   env = qi::jni::env();

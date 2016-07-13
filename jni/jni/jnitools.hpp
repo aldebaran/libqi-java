@@ -29,13 +29,28 @@
 // QI_OBJECT_CLASS defines complete name of java generic object class
 #define QI_OBJECT_CLASS "com/aldebaran/qi/AnyObject"
 
+extern jclass cls_string;
+extern jclass cls_integer;
+extern jclass cls_float;
+extern jclass cls_double;
+extern jclass cls_long;
+extern jclass cls_boolean;
+
+extern jclass cls_future;
+extern jclass cls_anyobject;
+extern jclass cls_tuple;
+
+extern jclass cls_list;
+extern jclass cls_arraylist;
+
+extern jclass cls_map;
+extern jclass cls_hashmap;
+
 // JNI utils
 extern "C"
 {
   JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void*);
-  JNIEXPORT void JNICALL Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(JNIEnv* env, jclass cls, jobject str, jobject i, jobject f, jobject d,
-                                                                                   jobject l, jobject m, jobject al, jobject tuple, jobject obj, jobject b,
-                                                                                   jobject fut);
+  JNIEXPORT void JNICALL Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(JNIEnv* env, jclass cls);
 } // !extern C
 
 
@@ -57,7 +72,6 @@ namespace qi {
     jstring     toJstring(const std::string& input);
     void        releaseString(jstring input);
     // TypeSystem tools
-    jclass      clazz(const std::string &name);
     jclass      clazz(jobject object);
     void        releaseClazz(jclass clazz);
     // JVM Environment management
@@ -252,5 +266,4 @@ jint throwNewTimeoutException(JNIEnv *env, const char *message = "");
 jint throwNewDynamicCallException(JNIEnv *env, const char *message = "");
 jint throwNewAdvertisementException(JNIEnv *env, const char *message = "");
 
-extern std::map<std::string, jobject> supportedTypes;
 #endif // !_JAVA_JNI_JNITOOLS_HPP_

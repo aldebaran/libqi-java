@@ -11,9 +11,10 @@ qiLogCategory("qimessaging.java");
  * Signature: ()J
  */
 JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Promise__1newPromise
-  (JNIEnv *QI_UNUSED(env), jobject QI_UNUSED(obj))
+  (JNIEnv *QI_UNUSED(env), jobject QI_UNUSED(obj), jint futureCallbackType)
 {
-  auto promisePtr = new qi::Promise<qi::AnyValue>();
+  qi::FutureCallbackType type = static_cast<qi::FutureCallbackType>(futureCallbackType);
+  auto promisePtr = new qi::Promise<qi::AnyValue>(type);
   return reinterpret_cast<jlong>(promisePtr);
 }
 
