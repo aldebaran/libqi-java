@@ -11,6 +11,20 @@ import java.util.Arrays;
 
 import com.aldebaran.qi.serialization.QiSerializer;
 
+/**
+ * Class that provides type erasure on objects. It represents an object
+ * (understandable by the messaging layer) that has shared semantics and that
+ * can contain methods, signals and properties.
+ * <p>
+ * This class is typically used in {@link Session} when retrieving a remote
+ * service by its name. The service itself is not retrieved, but a reference to
+ * it, in order to call its methods, connect to its signals and access its
+ * properties. It is also used when creating and registering a new
+ * {@link QiService}.
+ * <p>
+ * Use {@link DynamicObjectBuilder} to create an instance of this class.
+ * @see DynamicObjectBuilder
+ */
 public class AnyObject {
 
   static

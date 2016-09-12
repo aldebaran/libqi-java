@@ -4,6 +4,11 @@
 */
 package com.aldebaran.qi;
 
+/**
+ *  Class responsible for initializing the qi framework, but without creating a
+ *  {@link Session}.
+ *  @see Application
+ */
 public class RawApplication
 {
 
