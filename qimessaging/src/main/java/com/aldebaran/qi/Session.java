@@ -9,6 +9,19 @@ import java.util.List;
 
 import com.aldebaran.qi.ClientAuthenticatorFactory;
 
+/**
+ * Class that allows using the messaging layer: it is responsible for connecting
+ * services together locally or over the network.
+ * <p>
+ * The list of available services is contained in the {@link ServiceDirectory}
+ * which runs on a session acting as the entry point for other sessions to
+ * connect to. When a session exposes a service, other connected sessions can
+ * contact that service. When Sessions connect to each other, they create an
+ * undirected graph.
+ * <p>
+ * This class allows registering and exposing a new {@link QiService} or
+ * retrieving one as an {@link AnyObject}.
+ */
 public class Session
 {
 

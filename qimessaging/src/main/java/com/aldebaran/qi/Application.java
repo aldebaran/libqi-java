@@ -4,6 +4,12 @@
 */
 package com.aldebaran.qi;
 
+/**
+ * Class responsible for initializing the qi framework.
+ * <p>
+ * When started, it creates a {@link Session} by default connected
+ * to <i>tcp://127.0.0.1:9559</i> and listening to <i>tcp://0.0.0.0:0</i>
+ */
 public class Application
 {
 
