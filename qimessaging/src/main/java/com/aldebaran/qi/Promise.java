@@ -1,5 +1,19 @@
 package com.aldebaran.qi;
 
+/**
+ * Promise is a writable, single assignment container which sets the value of the {@link Future}.
+ *
+ * Promise and {@link Future} are two complementary concepts. They are designed to synchronise data
+ * between multiples threads. The {@link Future} holds the result of an asynchronous computation,
+ * from which you can retrieve the value of the result; the Promise sets the value of this computation,
+ * which resolves the associated {@link Future}.
+ *
+ * For promises that don't need a value and are just used to ensure correct ordering of asynchronous
+ * operations, the common pattern to use is {@link java.lang.Void} as a generic type.
+ *
+ * @param <T> The type of the result
+ */
+
 public class Promise<T>
 {
 
