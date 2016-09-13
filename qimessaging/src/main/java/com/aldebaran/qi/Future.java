@@ -10,9 +10,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * @author proullon
+ * Future extends the standard Java {@link java.util.concurrent.Future} and represents the result of
+ * an asynchronous computation.
  *
- * @param <T>
+ * {@link Promise} and Future are two complementary concepts. They are designed to synchronise data
+ * between multiples threads. The Future holds the result of an asynchronous computation, from which
+ * you can retrieve the value of the result; the {@link Promise} sets the value of this computation,
+ * which resolves the associated Future.
+ *
+ * @param <T> The type of the result
  */
 public class Future<T> implements java.util.concurrent.Future<T>
 {
