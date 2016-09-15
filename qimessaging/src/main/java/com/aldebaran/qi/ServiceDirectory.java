@@ -4,6 +4,15 @@
 */
 package com.aldebaran.qi;
 
+/**
+ * Class responsible for the administration of the available services in a
+ * {@link Session}.
+ * <p>
+ * A ServiceDirectory instance should be connected to a {@link Session} in order
+ * to be accessed by other {@link Session}s. When a {@link Session} exposes a
+ * service, other connected {@link Session}s can contact that service.
+ * @see Session
+ */
 public class ServiceDirectory {
 
   static
