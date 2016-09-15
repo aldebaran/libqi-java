@@ -14,10 +14,11 @@ import com.aldebaran.qi.ClientAuthenticatorFactory;
  * services together locally or over the network.
  * <p>
  * The list of available services is contained in the {@link ServiceDirectory}
- * which runs on a session acting as the entry point for other sessions to
- * connect to. When a session exposes a service, other connected sessions can
- * contact that service. When Sessions connect to each other, they create an
- * undirected graph.
+ * which runs on a Session acting as the entry point for other sessions to
+ * connect to. Not all Sessions need to have a {@link ServiceDirectory}, they
+ * can also be connected to a Session that already has one. When a Session
+ * exposes a service, other connected sessions can contact that service. When
+ * Sessions connect to each other, they create an undirected graph.
  * <p>
  * This class allows registering and exposing a new {@link QiService} or
  * retrieving one as an {@link AnyObject}.
