@@ -7,23 +7,28 @@ import java.util.List;
 import com.aldebaran.qi.QiConversionException;
 
 /**
- * Provide methods to serialize and deserialize custom objects to and from
- * supported types.
- *
- * This includes structs/tuples conversion.
+ * Class that provides methods to serialize and deserialize custom objects to and from supported
+ * types.
+ * <p>
+ * By default, there are {@link ArrayConverter}, {@link ListConverter}, {@link MapConverter} and
+ * {@link StructConverter}.
  */
 public class QiSerializer
 {
-  public interface Converter
-  {
-    boolean canSerialize(Object object);
+    /**
+     * Converter interface which defines the characteristics of a converter.
+     * <p>
+     * Implement this interface if a custom converter is needed.
+     */
+    public interface Converter {
+        boolean canSerialize(Object object);
 
-    Object serialize(QiSerializer serializer, Object object) throws QiConversionException;
+        Object serialize(QiSerializer serializer, Object object) throws QiConversionException;
 
-    boolean canDeserialize(Object object, Type targetType);
+        boolean canDeserialize(Object object, Type targetType);
 
-    Object deserialize(QiSerializer serializer, Object object, Type targetType) throws QiConversionException;
-  }
+        Object deserialize(QiSerializer serializer, Object object, Type targetType) throws QiConversionException;
+    }
 
   private static final QiSerializer DEFAULT_INSTANCE = new QiSerializer();
 

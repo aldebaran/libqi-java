@@ -5,6 +5,9 @@ import java.lang.reflect.Type;
 
 import com.aldebaran.qi.QiConversionException;
 
+/**
+ * Converter for Array serialization.
+ */
 public class ArrayConverter implements QiSerializer.Converter
 {
 

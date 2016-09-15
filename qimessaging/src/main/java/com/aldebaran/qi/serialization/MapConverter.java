@@ -7,6 +7,9 @@ import java.util.Map;
 
 import com.aldebaran.qi.QiConversionException;
 
+/**
+ * Converter for Map serialization.
+ */
 public class MapConverter implements QiSerializer.Converter
 {
 
