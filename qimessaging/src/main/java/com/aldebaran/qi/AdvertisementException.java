@@ -4,25 +4,30 @@
 */
 package com.aldebaran.qi;
 
+/**
+* An {@code AdvertisementException} is thrown when an error occurs during
+* the advertisement of a method, a signal or a property.
+* @see DynamicObjectBuilder
+*/
 public class AdvertisementException extends QiRuntimeException {
 
-  private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-  /**
-   * Exception thrown when error occurs during a QiMessaging operation.
-   * @param e Error message.
-   */
-  public AdvertisementException(String e)
-  {
-    super(e);
-  }
+    /**
+    * Constructs an {@code AdvertisementException} with the specified detail
+    * message.
+    * @param message the detail message.
+    */
+    public AdvertisementException(String message)
+    {
+    super(message);
+    }
 
-  /**
-   * Exception thrown when error occurs during a QiMessaging operation.
-   */
-  public AdvertisementException()
-  {
+    /**
+    * Constructs a {@code AdvertisementException} with no specified detail message.
+    */
+    public AdvertisementException()
+    {
     super();
-  }
-
+    }
 }
