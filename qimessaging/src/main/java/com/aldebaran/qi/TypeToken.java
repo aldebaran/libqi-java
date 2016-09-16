@@ -4,18 +4,18 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
 /**
- * Class used to keep and extract a parameter type at runtime.
- *
- * To retrieve the type at runtime, subclass this {@code TypeToken} and call
- * {@link #getType()}:
+ * Class used to represent a generic type {@code T} and to extract its type
+ * information at runtime.
+ * <p>
+ * To retrieve the type at runtime, create a subclass and call {@link #getType()}:
  *
  * <pre>
  * Type listOfStringsType = new TypeToken<List<String>>() {}.getType();
  * </pre>
  *
- * Inspired from GSON {@code TypeToken}:
- * <https://google.github.io/gson/apidocs/com/google/gson/reflect/TypeToken.html>
- *
+ * Inspired by GSON's {@code TypeToken}.
+ * @see <a href="https://google.github.io/gson/apidocs/com/google/gson/reflect/TypeToken.html">
+ * GSON's TypeToken</a>
  * @param <T>
  *          the type to retrieve at runtime
  */
