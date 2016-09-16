@@ -4,15 +4,15 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 
 /**
- * For convenience, this {@link FutureFunction} allow to implement 3 callbacks
+ * For convenience, this {@link FutureFunction} allows to implement 3 callbacks
  * independently for result, error or cancellation.
- *
- * This allow to directly get the future value as callback parameter.
+ * <p>
+ * This allows to directly get the {@link Future}'s value as callback parameter.
  *
  * @param <Ret>
- *          the input future type
+ *          the {@link Future}'s input type
  * @param <Arg>
- *          the output future type
+ *          the {@link Future}'s output type
  */
 public abstract class QiFunction<Ret, Arg> implements FutureFunction<Ret, Arg>
 {

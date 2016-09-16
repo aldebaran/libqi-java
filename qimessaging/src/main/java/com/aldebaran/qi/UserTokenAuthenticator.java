@@ -4,11 +4,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Specific {@link ClientAuthenticator} authenticating from a user and a token.
- *
- * If the server trusts on first use, we may receive a new token. In that case,
- * {@link #hasNewToken()} returns {@code true} and the new token is available
- * through {@link #getToken()}.
+ * Specific {@link ClientAuthenticator} that authenticates a user using a token.
+ * <p>
+ * If no initial token is provided, the client is trusted on first use and a
+ * token  is generated. In that case, {@link #hasNewToken()} returns
+ * {@code true} and the new token is available through {@link #getToken()}.
  */
 public class UserTokenAuthenticator implements ClientAuthenticator
 {
@@ -17,7 +17,7 @@ public class UserTokenAuthenticator implements ClientAuthenticator
   private boolean hasNewToken;
 
   /**
-   * Create an authenticator with an user and an initial token.
+   * Constructs an authenticator with the specified user and initial token.
    *
    * @param user
    *          the user
@@ -36,7 +36,7 @@ public class UserTokenAuthenticator implements ClientAuthenticator
   }
 
   /**
-   * Create an authenticator with an user but no token.
+   * Constructs an authenticator with the specified user and no initial token.
    *
    * @param user
    *          the user
@@ -78,7 +78,7 @@ public class UserTokenAuthenticator implements ClientAuthenticator
    * Indicates whether a new token has been retrieved during the last
    * authentication.
    *
-   * @return {@©ode true} if a new token has been retrieved, {@false} otherwise
+   * @return {@code true} if a new token has been retrieved, {@code false} otherwise
    */
   public synchronized boolean hasNewToken()
   {

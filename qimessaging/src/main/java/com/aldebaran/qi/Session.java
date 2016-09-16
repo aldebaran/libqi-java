@@ -133,7 +133,7 @@ public class Session
    * Register service on Service Directory
    * @param name Name of new service
    * @param object Instance of service
-   * @return
+   * @return the id of the service
    */
   public int registerService(String name, AnyObject object)
   {
@@ -143,7 +143,7 @@ public class Session
   /**
    * Unregister service from Service Directory
    * @param idx is return by registerService
-   * @see registerService
+   * @see #registerService(String, AnyObject)
    */
   public void unregisterService(int idx)
   {

@@ -4,16 +4,16 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 
 /**
- * Like {@link QiFunction}, this {@link FutureFunction} dispatches 3 callbacks
- * independently for result, error or cancellation.
+ * Like {@link QiFunction}, this {@link FutureFunction} allows to implement 3
+ * callbacks independently for result, error or cancellation.
  *
- * But contrary to {@link QiFunction}, all these methods return void.
- *
- * This is a facility to register a callback on a future, without the need to
- * manage what to return (that will be ignored anyway).
+ * Contrary to {@link QiFunction}, all these callback methods return void.
+ * <p>
+ * This is a facility to register a callback to a {@link Future}, without the
+ * need to manage what to return (that will be ignored anyway).
  *
  * @param <T>
- *          the future type
+ *          the {@link Future}'s type.
  */
 public abstract class QiCallback<T> implements FutureFunction<Void, T>
 {

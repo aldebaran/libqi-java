@@ -296,7 +296,7 @@ public class AnyObject {
 
   /**
    * Post an event advertised with advertiseEvent method.
-   * @see advertiseEvent
+   * @see DynamicObjectBuilder#advertiseSignal(long, String)
    * @param eventName Name of the event to trigger.
    * @param args Arguments sent to callback
    */
