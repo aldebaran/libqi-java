@@ -10,9 +10,9 @@ import java.util.concurrent.ExecutionException;
  * This allows to directly get the {@link Future}'s value as callback parameter.
  *
  * @param <Ret>
- *          the {@link Future}'s input type
- * @param <Arg>
  *          the {@link Future}'s output type
+ * @param <Arg>
+ *          the {@link Future}'s input type
  */
 public abstract class QiFunction<Ret, Arg> implements FutureFunction<Ret, Arg>
 {
