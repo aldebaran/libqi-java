@@ -5,6 +5,9 @@ import java.util.Arrays;
 import com.aldebaran.qi.serialization.QiSerializer;
 import com.aldebaran.qi.serialization.StructConverter;
 
+/**
+ * Class that represents a list of values of different fixed types.
+ */
 public class Tuple
 {
   private Object[] values;

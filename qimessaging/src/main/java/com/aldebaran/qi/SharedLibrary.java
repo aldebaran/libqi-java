@@ -12,6 +12,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 
+/**
+ * Class responsible for managing the dynamic libraries used by the qi
+ * Framework according to the system.
+ */
 public class SharedLibrary
 {
   private static String osName = System.getProperty("os.name");
