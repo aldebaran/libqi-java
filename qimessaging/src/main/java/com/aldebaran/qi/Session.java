@@ -54,6 +54,7 @@ public class Session
   private native void onDisconnected(long pSession, String callback, Object obj);
   private native void addConnectionListener(long pSession, ConnectionListener listener);
   private native void setClientAuthenticatorFactory(long pSession, ClientAuthenticatorFactory factory);
+  private native void loadService(long pSession, String name);
 
   // Members
   private long _session;
@@ -234,5 +235,10 @@ public class Session
         return authenticator;
       }
     });
+  }
+
+  public void loadService(String name)
+  {
+    loadService(_session, name);
   }
 }
