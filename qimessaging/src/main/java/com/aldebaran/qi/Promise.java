@@ -27,6 +27,16 @@ public class Promise<T>
     }
   }
 
+  /**
+   * An implementation of this interface can be connected to a {@link Promise}
+   * in order to be called when the {@link Promise} receives a cancel request.
+   * @param <T> The type of the result
+   */
+  public interface CancelRequestCallback<T>
+  {
+    void onCancelRequested(Promise<T> promise);
+  }
+
   private long promisePtr;
 
   private Future<T> future;
@@ -66,7 +76,17 @@ public class Promise<T>
     // isCancelled() must return true after any successful call to
     // cancel(…); for consistency, any call to promise.setCancelled() must
     // guarantee that any future call to future.isCancelled() also returns true
-    future.setCancelled();
+    //future.setCancelled(); //setCancelled has been deleted
+  }
+
+  /**
+   * Sets a cancel callback. When cancellation is requested, the set callback is
+   * immediately called.
+   * @param callback The callback to call
+   */
+  public void setOnCancel(CancelRequestCallback<T> callback)
+  {
+    _setOnCancel(promisePtr, callback);
   }
 
   public void connectFromFuture(Future<T> future)
@@ -103,4 +123,6 @@ public class Promise<T>
   private native void _setError(long promisePtr, String errorMessage);
 
   private native void _setCancelled(long promisePtr);
+
+  private native void _setOnCancel(long promisePtr, CancelRequestCallback<T> callback);
 }

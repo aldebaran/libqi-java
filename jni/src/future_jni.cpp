@@ -42,9 +42,17 @@ void      java_future_callback(const qi::Future<qi::AnyValue>& future)
 
 JNIEXPORT jboolean JNICALL Java_com_aldebaran_qi_Future_qiFutureCallCancel(JNIEnv *QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pFuture) {
   qi::Future<qi::AnyValue>* fut = reinterpret_cast<qi::Future<qi::AnyValue>*>(pFuture);
-
+  // Leave this method as it is (even if returning a boolean doesn't make sense) to avoid breaking
+  // projects that were already using it. Future projects should prefer using qiFutureCallCancelRequest.
+  if (fut->isCancelable() == false)
+      return false;
   fut->cancel();
   return true;
+}
+
+JNIEXPORT void JNICALL Java_com_aldebaran_qi_Future_qiFutureCallCancelRequest(JNIEnv *QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pFuture) {
+  qi::Future<qi::AnyValue>* fut = reinterpret_cast<qi::Future<qi::AnyValue>*>(pFuture);
+  fut->cancel();
 }
 
 JNIEXPORT jobject JNICALL Java_com_aldebaran_qi_Future_qiFutureCallGet(JNIEnv *env, jobject QI_UNUSED(obj), jlong pFuture, jint msecs)
@@ -98,6 +106,7 @@ JNIEXPORT jboolean JNICALL Java_com_aldebaran_qi_Future_qiFutureCallIsCancelled(
   return fut->isCanceled();
 }
 
+//TODO : return a state instead
 JNIEXPORT jboolean JNICALL Java_com_aldebaran_qi_Future_qiFutureCallIsDone(JNIEnv *QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pFuture)
 {
   qi::Future<qi::AnyValue>* fut = reinterpret_cast<qi::Future<qi::AnyValue>*>(pFuture);

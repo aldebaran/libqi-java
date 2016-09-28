@@ -67,3 +67,32 @@ JNIEXPORT void JNICALL Java_com_aldebaran_qi_Promise__1setCancelled
   // "cancelled" in Java, "canceled" in libqi
   promise->setCanceled();
 }
+
+namespace
+{
+  void jni_invoke_cancel_callback(qi::jni::SharedGlobalRef callback, qi::jni::SharedGlobalRef args )
+  {
+      const char *method = "onCancelRequested";
+      const char *methodSig = "(Lcom/aldebaran/qi/Promise;)V";
+      qi::jni::JNIAttach attach;
+      JNIEnv *env = attach.get();
+      qi::jni::Call<void>::invoke(env, callback.get(), method, methodSig, args.get());
+  }
+
+}
+
+/*
+ * Class:     com_aldebaran_qi_Promise
+ * Method:    _setOnCancel
+ * Signature: (J)V
+ */
+JNIEXPORT void JNICALL Java_com_aldebaran_qi_Promise__1setOnCancel(JNIEnv *env, jobject thisPromise, jlong promisePtr, jobject callback)
+{
+  auto promise = reinterpret_cast<qi::Promise<qi::AnyValue> *>(promisePtr);
+  auto gCallback = qi::jni::makeSharedGlobalRef(env, callback);
+  auto gThisPromise = qi::jni::makeSharedGlobalRef(env, thisPromise);
+  promise->setOnCancel( [=](qi::Promise<qi::AnyValue> p){
+      jni_invoke_cancel_callback(gCallback, gThisPromise);
+  } );
+
+}
