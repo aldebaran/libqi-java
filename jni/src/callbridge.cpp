@@ -22,15 +22,6 @@ qiLogCategory("qimessaging.jni");
 
 MethodInfoHandler gInfoHandler;
 
-static void call_from_java_cont(qi::Future<qi::AnyReference> ret,
-    qi::Promise<qi::AnyValue> promise)
-{
-  if (ret.hasError())
-    promise.setError(ret.error());
-  else
-    promise.setValue(qi::AnyValue(ret.value(), false, true));
-}
-
 /**
  * @brief call_from_java Helper function to call qiMessaging method with Java arguments
  * @param env JNI environment given by JVM.
@@ -57,23 +48,36 @@ qi::Future<qi::AnyValue>* call_from_java(JNIEnv *env, qi::AnyObject object, cons
     ++i;
   }
   // Create future and start metacall
-  // philippe: must be sync or testCallback is broken (future from metacall is
-  // sync, don't know why)
-  qi::Promise<qi::AnyValue> promise(qi::FutureCallbackType_Sync);
-  qi::Future<qi::AnyValue> *fut = new qi::Future<qi::AnyValue>();
   try
   {
-    qi::Future<qi::AnyReference> metfut =
-      object.metaCall(strMethodName, params);
-    metfut.connect(call_from_java_cont, _1, promise);
-    *fut = promise.future();
+    auto metfut = object.metaCall(strMethodName, params);
+    qi::Promise<qi::AnyValue> promise{[=](qi::Promise<qi::AnyValue>) mutable {
+            metfut.cancel();
+          }, qi::FutureCallbackType_Sync};
+
+    metfut.then([=](qi::Future<qi::AnyReference> result) mutable {
+      if (result.hasError())
+      {
+        promise.setError(result.error());
+      }
+      else if (result.isCanceled())
+      {
+        promise.setCanceled();
+      }
+      else
+      {
+        promise.setValue(qi::AnyValue(result.value(), false, true));
+      }
+    });
+
+    std::unique_ptr<qi::Future<qi::AnyValue>> fut { new auto{promise.future()} };
+    return fut.release();
+
   } catch (std::runtime_error &e)
   {
-    delete fut;
     throwNewDynamicCallException(env, e.what());
-    return 0;
+    return nullptr;
   }
-  return fut;
 }
 
 /**

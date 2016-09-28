@@ -156,11 +156,9 @@ public class AnyObject {
     try
     {
       Object[] convertedArgs = (Object[]) serializer.serialize(args);
-      return this.call(method, convertedArgs).andThen(new QiFunction<T, Object>()
-      {
+      return this.call(method, convertedArgs).andThen(new QiFunction<T, Object>() {
         @Override
-        public Future<T> onResult(Object result) throws Exception
-        {
+        public Future<T> onResult(Object result) throws Exception {
           @SuppressWarnings("unchecked")
           T convertedResult = (T) serializer.deserialize(result, targetType);
           return Future.of(convertedResult);

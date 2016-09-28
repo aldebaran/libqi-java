@@ -740,12 +740,47 @@ public class FutureTest
     }
     fail("Must have thrown ExecutionException");
   }
+  private class CancellableOperation{
+    final AtomicBoolean onCancelCalled = new AtomicBoolean();
+    public void doWork(Promise<String> promise){
+      for (int i = 0; i < 100; i++){
+        System.out.println("Printing " + i);
+        if (onCancelCalled.get() == true)
+          return;
+        try {
+          Thread.sleep(1000);
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+      }
+      promise.setValue("OK");
+    }
+    public Future<String> longReply()
+    {
+      final Promise<String> promise = new Promise<String>();
+      promise.setOnCancel(new Promise.CancelRequestCallback<String>() {
+        @Override
+        public void onCancelRequested(Promise<String> promise) {
+          onCancelCalled.set(true);
+          promise.setCancelled();
+        }
+      });
+      new Thread(new Runnable() {
+        @Override
+        public void run() {
+          doWork(promise);
+        }
+      }).start();
+      return promise.getFuture();
+    }
+  }
 
   @Test(expected=CancellationException.class)
   public void testCancelMatchesJavaFutureSemantics() throws ExecutionException
   {
-    Future<Void> future = proxy.call("longReply", "plaf");
-    future.cancel(false);
+    CancellableOperation cancellable = new CancellableOperation();
+    Future<String> future = cancellable.longReply();
+    future.cancel(true);
     future.get();
   }
 
