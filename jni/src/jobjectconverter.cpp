@@ -454,7 +454,6 @@ class JObjectTypeInterface: public qi::DynamicTypeInterface
 
     virtual qi::AnyReference get(void* storage)
     {
-      static const unsigned int MEMORY_DEFAULT_SIZE = 20;
       static unsigned int MEMORY_SIZE = 200;
       static bool init = false;
       static qi::AnyReference* memoryBuffer;
