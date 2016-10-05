@@ -70,7 +70,7 @@ qi::Future<qi::AnyValue>* call_from_java(JNIEnv *env, qi::AnyObject object, cons
       }
     });
 
-    std::unique_ptr<qi::Future<qi::AnyValue>> fut ( new auto{promise.future()} );
+    std::unique_ptr<qi::Future<qi::AnyValue>> fut ( new auto(promise.future()) );
     return fut.release();
 
   } catch (std::runtime_error &e)
