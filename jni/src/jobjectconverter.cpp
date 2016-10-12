@@ -24,6 +24,7 @@
 #include <list_jni.hpp>
 #include <tuple_jni.hpp>
 #include <object_jni.hpp>
+#include <future_jni.hpp>
 
 qiLogCategory("qimessaging.jni");
 using namespace qi;
@@ -321,6 +322,26 @@ qi::AnyReference AnyValue_from_JObject_Tuple(jobject val)
   return res;
 }
 
+/**
+ * Make AnyReference from a Java Future object.
+ * Future objects have a JNI member (a qi::Future) that we can
+ * directly rely on, hence the use of the JNI Environment.
+ * @param val The Future object.
+ * @param env The JNI Environment.
+ * @return
+ */
+qi::AnyReference AnyValue_from_JObject_Future(jobject val, JNIEnv* env)
+{
+  auto fieldId = env->GetFieldID(cls_future, "_fut", "J");
+  auto futureAddress = env->GetLongField(val, fieldId);
+  auto future = reinterpret_cast<qi::Future<qi::AnyValue>*>(futureAddress);
+
+  // like done with the other types, we store the real data somewhere for the
+  // reference to survive
+  auto& futureCopy = *new qi::Future<qi::AnyValue>(*future);
+  return qi::AnyReference::from(futureCopy);
+}
+
 qi::AnyReference AnyValue_from_JObject_RemoteObject(jobject val)
 {
   JNIObject obj(val);
@@ -402,11 +423,15 @@ qi::AnyReference _AnyValue_from_JObject(jobject val)
     return AnyValue_from_JObject_Tuple(val);
   }
 
+  if (env->IsInstanceOf(val, cls_future))
+  {
+    return AnyValue_from_JObject_Future(val, env);
+  }
+
   if (env->IsInstanceOf(val, cls_anyobject))
   {
     return AnyValue_from_JObject_RemoteObject(val);
   }
-
   qiLogError() << "Cannot serialize return value: Unable to convert JObject to AnyValue";
   throw std::runtime_error("Cannot serialize return value: Unable to convert JObject to AnyValue");
 }
