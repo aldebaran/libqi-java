@@ -338,3 +338,11 @@ JNIEXPORT void JNICALL Java_com_aldebaran_qi_Session_setClientAuthenticatorFacto
   qi::Session* session = reinterpret_cast<qi::Session*>(pSession);
   session->setClientAuthenticatorFactory(boost::make_shared<Java_ClientAuthenticatorFactory>(env, object));
 }
+
+JNIEXPORT void JNICALL Java_com_aldebaran_qi_Session_loadService(JNIEnv *env, jobject obj, jlong pSession, jstring jname)
+{
+  qi::Session* session = reinterpret_cast<qi::Session*>(pSession);
+  std::string moduleName = qi::jni::toString(jname);
+  session->loadService(moduleName);
+  return;
+}

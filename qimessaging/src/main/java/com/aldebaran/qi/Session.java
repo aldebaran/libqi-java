@@ -9,6 +9,20 @@ import java.util.List;
 
 import com.aldebaran.qi.ClientAuthenticatorFactory;
 
+/**
+ * Class that allows using the messaging layer: it is responsible for connecting
+ * services together locally or over the network.
+ * <p>
+ * The list of available services is contained in the {@link ServiceDirectory}
+ * which runs on a Session acting as the entry point for other sessions to
+ * connect to. Not all Sessions need to have a {@link ServiceDirectory}, they
+ * can also be connected to a Session that already has one. When a Session
+ * exposes a service, other connected sessions can contact that service. When
+ * Sessions connect to each other, they create an undirected graph.
+ * <p>
+ * This class allows registering and exposing a new {@link QiService} or
+ * retrieving one as an {@link AnyObject}.
+ */
 public class Session
 {
 
@@ -40,6 +54,7 @@ public class Session
   private native void onDisconnected(long pSession, String callback, Object obj);
   private native void addConnectionListener(long pSession, ConnectionListener listener);
   private native void setClientAuthenticatorFactory(long pSession, ClientAuthenticatorFactory factory);
+  private native void loadService(long pSession, String name);
 
   // Members
   private long _session;
@@ -119,7 +134,7 @@ public class Session
    * Register service on Service Directory
    * @param name Name of new service
    * @param object Instance of service
-   * @return
+   * @return the id of the service
    */
   public int registerService(String name, AnyObject object)
   {
@@ -129,7 +144,7 @@ public class Session
   /**
    * Unregister service from Service Directory
    * @param idx is return by registerService
-   * @see registerService
+   * @see #registerService(String, AnyObject)
    */
   public void unregisterService(int idx)
   {
@@ -220,5 +235,10 @@ public class Session
         return authenticator;
       }
     });
+  }
+
+  public void loadService(String name)
+  {
+    loadService(_session, name);
   }
 }

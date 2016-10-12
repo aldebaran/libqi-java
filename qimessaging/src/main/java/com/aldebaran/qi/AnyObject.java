@@ -11,6 +11,20 @@ import java.util.Arrays;
 
 import com.aldebaran.qi.serialization.QiSerializer;
 
+/**
+ * Class that provides type erasure on objects. It represents an object
+ * (understandable by the messaging layer) that has shared semantics and that
+ * can contain methods, signals and properties.
+ * <p>
+ * This class is typically used in {@link Session} when retrieving a remote
+ * service by its name. The service itself is not retrieved, but a reference to
+ * it, in order to call its methods, connect to its signals and access its
+ * properties. It is also used when creating and registering a new
+ * {@link QiService}.
+ * <p>
+ * Use {@link DynamicObjectBuilder} to create an instance of this class.
+ * @see DynamicObjectBuilder
+ */
 public class AnyObject {
 
   static
@@ -142,11 +156,9 @@ public class AnyObject {
     try
     {
       Object[] convertedArgs = (Object[]) serializer.serialize(args);
-      return this.call(method, convertedArgs).andThen(new QiFunction<T, Object>()
-      {
+      return this.call(method, convertedArgs).andThen(new QiFunction<T, Object>() {
         @Override
-        public Future<T> onResult(Object result) throws Exception
-        {
+        public Future<T> onResult(Object result) throws Exception {
           @SuppressWarnings("unchecked")
           T convertedResult = (T) serializer.deserialize(result, targetType);
           return Future.of(convertedResult);
@@ -282,7 +294,7 @@ public class AnyObject {
 
   /**
    * Post an event advertised with advertiseEvent method.
-   * @see advertiseEvent
+   * @see DynamicObjectBuilder#advertiseSignal(long, String)
    * @param eventName Name of the event to trigger.
    * @param args Arguments sent to callback
    */

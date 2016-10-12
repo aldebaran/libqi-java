@@ -7,10 +7,9 @@ package com.aldebaran.qi;
 import java.io.File;
 
 /**
- * Tool class providing QiMessaging<->Java type system loading and
- * dynamic library loader designed to load libraries included in jar package.
+ * Class that provides the tools for loading the system's necessary
+ * dynamic libraries (included in jar packages) used by the qi Framework.
  * @author proullon
- *
  */
 public class EmbeddedTools
 {

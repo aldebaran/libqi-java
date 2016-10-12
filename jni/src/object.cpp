@@ -80,7 +80,6 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_asyncCall(JNIEnv* env, j
     throwNewDynamicCallException(env, e.what());
     return 0;
   }
-
   return (jlong) fut;
 }
 

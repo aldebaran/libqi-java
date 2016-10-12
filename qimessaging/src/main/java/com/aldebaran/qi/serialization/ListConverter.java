@@ -7,6 +7,9 @@ import java.util.List;
 
 import com.aldebaran.qi.QiConversionException;
 
+/**
+ * Converter for List serialization.
+ */
 public class ListConverter implements QiSerializer.Converter
 {
 

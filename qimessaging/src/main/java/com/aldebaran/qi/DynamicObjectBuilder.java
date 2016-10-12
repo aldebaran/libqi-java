@@ -6,6 +6,16 @@ package com.aldebaran.qi;
 
 import java.lang.reflect.Method;
 
+/**
+ * Class that exposes directly an {@link AnyObject} that can be manipulated.
+ * <p>
+ * There is only one {@link AnyObject} per DynamicObjectBuilder, the object
+ * method always returns the same instance.
+ * <p>
+ * This class is typically used to subscribe a new {@link QiService} to a
+ * {@link Session}.
+ */
+
 public class DynamicObjectBuilder {
 
   static
@@ -29,6 +39,16 @@ public class DynamicObjectBuilder {
   private native void setThreadSafeness(long pObjectBuilder, boolean isThreadSafe);
 
   /// Possible thread models for an object
+
+  /**
+   * Enum to declare the thread-safeness state of an {@link AnyObject} instance.
+   * <p>
+   * Use <b>MultiThread</b> if your object is expected to be thread-safe.
+   * Method calls will potentially occur in parallel in multiple threads.
+   * <p>
+   * Use <b>SingleThread</b> to make your object non-thread-safe.
+   * All method calls must occur in the same thread.
+   */
   public enum ObjectThreadingModel
   {
     /// AnyObject is not thread safe, all method calls must occur in the same thread
@@ -70,7 +90,7 @@ public class DynamicObjectBuilder {
   }
 
   /**
-   * Advertise an signal with its callback signature.
+   * Advertise a signal with its callback signature.
    * @param signalSignature Signature of available callback.
    * @throws Exception If GenericObject is not initialized internally.
    */

@@ -23,3 +23,7 @@ bin/*/target/
 # ignore AndroidStudio generated files
 .idea
 *.iml
+
+# igonre files created by the filesystem
+.DS_Store
+

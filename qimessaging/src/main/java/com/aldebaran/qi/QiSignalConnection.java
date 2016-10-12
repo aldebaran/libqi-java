@@ -1,5 +1,14 @@
 package com.aldebaran.qi;
 
+import com.aldebaran.qi.serialization.QiSerializer;
+
+/**
+ * Class that represents a connection to a signal. It is retrieved when calling
+ * {@link AnyObject#connect(String, QiSignalListener)},
+ * {@link AnyObject#connect(QiSerializer, String, Object, String)} or
+ * {@link AnyObject#connect(String, Object, String)}.
+ * @see AnyObject
+ */
 public class QiSignalConnection
 {
   private AnyObject object;

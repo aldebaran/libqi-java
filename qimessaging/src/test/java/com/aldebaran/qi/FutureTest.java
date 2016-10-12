@@ -460,27 +460,29 @@ public class FutureTest
     Future<String> future = proxy.call("longReply", "plaf");
 
     // the callback may be called from another thread
-    final AtomicBoolean finished = new AtomicBoolean();
-
+    final AtomicBoolean finished = new AtomicBoolean(false);
+/**
     future.connect(new Future.Callback<String>()
     {
       @Override
       public void onFinished(Future<String> future)
       {
         finished.set(true);
-        try
-        {
-          future.get();
-        } catch (Exception e)
-        {
-          fail("get() must not fail");
-        }
+      }
+    });**/
+
+
+    Future<Void> futureFinished = future.then(new FutureFunction<Void, String>()
+    {
+      @Override
+      public Future<Void> execute(Future<String> future) throws Throwable {
+        finished.set(true);
+        return null;
       }
     });
-
     try
     {
-      future.get();
+      futureFinished.get();
     } catch (Exception e)
     {
       fail("get() must not fail");
@@ -490,40 +492,62 @@ public class FutureTest
   }
 
   @Test
-  public void testConnectCallbackFailure()
+  public void testConnectCallbackOnFailure()
   {
     Future<Void> future = proxy.call("throwUp");
 
     // the callback may be called from another thread
     final AtomicBoolean finished = new AtomicBoolean();
-
-    future.connect(new Future.Callback<Void>()
+    Future<Void> futureFinished = future.then(new FutureFunction<Void, Void>()
     {
       @Override
-      public void onFinished(Future<Void> future)
-      {
+      public Future<Void> execute(Future<Void> future) throws Throwable {
+        assertTrue(future.hasError());
         finished.set(true);
-        try
-        {
-          future.get();
-          fail("get() must fail");
-        } catch (Exception e)
-        {
-          // expected exception
-        }
+        return future;
       }
     });
 
     try
     {
-      future.get();
+      futureFinished.get();
       fail("get() must fail");
     } catch (Exception e)
     {
       // expected exception
     }
-
+    assertTrue(futureFinished.hasError());
     assertTrue(finished.get());
+  }
+
+  @Test
+  public void testAndThenCallbackFailure()
+  {
+    Future<Void> future = proxy.call("throwUp");
+
+    // the callback may be called from another thread
+    final AtomicBoolean finished = new AtomicBoolean();
+    Future<Void> futureFinished = future.andThen(new FutureFunction<Void, Void>()
+    {
+      @Override
+      public Future<Void> execute(Future<Void> future) throws Throwable {
+        // This callback should not be called
+        assertTrue(future.hasError());
+        finished.set(true);
+        return future;
+      }
+    });
+
+    try
+    {
+      futureFinished.get();
+      fail("get() must fail");
+    } catch (Exception e)
+    {
+      // expected exception
+    }
+    assertTrue(futureFinished.hasError());
+    assertFalse(finished.get());
   }
 
   @Test
@@ -531,6 +555,7 @@ public class FutureTest
   {
     AnyObject proxy = null;
     Future<String> fut = null;
+    Future<Void> futureFinished = null;
 
 
     // Get a proxy to serviceTest
@@ -568,6 +593,12 @@ public class FutureTest
           assertEquals(2, args[1]);
         }
       }, 1, 2);
+      futureFinished = fut.then(new QiFunction<Void, String>() {
+        @Override
+        public Future<Void> onResult(String result) throws Throwable {
+          return null;
+        }
+      });
     } catch (DynamicCallException e)
     {
       fail("Error calling answer function : " + e.getMessage());
@@ -576,6 +607,7 @@ public class FutureTest
     try
     {
       fut.get();
+      futureFinished.get();
     } catch (Exception e)
     {
       fail("fut.get() must not fail");
@@ -740,15 +772,64 @@ public class FutureTest
     }
     fail("Must have thrown ExecutionException");
   }
+  private class CancellableOperation{
+    final AtomicBoolean onCancelCalled = new AtomicBoolean();
+    public void doWork(Promise<String> promise){
+      for (int i = 0; i < 100; i++){
+        System.out.println("Printing " + i);
+        if (onCancelCalled.get() == true)
+          return;
+        try {
+          Thread.sleep(1000);
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+      }
+      promise.setValue("OK");
+    }
+    public Future<String> longReply()
+    {
+      final Promise<String> promise = new Promise<String>();
+      promise.setOnCancel(new Promise.CancelRequestCallback<String>() {
+        @Override
+        public void onCancelRequested(Promise<String> promise) {
+          onCancelCalled.set(true);
+          promise.setCancelled();
+        }
+      });
+      new Thread(new Runnable() {
+        @Override
+        public void run() {
+          doWork(promise);
+        }
+      }).start();
+      return promise.getFuture();
+    }
+  }
 
   @Test(expected=CancellationException.class)
   public void testCancelMatchesJavaFutureSemantics() throws ExecutionException
   {
-    Future<Void> future = proxy.call("longReply", "plaf");
-    future.cancel(false);
+    CancellableOperation cancellable = new CancellableOperation();
+    Future<String> future = cancellable.longReply();
+    future.cancel(true);
     future.get();
   }
 
+  @Test(expected=CancellationException.class)
+  public void testThenForwardCancel() throws ExecutionException
+  {
+    CancellableOperation cancellable = new CancellableOperation();
+    Future<String> future = cancellable.longReply();
+    Future<Void> childFuture = future.then(new QiFunction<Void, String>() {
+      @Override
+      public Future<Void> onResult(String result) throws Throwable {
+        return null;
+      }
+    });
+    childFuture.cancel(true);
+    future.get();
+  }
   private static class AsyncWait implements Runnable
   {
     enum Type

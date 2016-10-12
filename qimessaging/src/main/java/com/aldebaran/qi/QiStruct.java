@@ -9,21 +9,23 @@ import java.lang.annotation.Target;
 /**
  * Annotation indicating that a class represents a conversion from a
  * {@link Tuple}.
- *
- * A class having this annotation must annotate fields with {@code QiField} with
- * the matching index in the Tuple it represents.
- *
+ * <p>
+ * A class having this annotation must add the {@code QiField} annotation to
+ * each of its fields, indicating the index they match in the {@link Tuple} the
+ * class represents.
+ * <p>
  * Here is an example:
+ * <p>
  * <pre>
- * @QiStruct
+ * &#64;QiStruct
  * class Person {
- *     @QiField(0)
+ *     &#64;QiField(0)
  *     String firstName;
- *     @QiField(1)
+ *     &#64;QiField(1)
  *     String lastName;
  * }
  * </pre>
- *
+ * <p>
  * Field names are irrelevant.
  */
 @Documented

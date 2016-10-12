@@ -10,6 +10,9 @@ import com.aldebaran.qi.QiField;
 import com.aldebaran.qi.QiStruct;
 import com.aldebaran.qi.Tuple;
 
+/**
+ * Converter for Struct and Tuple serialization.
+ */
 public class StructConverter implements QiSerializer.Converter
 {
 
