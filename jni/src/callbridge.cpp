@@ -145,20 +145,29 @@ qi::AnyReference call_to_java(std::string signature, void* data, const qi::Gener
     qiLogError() << "Service class not found";
     throw std::runtime_error("Service class not found");
   }
-
   // Find method ID
-  std::string javaSignature = toJavaSignature(signature);
-  qiLogVerbose() << "looking for method " << signature << " -> " << javaSignature;
-  jmethodID mid = env->GetMethodID(cls, sigInfo[1].c_str(), javaSignature.c_str());
-  if (env->ExceptionCheck()) // NoSuchMethodError
-    env->ExceptionClear();
-  if (!mid)
-    mid = env->GetStaticMethodID(cls, sigInfo[1].c_str(), javaSignature.c_str());
-  if (env->ExceptionCheck()) // NoSuchMethodError
-    env->ExceptionClear();
+  auto findMethodFromSignature = [&](const std::string& signature, std::function<std::string(const std::string&)> signatureConverter)
+  {
+    std::string javaSignature = signatureConverter(signature);
+    qiLogVerbose() << "looking for method " << signature << " -> " << javaSignature;
+    jmethodID mid = env->GetMethodID(cls, sigInfo[1].c_str(), javaSignature.c_str());
+    if (env->ExceptionCheck()) // NoSuchMethodError
+      env->ExceptionClear();
+    if (!mid)
+      mid = env->GetStaticMethodID(cls, sigInfo[1].c_str(), javaSignature.c_str());
+    if (env->ExceptionCheck()) // NoSuchMethodError
+      env->ExceptionClear();
+    return mid;
+  };
+
+  auto mid = findMethodFromSignature(signature, toJavaSignature);
+  if (!mid){
+    // Try finding a method that fits the signature with a Future as return type
+    mid = findMethodFromSignature(signature, toJavaSignatureWithFuture);
+  }
   if (!mid)
   {
-    qiLogError() << "Cannot find java method " << sigInfo[1] << javaSignature.c_str();
+    qiLogError() << "Cannot find java method " << signature;
     throw std::runtime_error("Cannot find method");
   }
 

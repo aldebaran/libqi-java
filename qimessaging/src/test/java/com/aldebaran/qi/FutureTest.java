@@ -69,6 +69,8 @@ public class FutureTest
     ob.advertiseMethod("createObject::o()", reply, "Return a test object");
     ob.advertiseMethod("longReply::s(s)", reply, "Sleep 2s, then return given argument + 'bim !'");
     ob.advertiseMethod("throwUp::v()", reply, "Throws");
+    ob.advertiseMethod("getFuture::s(s)", reply, "Returns a future");
+    ob.advertiseMethod("getCancellableFuture::s(s)", reply, "Returns a cancellable future");
 
     // Connect session to Service Directory
     s.connect(url).sync();
@@ -929,5 +931,17 @@ public class FutureTest
     future.sync();
     assertTrue(p.getFuture().isDone());
     p.getFuture().get(0, TimeUnit.SECONDS); // must not throw
+  }
+
+  @Test
+  public void testAdvertisedFutureReturn() throws ExecutionException, InterruptedException {
+    Future f = proxy.call(Future.class, "getFuture", "toto");
+    assertEquals("ENDtoto", f.get());
+  }
+  @Test
+  public void testFutureCancelAdvertisedMethod() throws ExecutionException {
+    Future f = proxy.call(Future.class, "getCancellableFuture", "toto");
+    f.cancel(true);
+    assertTrue(f.isCancelled());
   }
 }

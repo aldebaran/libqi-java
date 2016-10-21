@@ -110,68 +110,69 @@ JavaVM*       JVM(JNIEnv* env)
  * Do not call this function, use toJavaSignature instead
  * @see toJavaSignature
  */
-void getJavaSignature(std::string &sig, const std::string& sigInfo)
+void getJavaSignature(std::string &javaSignature, const std::string& qiSignature)
 {
   unsigned int i = 0;
 
-  while (i < sigInfo.size())
+  while (i < qiSignature.size())
   {
-    switch (sigInfo[i])
+    switch (qiSignature[i])
     {
     case qi::Signature::Type_Bool:
-      sig.append("Ljava/lang/Boolean;");
+      javaSignature.append("Ljava/lang/Boolean;");
       break;
     case qi::Signature::Type_Int8:
-      sig.append("Ljava/lang/Character;");
+      javaSignature.append("Ljava/lang/Character;");
       break;
     case qi::Signature::Type_Float:
-      sig.append("Ljava/lang/Float;");
+      javaSignature.append("Ljava/lang/Float;");
       break;
     case qi::Signature::Type_Double:
-      sig.append("Ljava/lang/Double;");
+      javaSignature.append("Ljava/lang/Double;");
       break;
     case qi::Signature::Type_Int32:
-      sig.append("Ljava/lang/Integer;");
+      javaSignature.append("Ljava/lang/Integer;");
       break;
     case qi::Signature::Type_String:
-      sig.append("Ljava/lang/String;");
+      javaSignature.append("Ljava/lang/String;");
       break;
     case qi::Signature::Type_Void:
-      sig.append("V");
+      javaSignature.append("V");
       break;
     case qi::Signature::Type_Dynamic:
-      sig.append("Ljava/lang/Object;");
+      javaSignature.append("Ljava/lang/Object;");
       break;
     case qi::Signature::Type_Map:
     {
-      sig.append("Ljava/util/Map;");
-      while (i < sigInfo.size() && sigInfo[i] != qi::Signature::Type_Map_End)
+      javaSignature.append("Ljava/util/Map;");
+      while (i < qiSignature.size() && qiSignature[i] != qi::Signature::Type_Map_End)
         i++;
       break;
     }
     case qi::Signature::Type_Tuple:
     {
-      sig.append("Lcom/aldebaran/qi/Tuple;");
-      while (i < sigInfo.size() && sigInfo[i] != qi::Signature::Type_Tuple_End)
+      javaSignature.append("Lcom/aldebaran/qi/Tuple;");
+      while (i < qiSignature.size() && qiSignature[i] != qi::Signature::Type_Tuple_End)
         i++;
       break;
     }
     case qi::Signature::Type_List:
     {
-      sig.append("Ljava/util/ArrayList;");
-      while (i < sigInfo.size() && sigInfo[i] != qi::Signature::Type_List_End)
+      javaSignature.append("Ljava/util/ArrayList;");
+      while (i < qiSignature.size() && qiSignature[i] != qi::Signature::Type_List_End)
         i++;
       break;
     }
     case qi::Signature::Type_Object:
     {
-      sig.append("L");
-      sig.append(QI_OBJECT_CLASS);
-      sig.append(";");
+      javaSignature.append("L");
+      javaSignature.append(QI_OBJECT_CLASS);
+      javaSignature.append(";");
       break;
     }
+
     default:
-      qiLogFatal() << "Unknown conversion for [" << sigInfo[i] << "]";
+      qiLogFatal() << "Unknown conversion for [" << qiSignature[i] << "]";
       break;
     }
 
@@ -200,6 +201,27 @@ std::string   toJavaSignature(const std::string &signature)
   else
     getJavaSignature(sig, sigInfo[0]);
 
+  return sig;
+}
+
+/**
+ * @brief toJavaSignatureWithFuture Convert qitype-like signature into Java-like signature
+ * returning a Future.
+ * @param signature qitype signature
+ * @return Java signature
+ */
+std::string toJavaSignatureWithFuture(const std::string &signature)
+{
+  std::vector<std::string> sigInfo = qi::signatureSplit(signature);
+  std::string              sig;
+
+  // Compute every argument
+  sig.append("(");
+  getJavaSignature(sig, sigInfo[2].substr(1, sigInfo[2].size()-2));
+  sig.append(")");
+
+  // no need to specify the Future's result type
+  sig.append("Lcom/aldebaran/qi/Future;");
   return sig;
 }
 

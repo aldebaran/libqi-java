@@ -246,6 +246,7 @@ JavaVM*       JVM(JNIEnv* env = 0);
 
 // Signature conversion
 std::string   toJavaSignature(const std::string &signature);
+std::string toJavaSignatureWithFuture(const std::string &signature);
 std::string   propertyBaseSignature(JNIEnv *env, jclass propertyBase);
 
 jthrowable createNewException(JNIEnv *env, const char *className, const char *message, jthrowable cause);
