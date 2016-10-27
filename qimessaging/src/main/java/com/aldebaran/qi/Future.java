@@ -385,6 +385,14 @@ public class Future<T> implements java.util.concurrent.Future<T>
     }
     final WaitData waitData = new WaitData();
     final Promise<Void> promise = new Promise<Void>();
+    promise.setOnCancel(new Promise.CancelRequestCallback<Void>() {
+      @Override
+      public void onCancelRequested(Promise<Void> promise) {
+        for (Future<?> future : futures){
+          future.requestCancellation();
+        }
+      }
+    });
     for (Future<?> future : futures)
     {
       @SuppressWarnings("unchecked")
