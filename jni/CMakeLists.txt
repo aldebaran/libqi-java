@@ -53,3 +53,16 @@ set(SOURCE
 
 # Compile qimessaging java compatibility layer using jni
 qi_create_lib(qimessagingjni ${SOURCE} SHARED DEPENDS QI)
+
+qi_stage_lib(qimessagingjni)
+
+qi_create_gtest(
+  test_qijni
+
+  "test/test_qijni.cpp"
+
+  DEPENDS
+  jni
+  qi
+  qimessagingjni
+)

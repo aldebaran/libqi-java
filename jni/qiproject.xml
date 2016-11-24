@@ -1,5 +1,6 @@
 <project version="3">
   <qibuild name="qimessaging-jni">
     <depends buildtime="true" runtime="true" names="libqi" />
+    <depends testtime="true" names="gtest" />
   </qibuild>
 </project>
