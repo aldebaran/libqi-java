@@ -90,15 +90,12 @@ JNIEXPORT void JNICALL Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(JNIEnv
  * it must be attach to current thread (via JavaVM->AttachCurrentThread())
  * Therefore we keep a pointer to the JavaVM, which is thread safe.
  */
-JavaVM*       JVM(JNIEnv* env)
+JavaVM* JVM(JNIEnv* env)
 {
-  static JavaVM* gJVM = 0;
-
-  if (env != 0 && gJVM == 0)
+  static JavaVM* gJVM = nullptr;
+  if (env && !gJVM)
     env->GetJavaVM(&gJVM);
-
-  if (gJVM == 0 && env == 0)
-    qiLogError() << "JVM singleton wasn't initialized";
+  QI_ASSERT(gJVM && "no JavaVM associated to provided JNIEnv");
   return gJVM;
 }
 
