@@ -41,20 +41,18 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_property(JNIEnv* env, jo
   return (jlong) ret;
 }
 
-JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_setProperty(JNIEnv* env, jobject QI_UNUSED(jobj), jlong pObj, jstring name, jobject property)
+JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_setProperty(
+    JNIEnv* env, jobject /*jObject*/, jlong objectAddress, jstring jPropertyName, jobject jValue)
 {
-  qi::AnyObject *obj = reinterpret_cast<qi::AnyObject*>(pObj);
-  std::string propName = qi::jni::toString(name);
+  auto objectPtr = reinterpret_cast<qi::AnyObject*>(objectAddress);
+  auto propertyName = qi::jni::toString(jPropertyName);
 
   qi::jni::JNIAttach attach(env);
-
-  auto value = qi::AnyValue::from<jobject>(property);
   try
   {
-    qi::Future<void> propertyFuture = obj->setProperty(propName, std::move(value));
-    qi::Future<qi::AnyValue> future = qi::toAnyValueFuture(std::move(propertyFuture));
-    auto futurePtr = new qi::Future<qi::AnyValue>(std::move(future));
-    return reinterpret_cast<jlong>(futurePtr);
+    std::unique_ptr<qi::Future<qi::AnyValue>> futurePtr{new qi::Future<qi::AnyValue>()};
+    *futurePtr = qi::toAnyValueFuture(objectPtr->setProperty(propertyName, qi::AnyValue::from<jobject>(jValue)).async());
+    return reinterpret_cast<jlong>(futurePtr.release());
   }
   catch (std::runtime_error &e)
   {
