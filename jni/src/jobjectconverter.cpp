@@ -363,7 +363,6 @@ std::pair<qi::AnyReference, bool> AnyValue_from_JObject(jobject val)
 
 qi::AnyReference _AnyValue_from_JObject(jobject val)
 {
-  qi::AnyReference res;
   qi::jni::JNIAttach attach;
   JNIEnv *env = attach.get();
 
