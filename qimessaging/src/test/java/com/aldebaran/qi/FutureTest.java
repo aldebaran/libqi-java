@@ -819,7 +819,7 @@ public class FutureTest
   }
 
   @Test(expected=CancellationException.class)
-  public void testThenForwardCancel() throws ExecutionException
+  public void testThenBackwardCancel() throws ExecutionException
   {
     CancellableOperation cancellable = new CancellableOperation();
     Future<String> future = cancellable.longReply();
@@ -832,6 +832,23 @@ public class FutureTest
     childFuture.cancel(true);
     future.get();
   }
+
+  @Test(expected=CancellationException.class)
+  public void testThenForwardCancel() throws ExecutionException
+  {
+    final Future<String> future = Future.of("Test");
+    final Future<String> otherFuture = proxy.call(String.class, "getCancellableFuture", "toto");
+    final Future<String> childFuture = future.then(new QiFunction<String, String>() {
+      @Override
+      public Future<String> onResult(String result) throws Throwable {
+        return otherFuture;
+      }
+    });
+
+    childFuture.cancel(true);
+    otherFuture.get();
+  }
+
   private static class AsyncWait implements Runnable
   {
     enum Type

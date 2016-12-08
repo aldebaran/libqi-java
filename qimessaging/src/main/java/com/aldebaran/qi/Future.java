@@ -288,13 +288,20 @@ public class Future<T> implements java.util.concurrent.Future<T>
     return _then(function, false, FutureCallbackType.Auto);
   }
 
-  private static <Ret, Arg> Future<Ret> getNextFuture(Future<Arg> future, FutureFunction<Ret, Arg> function)
-  {
+  private static <Ret, Arg> Future<Ret> getNextFuture(Future<Arg> future, FutureFunction<Ret, Arg> function, Promise<Ret> promiseToNotify) {
     try {
-      Future<Ret> result = function.execute(future);
+      Future<Ret> nextFuture = function.execute(future);
+
+      final Future<Ret> result = (nextFuture != null) ? nextFuture : Future.<Ret>of(null);
+      promiseToNotify.setOnCancel(new Promise.CancelRequestCallback<Ret>() {
+        @Override
+        public void onCancelRequested(Promise<Ret> promise) {
+          result.requestCancellation();
+        }
+      });
+
       // for convenience, the function can return null, which means a future with a null value
-      if (result == null)
-        result = Future.of(null);
+
       return result;
     } catch (Throwable t) {
       // print the trace because the future error is a string, so the stack trace is lost
@@ -331,7 +338,7 @@ public class Future<T> implements java.util.concurrent.Future<T>
   private static <Ret, Arg> void chainFuture(Future<Arg> future, FutureFunction<Ret, Arg> function,
       final Promise<Ret> promiseToNotify)
   {
-    getNextFuture(future, function).connect(new Callback<Ret>()
+    getNextFuture(future, function, promiseToNotify).connect(new Callback<Ret>()
     {
       @Override
       public void onFinished(Future<Ret> future)
