@@ -22,15 +22,6 @@ qiLogCategory("qimessaging.jni");
 
 MethodInfoHandler gInfoHandler;
 
-static void call_from_java_cont(qi::Future<qi::AnyReference> ret,
-    qi::Promise<qi::AnyValue> promise)
-{
-  if (ret.hasError())
-    promise.setError(ret.error());
-  else
-    promise.setValue(qi::AnyValue(ret.value(), false, true));
-}
-
 /**
  * @brief call_from_java Helper function to call qiMessaging method with Java arguments
  * @param env JNI environment given by JVM.
@@ -57,23 +48,36 @@ qi::Future<qi::AnyValue>* call_from_java(JNIEnv *env, qi::AnyObject object, cons
     ++i;
   }
   // Create future and start metacall
-  // philippe: must be sync or testCallback is broken (future from metacall is
-  // sync, don't know why)
-  qi::Promise<qi::AnyValue> promise(qi::FutureCallbackType_Sync);
-  qi::Future<qi::AnyValue> *fut = new qi::Future<qi::AnyValue>();
   try
   {
-    qi::Future<qi::AnyReference> metfut =
-      object.metaCall(strMethodName, params);
-    metfut.connect(call_from_java_cont, _1, promise);
-    *fut = promise.future();
+    auto metfut = object.metaCall(strMethodName, params);
+    qi::Promise<qi::AnyValue> promise{[=](qi::Promise<qi::AnyValue>) mutable {
+            metfut.cancel();
+          }, qi::FutureCallbackType_Sync};
+
+    metfut.then([=](qi::Future<qi::AnyReference> result) mutable {
+      if (result.hasError())
+      {
+        promise.setError(result.error());
+      }
+      else if (result.isCanceled())
+      {
+        promise.setCanceled();
+      }
+      else
+      {
+        promise.setValue(qi::AnyValue(result.value(), false, true));
+      }
+    });
+
+    std::unique_ptr<qi::Future<qi::AnyValue>> fut ( new auto(promise.future()) );
+    return fut.release();
+
   } catch (std::runtime_error &e)
   {
-    delete fut;
-    throwJavaError(env, e.what());
-    return 0;
+    throwNewDynamicCallException(env, e.what());
+    return nullptr;
   }
-  return fut;
 }
 
 /**
@@ -100,7 +104,7 @@ qi::AnyReference call_to_java(std::string signature, void* data, const qi::Gener
   if (info == 0)
   {
     qiLogError() << "Internal method informations are not valid";
-    throwJavaError(env, "Internal method informations are not valid");
+    throwNewException(env, "Internal method informations are not valid");
     return res;
   }
   // Translate parameters from AnyValues to jobjects
@@ -141,20 +145,29 @@ qi::AnyReference call_to_java(std::string signature, void* data, const qi::Gener
     qiLogError() << "Service class not found";
     throw std::runtime_error("Service class not found");
   }
-
   // Find method ID
-  std::string javaSignature = toJavaSignature(signature);
-  qiLogVerbose() << "looking for method " << signature << " -> " << javaSignature;
-  jmethodID mid = env->GetMethodID(cls, sigInfo[1].c_str(), javaSignature.c_str());
-  if (env->ExceptionCheck()) // NoSuchMethodError
-    env->ExceptionClear();
-  if (!mid)
-    mid = env->GetStaticMethodID(cls, sigInfo[1].c_str(), javaSignature.c_str());
-  if (env->ExceptionCheck()) // NoSuchMethodError
-    env->ExceptionClear();
+  auto findMethodFromSignature = [&](const std::string& signature, std::function<std::string(const std::string&)> signatureConverter)
+  {
+    std::string javaSignature = signatureConverter(signature);
+    qiLogVerbose() << "looking for method " << signature << " -> " << javaSignature;
+    jmethodID mid = env->GetMethodID(cls, sigInfo[1].c_str(), javaSignature.c_str());
+    if (env->ExceptionCheck()) // NoSuchMethodError
+      env->ExceptionClear();
+    if (!mid)
+      mid = env->GetStaticMethodID(cls, sigInfo[1].c_str(), javaSignature.c_str());
+    if (env->ExceptionCheck()) // NoSuchMethodError
+      env->ExceptionClear();
+    return mid;
+  };
+
+  auto mid = findMethodFromSignature(signature, toJavaSignature);
+  if (!mid){
+    // Try finding a method that fits the signature with a Future as return type
+    mid = findMethodFromSignature(signature, toJavaSignatureWithFuture);
+  }
   if (!mid)
   {
-    qiLogError() << "Cannot find java method " << sigInfo[1] << javaSignature.c_str();
+    qiLogError() << "Cannot find java method " << signature;
     throw std::runtime_error("Cannot find method");
   }
 

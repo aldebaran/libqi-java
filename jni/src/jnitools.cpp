@@ -18,7 +18,22 @@
 
 qiLogCategory("qimessaging.jni");
 
-std::map<std::string, jobject> supportedTypes;
+jclass cls_string;
+jclass cls_integer;
+jclass cls_float;
+jclass cls_double;
+jclass cls_long;
+jclass cls_boolean;
+
+jclass cls_future;
+jclass cls_anyobject;
+jclass cls_tuple;
+
+jclass cls_list;
+jclass cls_arraylist;
+
+jclass cls_map;
+jclass cls_hashmap;
 
 static void emergency()
 {
@@ -38,77 +53,35 @@ JNIEXPORT jint JNICALL JNI_OnLoad (JavaVM* QI_UNUSED(vm), void* QI_UNUSED(reserv
   return QI_JNI_MIN_VERSION;
 }
 
-/*
- * To work correctly, QiMessaging<->java type system needs to compare type class template.
- * Unfortunately, call template cannot be retrieve on native android thread, that is why
- * type instance are stored in supportedTypes map.
- */
-void Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(JNIEnv* env, jobject QI_UNUSED(jobj), jobject str, jobject i, jobject f, jobject d, jobject l, jobject m, jobject al, jobject tuple, jobject obj, jobject b, jobject fut)
+static inline jclass loadClass(JNIEnv *env, const char *className)
 {
-  JVM(env);
-
-  supportedTypes["String"] = env->NewGlobalRef(str);
-  supportedTypes["Integer"] = env->NewGlobalRef(i);
-  supportedTypes["Float"] = env->NewGlobalRef(f);
-  supportedTypes["Double"] = env->NewGlobalRef(d);
-  supportedTypes["Long"] = env->NewGlobalRef(l);
-  supportedTypes["Map"] = env->NewGlobalRef(m);
-  supportedTypes["List"] = env->NewGlobalRef(al);
-  supportedTypes["Tuple"] = env->NewGlobalRef(tuple);
-  supportedTypes["Object"] = env->NewGlobalRef(obj);
-  supportedTypes["Boolean"] = env->NewGlobalRef(b);
-  supportedTypes["Future"] = env->NewGlobalRef(fut);
-
-  for (std::map<std::string, jobject>::iterator it = supportedTypes.begin(); it != supportedTypes.end(); ++it)
-  {
-    if (it->second == 0)
-      qiLogFatal() << it->first << ": Initialization failed.";
-  }
+  return reinterpret_cast<jclass>(env->NewGlobalRef(env->FindClass(className)));
 }
 
-void Java_com_aldebaran_qi_EmbeddedTools_initTupleInTypeSystem(JNIEnv* env, jobject QI_UNUSED(jobj), jobject t1, jobject t2, jobject t3, jobject t4, jobject t5, jobject t6, jobject t7, jobject t8, jobject t9, jobject t10, jobject t11, jobject t12, jobject t13, jobject t14, jobject t15, jobject t16, jobject t17, jobject t18, jobject t19, jobject t20, jobject t21, jobject t22, jobject t23, jobject t24, jobject t25, jobject t26, jobject t27, jobject t28, jobject t29, jobject t30, jobject t31, jobject t32)
+static void init_classes(JNIEnv *env)
+{
+  cls_string = loadClass(env, "java/lang/String");
+  cls_integer = loadClass(env, "java/lang/Integer");
+  cls_float = loadClass(env, "java/lang/Float");
+  cls_double = loadClass(env, "java/lang/Double");
+  cls_long = loadClass(env, "java/lang/Long");
+  cls_boolean = loadClass(env, "java/lang/Boolean");
+
+  cls_future = loadClass(env, "com/aldebaran/qi/Future");
+  cls_anyobject = loadClass(env, "com/aldebaran/qi/AnyObject");
+  cls_tuple = loadClass(env, "com/aldebaran/qi/Tuple");
+
+  cls_list = loadClass(env, "java/util/List");
+  cls_arraylist = loadClass(env, "java/util/ArrayList");
+
+  cls_map = loadClass(env, "java/util/Map");
+  cls_hashmap = loadClass(env, "java/util/HashMap");
+}
+
+JNIEXPORT void JNICALL Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(JNIEnv* env, jclass QI_UNUSED(cls))
 {
   JVM(env);
-
-  supportedTypes["Tuple1"] = env->NewGlobalRef(t1);
-  supportedTypes["Tuple2"] = env->NewGlobalRef(t2);
-  supportedTypes["Tuple3"] = env->NewGlobalRef(t3);
-  supportedTypes["Tuple4"] = env->NewGlobalRef(t4);
-  supportedTypes["Tuple5"] = env->NewGlobalRef(t5);
-  supportedTypes["Tuple6"] = env->NewGlobalRef(t6);
-  supportedTypes["Tuple7"] = env->NewGlobalRef(t7);
-  supportedTypes["Tuple8"] = env->NewGlobalRef(t8);
-  supportedTypes["Tuple9"] = env->NewGlobalRef(t9);
-  supportedTypes["Tuple10"] = env->NewGlobalRef(t10);
-  supportedTypes["Tuple11"] = env->NewGlobalRef(t11);
-  supportedTypes["Tuple12"] = env->NewGlobalRef(t12);
-  supportedTypes["Tuple13"] = env->NewGlobalRef(t13);
-  supportedTypes["Tuple14"] = env->NewGlobalRef(t14);
-  supportedTypes["Tuple15"] = env->NewGlobalRef(t15);
-  supportedTypes["Tuple16"] = env->NewGlobalRef(t16);
-  supportedTypes["Tuple17"] = env->NewGlobalRef(t17);
-  supportedTypes["Tuple18"] = env->NewGlobalRef(t18);
-  supportedTypes["Tuple19"] = env->NewGlobalRef(t19);
-  supportedTypes["Tuple20"] = env->NewGlobalRef(t20);
-  supportedTypes["Tuple21"] = env->NewGlobalRef(t21);
-  supportedTypes["Tuple22"] = env->NewGlobalRef(t22);
-  supportedTypes["Tuple23"] = env->NewGlobalRef(t23);
-  supportedTypes["Tuple24"] = env->NewGlobalRef(t24);
-  supportedTypes["Tuple25"] = env->NewGlobalRef(t25);
-  supportedTypes["Tuple26"] = env->NewGlobalRef(t26);
-  supportedTypes["Tuple27"] = env->NewGlobalRef(t27);
-  supportedTypes["Tuple28"] = env->NewGlobalRef(t28);
-  supportedTypes["Tuple29"] = env->NewGlobalRef(t29);
-  supportedTypes["Tuple30"] = env->NewGlobalRef(t30);
-  supportedTypes["Tuple31"] = env->NewGlobalRef(t31);
-  supportedTypes["Tuple32"] = env->NewGlobalRef(t32);
-
-
-  for (std::map<std::string, jobject>::iterator it = supportedTypes.begin(); it != supportedTypes.end(); ++it)
-  {
-    if (it->second == 0)
-      qiLogError() << it->first << ": Initialization failed.";
-  }
+  init_classes(env);
 }
 
 /*
@@ -137,68 +110,69 @@ JavaVM*       JVM(JNIEnv* env)
  * Do not call this function, use toJavaSignature instead
  * @see toJavaSignature
  */
-void getJavaSignature(std::string &sig, const std::string& sigInfo)
+void getJavaSignature(std::string &javaSignature, const std::string& qiSignature)
 {
   unsigned int i = 0;
 
-  while (i < sigInfo.size())
+  while (i < qiSignature.size())
   {
-    switch (sigInfo[i])
+    switch (qiSignature[i])
     {
     case qi::Signature::Type_Bool:
-      sig.append("Ljava/lang/Boolean;");
+      javaSignature.append("Ljava/lang/Boolean;");
       break;
     case qi::Signature::Type_Int8:
-      sig.append("Ljava/lang/Character;");
+      javaSignature.append("Ljava/lang/Character;");
       break;
     case qi::Signature::Type_Float:
-      sig.append("Ljava/lang/Float;");
+      javaSignature.append("Ljava/lang/Float;");
       break;
     case qi::Signature::Type_Double:
-      sig.append("Ljava/lang/Double;");
+      javaSignature.append("Ljava/lang/Double;");
       break;
     case qi::Signature::Type_Int32:
-      sig.append("Ljava/lang/Integer;");
+      javaSignature.append("Ljava/lang/Integer;");
       break;
     case qi::Signature::Type_String:
-      sig.append("Ljava/lang/String;");
+      javaSignature.append("Ljava/lang/String;");
       break;
     case qi::Signature::Type_Void:
-      sig.append("V");
+      javaSignature.append("V");
       break;
     case qi::Signature::Type_Dynamic:
-      sig.append("Ljava/lang/Object;");
+      javaSignature.append("Ljava/lang/Object;");
       break;
     case qi::Signature::Type_Map:
     {
-      sig.append("Ljava/util/Map;");
-      while (i < sigInfo.size() && sigInfo[i] != qi::Signature::Type_Map_End)
+      javaSignature.append("Ljava/util/Map;");
+      while (i < qiSignature.size() && qiSignature[i] != qi::Signature::Type_Map_End)
         i++;
       break;
     }
     case qi::Signature::Type_Tuple:
     {
-      sig.append("Lcom/aldebaran/qi/Tuple;");
-      while (i < sigInfo.size() && sigInfo[i] != qi::Signature::Type_Tuple_End)
+      javaSignature.append("Lcom/aldebaran/qi/Tuple;");
+      while (i < qiSignature.size() && qiSignature[i] != qi::Signature::Type_Tuple_End)
         i++;
       break;
     }
     case qi::Signature::Type_List:
     {
-      sig.append("Ljava/util/ArrayList;");
-      while (i < sigInfo.size() && sigInfo[i] != qi::Signature::Type_List_End)
+      javaSignature.append("Ljava/util/ArrayList;");
+      while (i < qiSignature.size() && qiSignature[i] != qi::Signature::Type_List_End)
         i++;
       break;
     }
     case qi::Signature::Type_Object:
     {
-      sig.append("L");
-      sig.append(QI_OBJECT_CLASS);
-      sig.append(";");
+      javaSignature.append("L");
+      javaSignature.append(QI_OBJECT_CLASS);
+      javaSignature.append(";");
       break;
     }
+
     default:
-      qiLogFatal() << "Unknown conversion for [" << sigInfo[i] << "]";
+      qiLogFatal() << "Unknown conversion for [" << qiSignature[i] << "]";
       break;
     }
 
@@ -231,24 +205,112 @@ std::string   toJavaSignature(const std::string &signature)
 }
 
 /**
- * @brief throwJavaError Helper function to throw generic Java exception from C++
+ * @brief toJavaSignatureWithFuture Convert qitype-like signature into Java-like signature
+ * returning a Future.
+ * @param signature qitype signature
+ * @return Java signature
+ */
+std::string toJavaSignatureWithFuture(const std::string &signature)
+{
+  std::vector<std::string> sigInfo = qi::signatureSplit(signature);
+  std::string              sig;
+
+  // Compute every argument
+  sig.append("(");
+  getJavaSignature(sig, sigInfo[2].substr(1, sigInfo[2].size()-2));
+  sig.append(")");
+
+  // no need to specify the Future's result type
+  sig.append("Lcom/aldebaran/qi/Future;");
+  return sig;
+}
+
+jthrowable createNewException(JNIEnv *env, const char *className, const char *message, jthrowable cause)
+{
+  jstring jMessage = qi::jni::toJstring(message);
+  jobject ex = qi::jni::construct(env, className, "(Ljava/lang/String;Ljava/lang/Throwable)V", jMessage, cause);
+  return reinterpret_cast<jthrowable>(ex);
+}
+
+jthrowable createNewException(JNIEnv *env, const char *className, const char *message)
+{
+  jstring jMessage = qi::jni::toJstring(message);
+  jobject ex = qi::jni::construct(env, className, "(Ljava/lang/String;)V", jMessage);
+  return reinterpret_cast<jthrowable>(ex);
+}
+
+jthrowable createNewException(JNIEnv *env, const char *className, jthrowable cause)
+{
+  jobject ex = qi::jni::construct(env, className, "(Ljava/lang/Throwable;)V", cause);
+  if (!ex)
+  qiLogFatal() << className << " noex";
+  return reinterpret_cast<jthrowable>(ex);
+}
+
+jthrowable createNewQiException(JNIEnv *env, const char *message)
+{
+  return createNewException(env, "com/aldebaran/qi/QiException", message);
+}
+
+/**
+ * @brief throwNewException Helper function to throw generic Java exception from C++
  * @param env JNI environment
  * @param message content of exception
  * @return 0 on success, a positive number otherwise
  */
-jint throwJavaError(JNIEnv *env, const char *message)
+jint throwNew(JNIEnv *env, const char *className, const char *message)
 {
-  jclass		 exClass;
-  const char*    className = "java/lang/Exception" ;
-
-  exClass = env->FindClass(className);
-  if (exClass == NULL)
+  jclass exClass = env->FindClass(className);
+  if (!exClass)
   {
-    qiLogFatal() << "Cannot throw any exceptions";
+    qiLogFatal() << "Cannot find exception class: " << className;
     return 1;
   }
 
   return env->ThrowNew(exClass, message);
+}
+
+jint throwNewException(JNIEnv *env, const char *message)
+{
+  return throwNew(env, "java/lang/Exception", message);
+}
+
+jint throwNewRuntimeException(JNIEnv *env, const char *message)
+{
+  return throwNew(env, "java/lang/RuntimeException", message);
+}
+
+jint throwNewNullPointerException(JNIEnv *env, const char *message)
+{
+  return throwNew(env, "java/lang/NullPointerException", message);
+}
+
+jint throwNewCancellationException(JNIEnv *env, const char *message)
+{
+  return throwNew(env, "java/util/concurrent/CancellationException", message);
+}
+
+jint throwNewExecutionException(JNIEnv *env, jthrowable cause)
+{
+  jthrowable ex = createNewException(env, "java/util/concurrent/ExecutionException", cause);
+  if (!ex)
+    return 1;
+  return env->Throw(ex);
+}
+
+jint throwNewTimeoutException(JNIEnv *env, const char *message)
+{
+  return throwNew(env, "java/util/concurrent/TimeoutException", message);
+}
+
+jint throwNewDynamicCallException(JNIEnv *env, const char *message)
+{
+  return throwNew(env, "com/aldebaran/qi/DynamicCallException", message);
+}
+
+jint throwNewAdvertisementException(JNIEnv *env, const char *message)
+{
+  return throwNew(env, "com/aldebaran/qi/AdvertisementException", message);
 }
 
 /**
@@ -261,61 +323,39 @@ std::string propertyBaseSignature(JNIEnv* env, jclass propertyBase)
 {
   std::string sig;
 
-  jclass stringClass = qi::jni::clazz("String");
-  jclass int32Class = qi::jni::clazz("Integer");
-  jclass floatClass = qi::jni::clazz("Float");
-  jclass doubleClass = qi::jni::clazz("Double");
-  jclass boolClass = qi::jni::clazz("Boolean");
-  jclass longClass = qi::jni::clazz("Long");
-  jclass mapClass = qi::jni::clazz("Map");
-  jclass listClass = qi::jni::clazz("List");
-  jclass tupleClass = qi::jni::clazz("Tuple");
-  jclass objectClass = qi::jni::clazz("Object");
-
-  if (env->IsAssignableFrom(propertyBase, stringClass) == true)
+  if (env->IsAssignableFrom(propertyBase, cls_string))
     sig = static_cast<char>(qi::Signature::Type_String);
-  if (env->IsAssignableFrom(propertyBase, int32Class) == true)
+  if (env->IsAssignableFrom(propertyBase, cls_integer))
     sig = static_cast<char>(qi::Signature::Type_Int32);
-  if (env->IsAssignableFrom(propertyBase, floatClass) == true)
+  if (env->IsAssignableFrom(propertyBase, cls_float))
     sig = static_cast<char>(qi::Signature::Type_Float);
-  if (env->IsAssignableFrom(propertyBase, boolClass) == true)
+  if (env->IsAssignableFrom(propertyBase, cls_boolean))
     sig = static_cast<char>(qi::Signature::Type_Bool);
-  if (env->IsAssignableFrom(propertyBase, longClass) == true)
+  if (env->IsAssignableFrom(propertyBase, cls_long))
     sig = static_cast<char>(qi::Signature::Type_Int64);
-  if (env->IsAssignableFrom(propertyBase, objectClass) == true)
+  if (env->IsAssignableFrom(propertyBase, cls_anyobject))
     sig = static_cast<char>(qi::Signature::Type_Object);
-  if (env->IsAssignableFrom(propertyBase, doubleClass) == true)
+  if (env->IsAssignableFrom(propertyBase, cls_double))
     sig = static_cast<char>(qi::Signature::Type_Float);
-  if (env->IsAssignableFrom(propertyBase, mapClass) == true)
+  if (env->IsAssignableFrom(propertyBase, cls_map))
   {
     sig = static_cast<char>(qi::Signature::Type_Map);
     sig += static_cast<char>(qi::Signature::Type_Dynamic);
     sig += static_cast<char>(qi::Signature::Type_Dynamic);
     sig += static_cast<char>(qi::Signature::Type_Map_End);
   }
-  if (env->IsAssignableFrom(propertyBase, listClass) == true)
+  if (env->IsAssignableFrom(propertyBase, cls_list))
   {
     sig = static_cast<char>(qi::Signature::Type_List);
     sig += static_cast<char>(qi::Signature::Type_Dynamic);
     sig += static_cast<char>(qi::Signature::Type_List_End);
   }
-  if (env->IsAssignableFrom(propertyBase, tupleClass) == true)
+  if (env->IsAssignableFrom(propertyBase, cls_tuple))
   {
     sig = static_cast<char>(qi::Signature::Type_Tuple);
     sig += static_cast<char>(qi::Signature::Type_Dynamic);
     sig += static_cast<char>(qi::Signature::Type_Tuple_End);
   }
-
-  qi::jni::releaseClazz(stringClass);
-  qi::jni::releaseClazz(int32Class);
-  qi::jni::releaseClazz(floatClass);
-  qi::jni::releaseClazz(doubleClass);
-  qi::jni::releaseClazz(boolClass);
-  qi::jni::releaseClazz(longClass);
-  qi::jni::releaseClazz(mapClass);
-  qi::jni::releaseClazz(listClass);
-  qi::jni::releaseClazz(tupleClass);
-  qi::jni::releaseClazz(objectClass);
 
   return sig;
 }
@@ -418,28 +458,6 @@ namespace qi {
       return env;
     }
 
-    // JNIEnv.FindClass has not same behavior on desktop and android.
-    // Here is a little wrapper to find wanted class anywhere.
-    jclass     clazz(const std::string& className)
-    {
-      JNIEnv*   env = qi::jni::env();
-      jclass   cls = 0;
-
-      if (!env)
-        return 0;
-
-      jobject obj = supportedTypes[className];
-      if (!obj)
-      {
-        qiLogError() << className << " unknown in type system";
-        return cls;
-      }
-
-      return env->GetObjectClass(obj);
-    }
-
-    // JNIEnv.FindClass has not same behavior on desktop and android.
-    // Here is a little wrapper to find wanted class anywhere.
     jclass      clazz(jobject object)
     {
       JNIEnv*   env = qi::jni::env();
@@ -524,36 +542,25 @@ namespace qi {
       env->DeleteLocalRef(obj);
     }
 
-    // Return true is jobject is a QiMessaging tuple.
-    bool        isTuple(jobject object)
+    jobjectArray toJobjectArray(const std::vector<AnyReference> &values)
     {
-      JNIEnv*     env = qi::jni::env();
-      jclass      cls = 0;
-      std::string className;
-
+      JNIEnv *env = qi::jni::env();
       if (!env)
-        return false;
+        return nullptr;
 
-      for (std::map<std::string, jobject>::iterator it = supportedTypes.begin(); it != supportedTypes.end(); ++it)
+      jclass objectClass = env->FindClass("java/lang/Object");
+      jobjectArray array = env->NewObjectArray(values.size(), objectClass, nullptr);
+      qi::jni::releaseClazz(objectClass);
+      int i = 0;
+      for (const AnyReference &ref : values)
       {
-        className = it->first;
-
-        // searching for tuple
-        if (className.find("Tuple") == std::string::npos)
-          continue;
-
-        cls = env->GetObjectClass(it->second);
-        if (env->IsInstanceOf(object, cls))
-        {
-          qi::jni::releaseClazz(cls);
-          return true;
-        }
-
-        qi::jni::releaseClazz(cls);
+        std::pair<AnyReference, bool> converted = ref.convert(qi::typeOf<jobject>());
+        jobject value = *reinterpret_cast<jobject *>(converted.first.rawValue());
+        env->SetObjectArrayElement(array, i++, value);
+        if (converted.second)
+          converted.first.destroy();
       }
-
-      return false;
+      return array;
     }
-
   }// !jni
 }// !qi

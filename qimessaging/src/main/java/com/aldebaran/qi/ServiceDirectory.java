@@ -4,6 +4,15 @@
 */
 package com.aldebaran.qi;
 
+/**
+ * Class responsible for the administration of the available services in a
+ * {@link Session}.
+ * <p>
+ * A ServiceDirectory instance should be connected to a {@link Session} in order
+ * to be accessed by other {@link Session}s. When a {@link Session} exposes a
+ * service, other connected {@link Session}s can contact that service.
+ * @see Session
+ */
 public class ServiceDirectory {
 
   static
@@ -17,31 +26,32 @@ public class ServiceDirectory {
   }
 
   // Native function
-  private static native long qiTestSDCreate();
-  private static native void qiTestSDDestroy(long pServiceDirectory);
-  private static native String qiListenUrl(long pServiceDirectory);
-  private static native void qiTestSDClose(long pServiceDirectory);
+  private native long qiTestSDCreate();
+  private native void qiTestSDDestroy(long pServiceDirectory);
+  private native String qiListenUrl(long pServiceDirectory);
+  private native void qiTestSDClose(long pServiceDirectory);
 
   // Members
   private long _sd;
 
   public ServiceDirectory()
   {
-    _sd = ServiceDirectory.qiTestSDCreate();
+    _sd = qiTestSDCreate();
   }
 
   public String listenUrl()
   {
-    return ServiceDirectory.qiListenUrl(_sd);
+    return qiListenUrl(_sd);
   }
 
+  @Override
   protected void finalize()
   {
-    ServiceDirectory.qiTestSDDestroy(_sd);
+    qiTestSDDestroy(_sd);
   }
 
   public void close()
   {
-    ServiceDirectory.qiTestSDClose(_sd);
+    qiTestSDClose(_sd);
   }
 }

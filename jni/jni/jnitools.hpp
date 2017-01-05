@@ -29,19 +29,33 @@
 // QI_OBJECT_CLASS defines complete name of java generic object class
 #define QI_OBJECT_CLASS "com/aldebaran/qi/AnyObject"
 
+extern jclass cls_string;
+extern jclass cls_integer;
+extern jclass cls_float;
+extern jclass cls_double;
+extern jclass cls_long;
+extern jclass cls_boolean;
+
+extern jclass cls_future;
+extern jclass cls_anyobject;
+extern jclass cls_tuple;
+
+extern jclass cls_list;
+extern jclass cls_arraylist;
+
+extern jclass cls_map;
+extern jclass cls_hashmap;
+
 // JNI utils
 extern "C"
 {
   JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void*);
-  JNIEXPORT void Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(JNIEnv* env, jobject jobj, jobject str, jobject i, jobject f, jobject d,
-                                                                                   jobject l, jobject m, jobject al, jobject tuple, jobject obj, jobject b,
-                                                                                   jobject fut);
-  JNIEXPORT void Java_com_aldebaran_qi_EmbeddedTools_initTupleInTypeSystem(JNIEnv* env, jobject jobj, jobject t1, jobject t2, jobject t3, jobject t4,
-                                                                                   jobject t5, jobject t6, jobject t7, jobject t8, jobject t9, jobject t10, jobject t11, jobject t12, jobject t13, jobject t14, jobject t15, jobject t16, jobject t17, jobject t18, jobject t19, jobject t20, jobject t21, jobject t22, jobject t23, jobject t24, jobject t25, jobject t26, jobject t27, jobject t28, jobject t29, jobject t30, jobject t31, jobject t32);
+  JNIEXPORT void JNICALL Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(JNIEnv* env, jclass cls);
 } // !extern C
 
 
 namespace qi {
+  class AnyReference;
   namespace jni {
 
     class JNIAttach
@@ -58,16 +72,15 @@ namespace qi {
     jstring     toJstring(const std::string& input);
     void        releaseString(jstring input);
     // TypeSystem tools
-    jclass      clazz(const std::string &name);
     jclass      clazz(jobject object);
     void        releaseClazz(jclass clazz);
-    bool        isTuple(jobject object);
     // JVM Environment management
     JNIEnv*     env();
     void        releaseObject(jobject obj);
     // Signature
     std::string javaSignature(const std::string& qiSignature);
     std::string qiSignature(jclass clazz);
+    jobjectArray toJobjectArray(const std::vector<AnyReference> &values);
 
     template<typename R>
     struct Call
@@ -90,6 +103,7 @@ namespace qi {
     {
       jclass cls = env->GetObjectClass(jobject);
       jmethodID mid = env->GetMethodID(cls, methodName, methodSig);
+      env->DeleteLocalRef(cls);
       return env->CallVoidMethod(jobject, mid, rest...);
     }
 
@@ -103,6 +117,7 @@ namespace qi {
     {
       jclass cls = env->GetObjectClass(jobject);
       jmethodID mid = env->GetMethodID(cls, methodName, methodSig);
+      env->DeleteLocalRef(cls);
       return env->CallBooleanMethod(jobject, mid, rest...);
     }
 
@@ -116,9 +131,113 @@ namespace qi {
     {
       jclass cls = env->GetObjectClass(jobject);
       jmethodID mid = env->GetMethodID(cls, methodName, methodSig);
+      env->DeleteLocalRef(cls);
       return env->CallObjectMethod(jobject, mid, rest...);
     }
 
+    template <typename R>
+    using JNIFieldGetter = R (JNIEnv::*)(jobject, jfieldID);
+
+    template <typename R, JNIFieldGetter<R> GETTER>
+    R _getField(JNIEnv *env, jobject obj, const char *name, const char *sig)
+    {
+      jclass cls = env->GetObjectClass(obj);
+      jfieldID fid = env->GetFieldID(cls, name, sig);
+      env->DeleteLocalRef(cls);
+      if (!fid) {
+        // the caller must check any pending exception
+        return {};
+      }
+      return (env->*GETTER)(obj, fid);
+    }
+
+    inline jobject getObjectField(JNIEnv *env, jobject obj, const char *name, const char *sig)
+    {
+      return _getField<jobject, &JNIEnv::GetObjectField>(env, obj, name, sig);
+    }
+
+    template <typename R>
+    R getField(JNIEnv *env, jobject jobject, const char *name);
+
+    template <>
+    inline jboolean getField(JNIEnv *env, jobject obj, const char *name)
+    {
+      return _getField<jboolean, &JNIEnv::GetBooleanField>(env, obj, name, "Z");
+    }
+
+    template <>
+    inline jbyte getField(JNIEnv *env, jobject obj, const char *name)
+    {
+      return _getField<jbyte, &JNIEnv::GetByteField>(env, obj, name, "B");
+    }
+
+    template <>
+    inline jchar getField(JNIEnv *env, jobject obj, const char *name)
+    {
+      return _getField<jchar, &JNIEnv::GetCharField>(env, obj, name, "C");
+    }
+
+    template <>
+    inline jshort getField(JNIEnv *env, jobject obj, const char *name)
+    {
+      return _getField<jshort, &JNIEnv::GetShortField>(env, obj, name, "S");
+    }
+
+    template <>
+    inline jint getField(JNIEnv *env, jobject obj, const char *name)
+    {
+      return _getField<jint, &JNIEnv::GetIntField>(env, obj, name, "I");
+    }
+
+    template <>
+    inline jlong getField(JNIEnv *env, jobject obj, const char *name)
+    {
+      return _getField<jlong, &JNIEnv::GetLongField>(env, obj, name, "J");
+    }
+
+    template <>
+    inline jfloat getField(JNIEnv *env, jobject obj, const char *name)
+    {
+      return _getField<jfloat, &JNIEnv::GetFloatField>(env, obj, name, "F");
+    }
+
+    template <>
+    inline jdouble getField(JNIEnv *env, jobject obj, const char *name)
+    {
+      return _getField<jdouble, &JNIEnv::GetDoubleField>(env, obj, name, "D");
+    }
+
+    template <typename ...T>
+    inline jobject construct(JNIEnv *env, const char *className, const char *sig, T... params)
+    {
+      jclass cls = env->FindClass(className);
+      if (!cls)
+        return nullptr;
+
+      jmethodID ctor = env->GetMethodID(cls, "<init>", sig);
+      if (!ctor) {
+        env->DeleteLocalRef(cls);
+        return nullptr;
+      }
+
+      jobject result = env->NewObject(cls, ctor, params...);
+      env->DeleteLocalRef(cls);
+      return result;
+    }
+
+    // jobject is defined as _jobject*
+    using SharedGlobalRef = std::shared_ptr<_jobject>;
+
+    inline SharedGlobalRef makeSharedGlobalRef(JNIEnv *env, jobject localRef)
+    {
+      jobject globalRef = env->NewGlobalRef(localRef);
+      return { globalRef, [](jobject globalRef) {
+        // delegate the deletion to JNI
+        qi::jni::JNIAttach attach;
+        JNIEnv *env = attach.get();
+        env->DeleteGlobalRef(globalRef);
+      }};
+    }
   }// !jni
 }// !qi
 
@@ -127,10 +246,25 @@ JavaVM*       JVM(JNIEnv* env = 0);
 
 // Signature conversion
 std::string   toJavaSignature(const std::string &signature);
+std::string toJavaSignatureWithFuture(const std::string &signature);
 std::string   propertyBaseSignature(JNIEnv *env, jclass propertyBase);
 
-// Java exception thrower
-jint          throwJavaError(JNIEnv *env, const char *message);
+jthrowable createNewException(JNIEnv *env, const char *className, const char *message, jthrowable cause);
+jthrowable createNewException(JNIEnv *env, const char *className, const char *message);
+jthrowable createNewException(JNIEnv *env, const char *className, jthrowable cause);
+jthrowable createNewQiException(JNIEnv *env, const char *message);
 
-extern std::map<std::string, jobject> supportedTypes;
+// Java exception thrower
+jint throwNew(JNIEnv *env, const char *className, const char *message = "");
+jint throwNewException(JNIEnv *env, const char *message = "");
+jint throwNewRuntimeException(JNIEnv *env, const char *message = "");
+jint throwNewNullPointerException(JNIEnv *env, const char *message = "");
+
+jint throwNewCancellationException(JNIEnv *env, const char *message = "");
+jint throwNewExecutionException(JNIEnv *env, jthrowable cause);
+jint throwNewTimeoutException(JNIEnv *env, const char *message = "");
+
+jint throwNewDynamicCallException(JNIEnv *env, const char *message = "");
+jint throwNewAdvertisementException(JNIEnv *env, const char *message = "");
+
 #endif // !_JAVA_JNI_JNITOOLS_HPP_

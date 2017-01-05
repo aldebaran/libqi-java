@@ -4,6 +4,11 @@
 */
 package com.aldebaran.qi;
 
+/**
+ *  Class responsible for initializing the qi framework, but without creating a
+ *  {@link Session}.
+ *  @see Application
+ */
 public class RawApplication
 {
 
@@ -18,10 +23,10 @@ public class RawApplication
   }
 
   // Native function
-  private static native long qiApplicationCreate(String[] args);
-  private static native void qiApplicationRun(long pApp);
-  private static native void qiApplicationStop(long pApp);
-  private static native void qiApplicationDestroy(long pApplication);
+  private native long qiApplicationCreate(String[] args);
+  private native void qiApplicationRun(long pApp);
+  private native void qiApplicationStop(long pApp);
+  private native void qiApplicationDestroy(long pApplication);
 
   // Members
   private long _application;
@@ -29,25 +34,20 @@ public class RawApplication
   /**
    * RawApplication constructor.
    * @param args Arguments given to main() function.
-   * @param defaultUrl Default url to connect to if none was provided in the
-   * program arguments
-   * @param listen If no argument was provided, will start a listening session
-   * with a ServiceDirectory (this argument is ignored for the moment)
    */
   public RawApplication(String[] args)
   {
     if (args == null)
       throw new NullPointerException("Creating application with null args");
-    _application = RawApplication.qiApplicationCreate(args);
+    _application = qiApplicationCreate(args);
   }
 
   /**
    * Stop RawApplication eventloops and calls atStop() callbacks.
-   * @since 1.20
    */
   public void stop()
   {
-    RawApplication.qiApplicationStop(_application);
+    qiApplicationStop(_application);
   }
 
   /**
@@ -55,11 +55,10 @@ public class RawApplication
    * Return when :
    * - Eventloop is stopped.
    * - RawApplication.stop() is called
-   * @since 1.20
    */
   public void run()
   {
-    RawApplication.qiApplicationRun(_application);
+    qiApplicationRun(_application);
   }
 
 }

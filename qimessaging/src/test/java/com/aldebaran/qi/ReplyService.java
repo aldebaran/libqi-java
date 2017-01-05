@@ -5,9 +5,11 @@
 package com.aldebaran.qi;
 
 import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ReplyService extends QiService
 {
@@ -40,7 +42,7 @@ public class ReplyService extends QiService
 
       ob.advertiseProperty("name", String.class);
       ob.advertiseProperty("uid", Integer.class);
-      ob.advertiseProperty("settings", Hashtable.class);
+      ob.advertiseProperty("settings", HashMap.class);
 
     } catch (Exception e1) {
       System.out.println("Cannot advertise methods and signals : " + e1.getMessage());
@@ -61,7 +63,7 @@ public class ReplyService extends QiService
 
   public Tuple info(String str, Integer i, Boolean b)
   {
-    Tuple ret = new Tuple3<String, Integer, Boolean>(str, i, b);
+    Tuple ret = Tuple.of(str, i, b);
     System.out.println("Received : " + str + "," + i + "," + b);
     return ret;
   }
@@ -124,7 +126,7 @@ public class ReplyService extends QiService
 
   public Map<Integer, Boolean> abacus(Map<Integer, Boolean> map)
   {
-    Map<Integer, Boolean> ret = new Hashtable<Integer, Boolean>();
+    Map<Integer, Boolean> ret = new HashMap<Integer, Boolean>();
 
     System.out.println("abacus : Received args : " + map);
     try
@@ -180,5 +182,69 @@ public class ReplyService extends QiService
   public void throwUp()
   {
     throw new RuntimeException("I has faild");
+  }
+
+  public Tuple genTuple() {
+    return Tuple.of(42, "forty-two");
+  }
+
+  public ArrayList<Tuple> genTuples() {
+    // services expect ArrayList, not List :(
+    ArrayList<Tuple> tuples = new ArrayList<Tuple>();
+    tuples.add(genTuple());
+    return tuples;
+  }
+
+  public Integer getFirstFieldValue(Tuple tuple)
+  {
+    return (Integer) tuple.get(0);
+  }
+
+  private void doWork(Promise<String> promise, String res){
+    System.out.println("do Work");
+    promise.setValue("END" + res);
+  }
+  private final AtomicBoolean onCancelCalled = new AtomicBoolean();
+  private void doCancellableWork(Promise<String> promise, String res){
+    for (int i = 0; i < 3; i++){
+      System.out.println("do Cancellable Work " + i);
+      if (onCancelCalled.get() == true)
+        return;
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
+    promise.setValue("END" + res);
+  }
+
+  public Future<String> getFuture(final String param){
+    final Promise<String> promise = new Promise<String>();
+    new Thread(new Runnable() {
+      @Override
+      public void run() {
+        doWork(promise, param);
+      }
+    }).start();
+    return promise.getFuture();
+  }
+
+  public Future<String> getCancellableFuture(final String param){
+    final Promise<String> promise = new Promise<String>();
+    promise.setOnCancel(new Promise.CancelRequestCallback<String>() {
+      @Override
+      public void onCancelRequested(Promise<String> promise) {
+        onCancelCalled.set(true);
+        promise.setCancelled();
+      }
+    });
+    new Thread(new Runnable() {
+      @Override
+      public void run() {
+        doCancellableWork(promise, param);
+      }
+    }).start();
+    return promise.getFuture();
   }
 }

@@ -6,6 +6,16 @@ package com.aldebaran.qi;
 
 import java.lang.reflect.Method;
 
+/**
+ * Class that exposes directly an {@link AnyObject} that can be manipulated.
+ * <p>
+ * There is only one {@link AnyObject} per DynamicObjectBuilder, the object
+ * method always returns the same instance.
+ * <p>
+ * This class is typically used to subscribe a new {@link QiService} to a
+ * {@link Session}.
+ */
+
 public class DynamicObjectBuilder {
 
   static
@@ -20,15 +30,25 @@ public class DynamicObjectBuilder {
 
   private long _p;
 
-  private static native long   create();
-  private static native void   destroy(long pObject);
-  private static native Object object(long pObjectBuilder);
-  private static native long   advertiseMethod(long pObjectBuilder, String method, Object instance, String className, String description);
-  private static native long   advertiseSignal(long pObjectBuilder, String eventSignature);
-  private static native long   advertiseProperty(long pObjectBuilder, String name, Class<?> propertyBase);
-  private static native long   advertiseThreadSafeness(long pObjectBuilder, boolean isThreadSafe);
+  private native long create();
+  private native void destroy(long pObject);
+  private native AnyObject object(long pObjectBuilder);
+  private native void advertiseMethod(long pObjectBuilder, String method, Object instance, String className, String description);
+  private native void advertiseSignal(long pObjectBuilder, String eventSignature);
+  private native void advertiseProperty(long pObjectBuilder, String name, Class<?> propertyBase);
+  private native void setThreadSafeness(long pObjectBuilder, boolean isThreadSafe);
 
   /// Possible thread models for an object
+
+  /**
+   * Enum to declare the thread-safeness state of an {@link AnyObject} instance.
+   * <p>
+   * Use <b>MultiThread</b> if your object is expected to be thread-safe.
+   * Method calls will potentially occur in parallel in multiple threads.
+   * <p>
+   * Use <b>SingleThread</b> to make your object non-thread-safe.
+   * All method calls must occur in the same thread.
+   */
   public enum ObjectThreadingModel
   {
     /// AnyObject is not thread safe, all method calls must occur in the same thread
@@ -39,7 +59,7 @@ public class DynamicObjectBuilder {
 
   public DynamicObjectBuilder()
   {
-    _p = DynamicObjectBuilder.create();
+    _p = create();
   }
 
   /**
@@ -48,13 +68,10 @@ public class DynamicObjectBuilder {
    * @param service Service implementing method.
    * @throws Exception on error.
    */
-  public void advertiseMethod(String methodSignature, QiService service, String description) throws QiException
+  public void advertiseMethod(String methodSignature, QiService service, String description)
   {
     Class<?extends Object> c = service.getClass();
     Method[] methods = c.getDeclaredMethods();
-
-    if (_p == 0)
-      throw new QiException("Invalid object.\n");
 
     for (Method method : methods)
     {
@@ -62,34 +79,29 @@ public class DynamicObjectBuilder {
       className = className.substring(6); // Remove "class "
       className = className.replace('.', '/');
 
+      // FIXME this is very fragile
       // If method name match signature
       if (methodSignature.contains(method.getName()) == true)
       {
-        if (DynamicObjectBuilder.advertiseMethod(_p, methodSignature, service, className, description) == 0)
-          throw new QiException("Cannot register method " + methodSignature);
+        advertiseMethod(_p, methodSignature, service, className, description);
         return;
       }
     }
   }
 
   /**
-   * Advertise an signal with its callback signature.
+   * Advertise a signal with its callback signature.
    * @param signalSignature Signature of available callback.
    * @throws Exception If GenericObject is not initialized internally.
    */
   public void advertiseSignal(String signalSignature) throws Exception
   {
-    if (_p == 0)
-      throw new Exception("Invalid object");
-    DynamicObjectBuilder.advertiseSignal(_p, signalSignature);
+    advertiseSignal(_p, signalSignature);
   }
 
-  public void advertiseProperty(String name, Class<?> propertyBase) throws QiException
+  public void advertiseProperty(String name, Class<?> propertyBase)
   {
-    if (_p == 0)
-      throw new QiException("Invalid object");
-    if (DynamicObjectBuilder.advertiseProperty(_p, name, propertyBase) <= 0)
-      throw new QiException("Cannot advertise " + name + " property");
+    advertiseProperty(_p, name, propertyBase);
   }
 
   /**
@@ -101,11 +113,9 @@ public class DynamicObjectBuilder {
    *        If false, qimessaging will use a per-instance mutex
    *        to prevent multiple calls at the same time.
    */
-  public void setThreadingModel(ObjectThreadingModel threadModel) throws QiException
+  public void setThreadingModel(ObjectThreadingModel threadModel)
   {
-    if (_p == 0)
-      throw new QiException("Invalid object");
-    DynamicObjectBuilder.advertiseThreadSafeness(_p, threadModel == ObjectThreadingModel.MultiThread);
+    setThreadSafeness(_p, threadModel == ObjectThreadingModel.MultiThread);
   }
 
   /**
@@ -115,7 +125,7 @@ public class DynamicObjectBuilder {
    */
   public AnyObject object()
   {
-    return (AnyObject) DynamicObjectBuilder.object(_p);
+    return object(_p);
   }
 
   /**
@@ -125,7 +135,7 @@ public class DynamicObjectBuilder {
   @Override
   protected void finalize() throws Throwable
   {
-    DynamicObjectBuilder.destroy(_p);
+    destroy(_p);
     super.finalize();
   }
 }

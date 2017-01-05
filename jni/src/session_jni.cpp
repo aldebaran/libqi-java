@@ -25,20 +25,20 @@
 
 qiLogCategory("qimessaging.jni");
 
-jlong Java_com_aldebaran_qi_Session_qiSessionCreate()
+JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Session_qiSessionCreate(JNIEnv *QI_UNUSED(env), jobject QI_UNUSED(obj))
 {
   qi::Session *session = new qi::Session();
 
   return (jlong) session;
 }
 
-void Java_com_aldebaran_qi_Session_qiSessionDestroy(JNIEnv* QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pSession)
+JNIEXPORT void JNICALL Java_com_aldebaran_qi_Session_qiSessionDestroy(JNIEnv *QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pSession)
 {
   qi::Session *s = reinterpret_cast<qi::Session*>(pSession);
   delete s;
 }
 
-jboolean Java_com_aldebaran_qi_Session_qiSessionIsConnected(JNIEnv* QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pSession)
+JNIEXPORT jboolean JNICALL Java_com_aldebaran_qi_Session_qiSessionIsConnected(JNIEnv *QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pSession)
 {
   qi::Session *s = reinterpret_cast<qi::Session*>(pSession);
 
@@ -53,11 +53,11 @@ static void adaptFuture(qi::Future<void> f, qi::Promise<qi::AnyValue> p)
     p.setValue(qi::AnyValue(qi::typeOf<void>()));
 }
 
-jlong Java_com_aldebaran_qi_Session_qiSessionConnect(JNIEnv *env, jobject QI_UNUSED(obj), jlong pSession, jstring jurl)
+JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Session_qiSessionConnect(JNIEnv *env, jobject QI_UNUSED(obj), jlong pSession, jstring jurl)
 {
   if (pSession == 0)
   {
-    throwJavaError(env, "Given qi::Session doesn't exists (pointer null).");
+    throwNewException(env, "Given qi::Session doesn't exists (pointer null).");
     return 0;
   }
 
@@ -80,36 +80,34 @@ jlong Java_com_aldebaran_qi_Session_qiSessionConnect(JNIEnv *env, jobject QI_UNU
   return (jlong) fref;
 }
 
-void Java_com_aldebaran_qi_Session_qiSessionClose(JNIEnv* QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pSession)
+JNIEXPORT void JNICALL Java_com_aldebaran_qi_Session_qiSessionClose(JNIEnv *QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pSession)
 {
   qi::Session *s = reinterpret_cast<qi::Session*>(pSession);
 
   s->close();
 }
 
-jobject   Java_com_aldebaran_qi_Session_service(JNIEnv* env, jobject QI_UNUSED(obj), jlong pSession, jstring jname)
+JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Session_service(JNIEnv *env, jobject QI_UNUSED(obj), jlong pSession, jstring jname)
 {
   qi::Session *s = reinterpret_cast<qi::Session*>(pSession);
   std::string serviceName = qi::jni::toString(jname);
 
-  qi::AnyObject *obj = new qi::AnyObject();
-  jobject proxy = 0;
-
   try
   {
-    *obj = s->service(serviceName);
-    JNIObject jniProxy(obj);
-    return jniProxy.object();
+    qi::Future<qi::AnyObject> serviceFuture = s->service(serviceName);
+    // qiFutureCallGet() requires that the future returns a qi::AnyValue
+    qi::Future<qi::AnyValue> future = qi::toAnyValueFuture(std::move(serviceFuture));
+    auto futurePtr = new qi::Future<qi::AnyValue>(std::move(future));
+    return reinterpret_cast<jlong>(futurePtr);
   }
   catch (std::runtime_error &e)
   {
-    delete obj;
-    throwJavaError(env, e.what());
-    return proxy;
+    throwNewRuntimeException(env, e.what());
+    return 0;
   }
 }
 
-jint  Java_com_aldebaran_qi_Session_registerService(JNIEnv *env, jobject QI_UNUSED(jobj), jlong pSession, jstring jname, jobject object)
+JNIEXPORT jint JNICALL Java_com_aldebaran_qi_Session_registerService(JNIEnv *env, jobject QI_UNUSED(obj), jlong pSession, jstring jname, jobject object)
 {
   qi::Session*    session = reinterpret_cast<qi::Session*>(pSession);
   std::string     name    = qi::jni::toString(jname);
@@ -123,20 +121,20 @@ jint  Java_com_aldebaran_qi_Session_registerService(JNIEnv *env, jobject QI_UNUS
   catch (std::runtime_error &e)
   {
     qiLogError() << "Throwing exception : " << e.what();
-    throwJavaError(env, e.what());
+    throwNewException(env, e.what());
     return 0;
   }
 
   if (ret <= 0)
   {
-    throwJavaError(env, "Cannot register service");
+    throwNewException(env, "Cannot register service");
     return 0;
   }
 
   return ret;
 }
 
-void  Java_com_aldebaran_qi_Session_unregisterService(JNIEnv *env, jobject obj, jlong pSession, jint serviceId)
+JNIEXPORT void JNICALL Java_com_aldebaran_qi_Session_unregisterService(JNIEnv *QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pSession, jint serviceId)
 {
   qi::Session*    session = reinterpret_cast<qi::Session*>(pSession);
   unsigned int    id = static_cast<unsigned int>(serviceId);
@@ -144,7 +142,7 @@ void  Java_com_aldebaran_qi_Session_unregisterService(JNIEnv *env, jobject obj, 
   session->unregisterService(id);
 }
 
-void      Java_com_aldebaran_qi_Session_onDisconnected(JNIEnv *env, jobject jobj, jlong pSession, jstring jcallbackName, jobject jobjectInstance)
+JNIEXPORT void JNICALL Java_com_aldebaran_qi_Session_onDisconnected(JNIEnv *env, jobject jobj, jlong pSession, jstring jcallbackName, jobject jobjectInstance)
 {
   extern MethodInfoHandler gInfoHandler;
   qi::Session*    session = reinterpret_cast<qi::Session*>(pSession);
@@ -159,6 +157,7 @@ void      Java_com_aldebaran_qi_Session_onDisconnected(JNIEnv *env, jobject jobj
   // Create a struct holding a jobject instance, jmethodId id and other needed thing for callback
   // Pass it to void * data to register_method
   signature = callbackName + "::(s)";
+  // FIXME jobj is not a global ref, it may be invalid when it will be used
   data = new qi_method_info(jobjectInstance, signature, jobj);
   gInfoHandler.push(data);
 
@@ -167,13 +166,29 @@ void      Java_com_aldebaran_qi_Session_onDisconnected(JNIEnv *env, jobject jobj
           boost::bind(&event_callback_to_java, (void*) data, _1)));
 }
 
+JNIEXPORT void JNICALL Java_com_aldebaran_qi_Session_addConnectionListener(JNIEnv *env, jobject QI_UNUSED(obj), jlong pSession, jobject listener)
+{
+  qi::Session *session = reinterpret_cast<qi::Session*>(pSession);
+  auto gListener = qi::jni::makeSharedGlobalRef(env, listener);
+  session->connected.connect([gListener] {
+    qi::jni::JNIAttach attach;
+    JNIEnv *env = attach.get();
+    qi::jni::Call<void>::invoke(env, gListener.get(), "onConnected", "()V");
+  });
+  session->disconnected.connect([gListener](const std::string &reason) {
+    qi::jni::JNIAttach attach;
+    JNIEnv *env = attach.get();
+    qi::jni::Call<void>::invoke(env, gListener.get(), "onDisconnected", "(Ljava/lang/String;)V", qi::jni::toJstring(reason));
+  });
+}
+
 class Java_ClientAuthenticator : public qi::ClientAuthenticator
 {
 public:
   Java_ClientAuthenticator(JNIEnv* env, jobject object)
   {
     env->GetJavaVM(&_jvm);
-    _jobject = env->NewGlobalRef(object);
+    _jobjectRef = qi::jni::makeSharedGlobalRef(env, object);
   }
 
   qi::CapabilityMap initialAuthData()
@@ -184,8 +199,11 @@ public:
 #else
     _jvm->AttachCurrentThread(&env, nullptr);
 #endif
+    jobject _jobject = _jobjectRef.get();
     jobject ca = qi::jni::Call<jobject>::invoke(env, _jobject, "initialAuthData", "()Ljava/util/Map;");
-    return JNI_JavaMaptoMap(env, ca);
+    auto result = JNI_JavaMaptoMap(env, ca);
+    env->DeleteLocalRef(ca);
+    return result;
   }
 
   qi::CapabilityMap _processAuth(const qi::CapabilityMap &authData)
@@ -196,14 +214,18 @@ public:
 #else
     _jvm->AttachCurrentThread(&env, nullptr);
 #endif
+    jobject _jobject = _jobjectRef.get();
     jobject jmap = JNI_MapToJavaMap(env, authData);
     jobject ca = qi::jni::Call<jobject>::invoke(env, _jobject, "_processAuth", "(Ljava/util/Map;)Ljava/util/Map;", jmap);
-    return JNI_JavaMaptoMap(env, ca);
+    env->DeleteLocalRef(jmap);
+    auto result = JNI_JavaMaptoMap(env, ca);
+    env->DeleteLocalRef(ca);
+    return result;
   }
 
 private:
   JavaVM* _jvm;
-  jobject _jobject;
+  qi::jni::SharedGlobalRef _jobjectRef;
 
   static qi::CapabilityMap JNI_JavaMaptoMap(JNIEnv* env, jobject jmap)
   {
@@ -211,6 +233,7 @@ private:
 
     jobject set = qi::jni::Call<jobject>::invoke(env, jmap, "entrySet", "()Ljava/util/Set;");
     jobject it = qi::jni::Call<jobject>::invoke(env, set, "iterator", "()Ljava/util/Iterator;");
+    env->DeleteLocalRef(set);
 
     while (qi::jni::Call<jboolean>::invoke(env, it, "hasNext", "()Z"))
     {
@@ -222,10 +245,17 @@ private:
       qiLogWarning() << "FIXME: only jstring are supported";
       jobject value = qi::jni::Call<jobject>::invoke(env, entry, "getValue", "()Ljava/lang/Object;");
       std::string v2 = env->GetStringUTFChars((jstring) value, nullptr);
+
+      env->DeleteLocalRef(entry);
+      env->DeleteLocalRef(key);
+      env->DeleteLocalRef(value);
+
       qi::AnyValue v = qi::AnyValue::from(v2);
 
       result[k] = v;
     }
+
+    env->DeleteLocalRef(it);
 
     return result;
   }
@@ -235,6 +265,7 @@ private:
     jclass mapClass = env->FindClass("java/util/HashMap");
     jmethodID init = env->GetMethodID(mapClass, "<init>", "()V");
     jobject result = env->NewObject(mapClass, init);
+    env->DeleteLocalRef(mapClass);
 
     qi::CapabilityMap::const_iterator it;
     for (it = map.begin(); it != map.end(); ++it)
@@ -251,6 +282,7 @@ private:
         jclass cls = env->FindClass("java/lang/Integer");
         jmethodID mid = env->GetMethodID(cls, "<init>", "(I)V");
         v = env->NewObject(cls, mid, val.toUInt());
+        env->DeleteLocalRef(cls);
       }
       else if (sig == "s")
       {
@@ -258,11 +290,15 @@ private:
       }
       else
       {
+        env->DeleteLocalRef(k);
         qiLogError() << "sig " << sig << " not supported, skipping...";
         continue;
       }
 
       qi::jni::Call<jobject>::invoke(env, result, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", k, v);
+
+      env->DeleteLocalRef(k);
+      env->DeleteLocalRef(v);
     }
 
     return result;
@@ -287,7 +323,9 @@ public:
     _jvm->AttachCurrentThread(&env, nullptr);
 #endif
     jobject ca = qi::jni::Call<jobject>::invoke(env, _jobject, "newAuthenticator", "()Lcom/aldebaran/qi/ClientAuthenticator;");
-    return boost::make_shared<Java_ClientAuthenticator>(env, ca);
+    auto result = boost::make_shared<Java_ClientAuthenticator>(env, ca);
+    env->DeleteLocalRef(ca);
+    return result;
   }
 
 private:
@@ -295,8 +333,16 @@ private:
   jobject _jobject;
 };
 
-void      Java_com_aldebaran_qi_Session_setClientAuthenticatorFactory(JNIEnv* env, jobject obj, jlong pSession, jobject object)
+JNIEXPORT void JNICALL Java_com_aldebaran_qi_Session_setClientAuthenticatorFactory(JNIEnv* env, jobject QI_UNUSED(obj), jlong pSession, jobject object)
 {
   qi::Session* session = reinterpret_cast<qi::Session*>(pSession);
   session->setClientAuthenticatorFactory(boost::make_shared<Java_ClientAuthenticatorFactory>(env, object));
+}
+
+JNIEXPORT void JNICALL Java_com_aldebaran_qi_Session_loadService(JNIEnv *env, jobject obj, jlong pSession, jstring jname)
+{
+  qi::Session* session = reinterpret_cast<qi::Session*>(pSession);
+  std::string moduleName = qi::jni::toString(jname);
+  session->loadService(moduleName);
+  return;
 }

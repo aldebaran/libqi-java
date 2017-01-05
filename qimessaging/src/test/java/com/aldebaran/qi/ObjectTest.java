@@ -10,8 +10,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Hashtable;
+import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 public class ObjectTest
 {
@@ -53,6 +56,9 @@ public class ObjectTest
     ob.advertiseMethod("createObject::o()", reply, "Return a test object");
     ob.advertiseMethod("setStored::v(i)", reply, "Set stored value");
     ob.advertiseMethod("waitAndAddToStored::i(ii)", reply, "Wait given time, and return stored + val");
+    ob.advertiseMethod("genTuple::(is)()", reply, "Return a tuple");
+    ob.advertiseMethod("genTuples::[(is)]()", reply, "Return a tuple list");
+    ob.advertiseMethod("getFirstFieldValue::i((is))", reply, "Return the first field value as int");
 
     QiService replyts = new ReplyService();
     DynamicObjectBuilder obts = new DynamicObjectBuilder();
@@ -74,8 +80,8 @@ public class ObjectTest
     client.connect(url).sync();
 
     // Get a proxy to serviceTest
-    proxy = client.service("serviceTest");
-    proxyts = client.service("serviceTestTs");
+    proxy = client.service("serviceTest").get();
+    proxyts = client.service("serviceTestTs").get();
     assertNotNull(proxy);
     assertNotNull(proxyts);
   }
@@ -116,14 +122,16 @@ public class ObjectTest
   public void callThrow() throws Exception
   {
     Future<Integer> v0 = proxyts.<Integer>call("throwUp");
-    assertEquals(v0.getError(), "I has faild");
+    assertTrue(v0.hasError());
+    assertEquals(v0.getErrorMessage(), "I has faild");
   }
 
-  @Test(expected=Exception.class)
+  @Test
   public void getErrorOnSuccess() throws Exception
   {
     Future<Void> v0 = proxyts.<Void>call("setStored", 18);
-    v0.getError();
+    assertNull(v0.getError());
+    assertFalse(v0.hasError());
   }
 
   @Test
@@ -147,7 +155,7 @@ public class ObjectTest
       fail("Property must not fail");
     }
 
-    Map<Object, Object> settings = new Hashtable<Object, Object>();
+    Map<Object, Object> settings = new HashMap<Object, Object>();
     settings.put("foo", true);
     settings.put("bar", "This is bar");
     try {
@@ -158,8 +166,8 @@ public class ObjectTest
     Map<Object, Object> readSettings = null;
     try {
       readSettings = ro.<Map<Object, Object>>property("settings").get();
-    } catch (InterruptedException e) {
-      fail("Call must not be interrupted: " + e.getMessage());
+    } catch (ExecutionException e) {
+      fail("Execution must not fail: " + e.getMessage());
     }
     assertEquals(readSettings.get("foo"), true);
     assertEquals(readSettings.get("bar"), "This is bar");
@@ -187,12 +195,12 @@ public class ObjectTest
     ok = false;
     try {
         ret = ro.<String>call("add", "42", 42, 42).get();
-      } catch (Exception e) {
+      } catch (ExecutionException e) {
         ok = true;
         String expected = "cannot convert parameters from (sii) to (iii)";
         System.out.println(e.getMessage());
         System.out.println(expected);
-        assertEquals(expected, e.getMessage());
+        assertEquals(expected, e.getCause().getMessage());
       }
     assertTrue(ok);
 
@@ -207,5 +215,50 @@ public class ObjectTest
         assertTrue(e.getMessage().contains("Can't find method"));
       }
     assertTrue(ok);
+  }
+
+  @QiStruct
+  static class Item
+  {
+    @QiField(0)
+    int i;
+    @QiField(1)
+    String s;
+
+    Item()
+    {
+    }
+
+    Item(int i, String s)
+    {
+      this.i = i;
+      this.s = s;
+    }
+  }
+
+  @Test
+  public void testCallReturnStructConversion() throws ExecutionException
+  {
+    Tuple tuple = proxy.<Tuple> call("genTuple").get();
+    assertEquals(42, tuple.get(0));
+    assertEquals("forty-two", tuple.get(1));
+
+    Item item = proxy.call(Item.class, "genTuple").get();
+    assertEquals(42, item.i);
+    assertEquals("forty-two", item.s);
+
+    Type listOfItemsType = new TypeToken<List<Item>>() {}.getType();
+    List<Item> items = proxy.<List<Item>>call(listOfItemsType, "genTuples").get();
+    item = items.get(0);
+    assertEquals(42, item.i);
+    assertEquals("forty-two", item.s);
+  }
+
+  @Test
+  public void testCallParameterStructConversion() throws ExecutionException
+  {
+    Item item = new Item(42, "forty-two");
+    int value = proxy.<Integer> call(int.class, "getFirstFieldValue", item).get();
+    assertEquals(42, value);
   }
 }

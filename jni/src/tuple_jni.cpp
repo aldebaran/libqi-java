@@ -17,49 +17,11 @@ JNITuple::JNITuple(jobject obj)
 {
   JVM()->GetEnv((void**) &_env, QI_JNI_MIN_VERSION);
   _obj = obj;
-  _cls = qi::jni::clazz("Tuple");
-  if (!_cls)
-  {
-    qiLogError("qimessaging.jni") << "JNITuple : Cannot find Tuple class template";
-    throwJavaError(_env, "JNITuple : Cannot find Tuple class template");
-  }
-}
-
-JNITuple::JNITuple(int size)
-{
-  std::stringstream name;
-  jmethodID mid = 0;
-
-  name << "Tuple" << size;
-  JVM()->GetEnv((void**) &_env, QI_JNI_MIN_VERSION);
-
-  _cls = qi::jni::clazz(name.str());
-  if (!_cls)
-  {
-    qiLogError("qimessaging.jni") << "JNITuple : Cannot find " << name.str() << " class template";
-    throwJavaError(_env, "JNITuple : Cannot find Tuple class template");
-  }
-
-
-  mid = _env->GetMethodID(_cls, "<init>", "()V");
-
-  if (!mid)
-  {
-    qiLogError("qimessaging.jni") << "JNITuple : Cannot find " << name.str() << " constructor";
-    throwJavaError(_env, "JNITuple : Cannot find Tuple constructor");
-  }
-
-  _obj = _env->NewObject(_cls, mid);
-}
-
-JNITuple::~JNITuple()
-{
-  qi::jni::releaseClazz(_cls);
 }
 
 int JNITuple::size()
 {
-  jmethodID mid = _env->GetMethodID(_cls, "size", "()I");
+  jmethodID mid = _env->GetMethodID(cls_tuple, "size", "()I");
 
   if (!mid)
   {
@@ -72,7 +34,7 @@ int JNITuple::size()
 
 jobject JNITuple::get(int index)
 {
-  jmethodID mid = _env->GetMethodID(_cls, "get", "(I)Ljava/lang/Object;");
+  jmethodID mid = _env->GetMethodID(cls_tuple, "get", "(I)Ljava/lang/Object;");
 
   if (!mid)
   {
@@ -85,7 +47,7 @@ jobject JNITuple::get(int index)
 
 void JNITuple::set(int index, jobject obj)
 {
-  jmethodID mid = _env->GetMethodID(_cls, "set", "(ILjava/lang/Object;)V");
+  jmethodID mid = _env->GetMethodID(cls_tuple, "set", "(ILjava/lang/Object;)V");
 
   if (!mid)
   {

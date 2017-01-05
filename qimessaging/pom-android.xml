@@ -20,9 +20,24 @@
 
     <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+      <!-- default value for the nativeResourceFilter : used when
+           we do multilib android package -->
+      <nativeResourceFilter>lib/*/*.so</nativeResourceFilter>
+      <!-- default name is libqi-java-android -->
+      <finalName>libqi-java-android</finalName>
     </properties>
 
     <packaging>jar</packaging>
+
+    <profiles>
+      <profile>
+        <id>arm-only</id>
+        <properties>
+          <nativeResourceFilter>lib/arm*/*.so</nativeResourceFilter>
+          <finalName>libqi-java-android-arm</finalName>
+        </properties>
+      </profile>
+    </profiles>
 
     <dependencies>
       <dependency>
@@ -40,9 +55,13 @@
     </dependencies>
 
     <build>
+      <finalName>${finalName}</finalName>
       <resources>
         <resource>
           <directory>native-android</directory>
+          <includes>
+            <include>${nativeResourceFilter}</include>
+          </includes>
         </resource>
       </resources>
       <plugins>
@@ -60,6 +79,24 @@
           <artifactId>android-maven-plugin</artifactId>
           <version>3.4.0</version>
           <extensions>true</extensions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>2.10.3</version>
+          <configuration>
+            <finalName>libqi-java</finalName>
+            <failOnError>false</failOnError>
+            <sourcepath>src/main/java</sourcepath>
+          </configuration>
+          <executions>
+            <execution>
+              <id>attach-javadocs</id>
+              <goals>
+                <goal>jar</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
       </plugins>
     </build>

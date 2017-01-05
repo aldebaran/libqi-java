@@ -5,8 +5,7 @@
 package com.aldebaran.qi;
 
 /**
- * @since 1.20
- * Implement this interface to create a Qimessaging service.
+ * Interface used to create a service that can be registered to a {@link Session}
  */
 public abstract class QiService {
 

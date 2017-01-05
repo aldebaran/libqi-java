@@ -19,15 +19,7 @@ qiLogCategory("qimessaging.jni");
 
 extern MethodInfoHandler gInfoHandler;
 
-static void adaptFuture(qi::Future<void> f, qi::Promise<qi::AnyValue> p)
-{
-  if (f.hasError())
-    p.setError(f.error());
-  else
-    p.setValue(qi::AnyValue(qi::typeOf<void>()));
-}
-
-jlong   Java_com_aldebaran_qi_AnyObject_property(JNIEnv* env, jobject jobj, jlong pObj, jstring name)
+JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_property(JNIEnv* env, jobject QI_UNUSED(jobj), jlong pObj, jstring name)
 {
   qi::AnyObject&     obj = *(reinterpret_cast<qi::AnyObject*>(pObj));
   std::string        propName = qi::jni::toString(name);
@@ -42,30 +34,36 @@ jlong   Java_com_aldebaran_qi_AnyObject_property(JNIEnv* env, jobject jobj, jlon
   } catch (qi::FutureUserException& e)
   {
     delete ret;
-    throwJavaError(env, e.what());
+    throwNewException(env, e.what());
     return 0;
   }
 
   return (jlong) ret;
 }
 
-jlong  Java_com_aldebaran_qi_AnyObject_setProperty(JNIEnv* env, jobject QI_UNUSED(jobj), jlong pObj, jstring name, jobject property)
+JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_setProperty(JNIEnv* env, jobject QI_UNUSED(jobj), jlong pObj, jstring name, jobject property)
 {
-  qi::AnyObject&    obj = *(reinterpret_cast<qi::AnyObject*>(pObj));
-  std::string       propName = qi::jni::toString(name);
+  qi::AnyObject *obj = reinterpret_cast<qi::AnyObject*>(pObj);
+  std::string propName = qi::jni::toString(name);
 
   qi::jni::JNIAttach attach(env);
 
-  qi::Future<qi::AnyValue>* ret = new qi::Future<qi::AnyValue>();
-
-  qi::Future<void> f = obj.setProperty(propName, qi::AnyValue::from<jobject>(property)).async();
-  qi::Promise<qi::AnyValue> promise;
-  *ret = promise.future();
-  f.connect(adaptFuture, _1, promise);
-  return (jlong) ret;
+  auto value = qi::AnyValue::from<jobject>(property);
+  try
+  {
+    qi::Future<void> propertyFuture = obj->setProperty(propName, std::move(value));
+    qi::Future<qi::AnyValue> future = qi::toAnyValueFuture(std::move(propertyFuture));
+    auto futurePtr = new qi::Future<qi::AnyValue>(std::move(future));
+    return reinterpret_cast<jlong>(futurePtr);
+  }
+  catch (std::runtime_error &e)
+  {
+    throwNewDynamicCallException(env, e.what());
+    return 0;
+  }
 }
 
-jlong     Java_com_aldebaran_qi_AnyObject_asyncCall(JNIEnv* env, jobject QI_UNUSED(jobj), jlong pObject, jstring jmethod, jobjectArray args)
+JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_asyncCall(JNIEnv* env, jobject QI_UNUSED(jobj), jlong pObject, jstring jmethod, jobjectArray args)
 {
   qi::AnyObject&    obj = *(reinterpret_cast<qi::AnyObject*>(pObject));
   std::string       method;
@@ -73,27 +71,19 @@ jlong     Java_com_aldebaran_qi_AnyObject_asyncCall(JNIEnv* env, jobject QI_UNUS
 
   qi::jni::JNIAttach attach(env);
 
-  if (!obj)
-  {
-    qiLogError() << "Given object not valid.";
-    throwJavaError(env, "Given object is not valid.");
-    return 0;
-  }
-
   // Get method name and parameters C style.
   method = qi::jni::toString(jmethod);
   try {
     fut = call_from_java(env, obj, method, args);
   } catch (std::exception& e)
   {
-    throwJavaError(env, e.what());
+    throwNewDynamicCallException(env, e.what());
     return 0;
   }
-
   return (jlong) fut;
 }
 
-jstring   Java_com_aldebaran_qi_AnyObject_printMetaObject(JNIEnv* env, jobject QI_UNUSED(jobj), jlong pObject)
+JNIEXPORT jstring JNICALL Java_com_aldebaran_qi_AnyObject_printMetaObject(JNIEnv* QI_UNUSED(env), jobject QI_UNUSED(jobj), jlong pObject)
 {
   qi::AnyObject&    obj = *(reinterpret_cast<qi::AnyObject*>(pObject));
   std::stringstream ss;
@@ -102,7 +92,7 @@ jstring   Java_com_aldebaran_qi_AnyObject_printMetaObject(JNIEnv* env, jobject Q
   return qi::jni::toJstring(ss.str());
 }
 
-void      Java_com_aldebaran_qi_AnyObject_destroy(JNIEnv* QI_UNUSED(env), jobject QI_UNUSED(jobj), jlong pObject)
+JNIEXPORT void JNICALL Java_com_aldebaran_qi_AnyObject_destroy(JNIEnv* QI_UNUSED(env), jobject QI_UNUSED(jobj), jlong pObject)
 {
   qi::AnyObject*    obj = reinterpret_cast<qi::AnyObject*>(pObject);
 
@@ -110,20 +100,19 @@ void      Java_com_aldebaran_qi_AnyObject_destroy(JNIEnv* QI_UNUSED(env), jobjec
 }
 
 
-jlong     Java_com_aldebaran_qi_AnyObject_disconnect(JNIEnv *env, jobject jobj, jlong pObject, jlong subscriberId)
+JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_disconnect(JNIEnv *env, jobject QI_UNUSED(jobj), jlong pObject, jlong subscriberId)
 {
   qi::AnyObject&             obj = *(reinterpret_cast<qi::AnyObject *>(pObject));
   try {
     obj.disconnect(subscriberId);
   } catch (std::exception& e)
   {
-    throwJavaError(env, e.what());
+    throwNewException(env, e.what());
   }
   return 0;
 }
 
-
-jlong     Java_com_aldebaran_qi_AnyObject_connect(JNIEnv *env, jobject jobj, jlong pObject, jstring method, jobject instance, jstring service, jstring eventName)
+JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_connect(JNIEnv *env, jobject jobj, jlong pObject, jstring method, jobject instance, jstring service, jstring eventName)
 {
   qi::AnyObject&             obj = *(reinterpret_cast<qi::AnyObject *>(pObject));
   std::string                signature = qi::jni::toString(method);
@@ -146,6 +135,7 @@ jlong     Java_com_aldebaran_qi_AnyObject_connect(JNIEnv *env, jobject jobj, jlo
 
   // Create a struct holding a jobject instance, jmethodId id and other needed thing for callback
   // Pass it to void * data to register_method
+  // FIXME jobj is not a global ref, it may be invalid when it will be used
   data = new qi_method_info(instance, signature, jobj);
   gInfoHandler.push(data);
 
@@ -158,12 +148,60 @@ jlong     Java_com_aldebaran_qi_AnyObject_connect(JNIEnv *env, jobject jobj, jlo
     return link;
   } catch (std::exception& e)
   {
-    throwJavaError(env, e.what());
+    throwNewException(env, e.what());
     return 0;
   }
 }
 
-void      Java_com_aldebaran_qi_AnyObject_post(JNIEnv *env, jobject QI_UNUSED(jobj), jlong pObject, jstring eventName, jobjectArray jargs)
+JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_connectSignal(JNIEnv *env, jobject QI_UNUSED(obj), jlong pObject, jstring jSignalName, jobject listener)
+{
+  qi::AnyObject *anyObject = reinterpret_cast<qi::AnyObject *>(pObject);
+  std::string signalName = qi::jni::toString(jSignalName);
+  auto gListener = qi::jni::makeSharedGlobalRef(env, listener);
+
+  qi::SignalSubscriber subscriber {
+    qi::AnyFunction::fromDynamicFunction(
+      [gListener](const std::vector<qi::AnyReference> &params) -> qi::AnyReference {
+        jobject listener = gListener.get();
+
+        qi::jni::JNIAttach attach;
+        JNIEnv *env = attach.get();
+
+        const char *method = "onSignalReceived";
+        const char *methodSig = "([Ljava/lang/Object;)V";
+        jobjectArray jparams = qi::jni::toJobjectArray(params);
+        qi::jni::Call<void>::invoke(env, listener, method, methodSig, jparams);
+        env->DeleteLocalRef(jparams);
+        jthrowable exception = env->ExceptionOccurred();
+        if (exception)
+        {
+          env->ExceptionDescribe();
+          // an exception occurred in a listener, report and ignore
+          env->ExceptionClear();
+        }
+        return {}; // a void AnyReference
+      }
+    )
+  };
+
+  qi::Future<qi::SignalLink> signalLinkFuture = anyObject->connect(signalName, subscriber);
+
+  qi::Future<qi::AnyValue> future = qi::toAnyValueFuture(std::move(signalLinkFuture));
+  auto futurePtr = new qi::Future<qi::AnyValue>(std::move(future));
+  return reinterpret_cast<jlong>(futurePtr);
+}
+
+JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_disconnectSignal(JNIEnv *env, jobject QI_UNUSED(obj), jlong pObject, jlong subscriberId)
+{
+  qi::AnyObject *anyObject = reinterpret_cast<qi::AnyObject *>(pObject);
+  qi::Future<void> disconnectFuture = anyObject->disconnect(subscriberId);
+
+  qi::Future<qi::AnyValue> future = qi::toAnyValueFuture(std::move(disconnectFuture));
+  auto futurePtr = new qi::Future<qi::AnyValue>(std::move(future));
+  return reinterpret_cast<jlong>(futurePtr);
+}
+
+JNIEXPORT void JNICALL Java_com_aldebaran_qi_AnyObject_post(JNIEnv *env, jobject QI_UNUSED(jobj), jlong pObject, jstring eventName, jobjectArray jargs)
 {
   qi::AnyObject obj = *(reinterpret_cast<qi::AnyObject *>(pObject));
   std::string   event = qi::jni::toString(eventName);
@@ -194,7 +232,7 @@ void      Java_com_aldebaran_qi_AnyObject_post(JNIEnv *env, jobject QI_UNUSED(jo
     obj.metaPost(event, params);
   } catch (std::exception& e)
   {
-    throwJavaError(env, e.what());
+    throwNewException(env, e.what());
   }
 
   // Destroy arguments
@@ -204,14 +242,14 @@ void      Java_com_aldebaran_qi_AnyObject_post(JNIEnv *env, jobject QI_UNUSED(jo
   return;
 }
 
-jobject Java_com_aldebaran_qi_AnyObject_decodeJSON(JNIEnv* env, jclass, jstring what)
+JNIEXPORT jobject JNICALL Java_com_aldebaran_qi_AnyObject_decodeJSON(JNIEnv *QI_UNUSED(env), jclass QI_UNUSED(cls), jstring what)
 {
   std::string str = qi::jni::toString(what);
   qi::AnyValue val = qi::decodeJSON(str);
   return JObject_from_AnyValue(val.asReference());
 }
 
-jstring Java_com_aldebaran_qi_AnyObject_encodeJSON(JNIEnv* env, jclass, jobject what)
+JNIEXPORT jstring JNICALL Java_com_aldebaran_qi_AnyObject_encodeJSON(JNIEnv *QI_UNUSED(env), jclass QI_UNUSED(cls), jobject what)
 {
   std::string res = qi::encodeJSON(what);
   return qi::jni::toJstring(res);
