@@ -18,124 +18,122 @@ import java.lang.reflect.Method;
 
 public class DynamicObjectBuilder {
 
-  static
-  {
-    // Loading native C++ libraries.
-    if (!EmbeddedTools.LOADED_EMBEDDED_LIBRARY)
-    {
-      EmbeddedTools loader = new EmbeddedTools();
-      loader.loadEmbeddedLibraries();
+    static {
+        // Loading native C++ libraries.
+        if (!EmbeddedTools.LOADED_EMBEDDED_LIBRARY) {
+            EmbeddedTools loader = new EmbeddedTools();
+            loader.loadEmbeddedLibraries();
+        }
     }
-  }
 
-  private long _p;
+    private long _p;
 
-  private native long create();
-  private native void destroy(long pObject);
-  private native AnyObject object(long pObjectBuilder);
-  private native void advertiseMethod(long pObjectBuilder, String method, Object instance, String className, String description);
-  private native void advertiseSignal(long pObjectBuilder, String eventSignature);
-  private native void advertiseProperty(long pObjectBuilder, String name, Class<?> propertyBase);
-  private native void setThreadSafeness(long pObjectBuilder, boolean isThreadSafe);
+    private native long create();
 
-  /// Possible thread models for an object
+    private native void destroy(long pObject);
 
-  /**
-   * Enum to declare the thread-safeness state of an {@link AnyObject} instance.
-   * <p>
-   * Use <b>MultiThread</b> if your object is expected to be thread-safe.
-   * Method calls will potentially occur in parallel in multiple threads.
-   * <p>
-   * Use <b>SingleThread</b> to make your object non-thread-safe.
-   * All method calls must occur in the same thread.
-   */
-  public enum ObjectThreadingModel
-  {
-    /// AnyObject is not thread safe, all method calls must occur in the same thread
-    SingleThread,
-    /// AnyObject is thread safe, multiple calls can occur in different threads in parallel
-    MultiThread
-  }
+    private native AnyObject object(long pObjectBuilder);
 
-  public DynamicObjectBuilder()
-  {
-    _p = create();
-  }
+    private native void advertiseMethod(long pObjectBuilder, String method, Object instance, String className, String description);
 
-  /**
-   * Bind method from a qimessaging.service to GenericObject.
-   * @param methodSignature Signature of method to bind.
-   * @param service Service implementing method.
-   * @throws Exception on error.
-   */
-  public void advertiseMethod(String methodSignature, QiService service, String description)
-  {
-    Class<?extends Object> c = service.getClass();
-    Method[] methods = c.getDeclaredMethods();
+    private native void advertiseSignal(long pObjectBuilder, String eventSignature);
 
-    for (Method method : methods)
-    {
-      String className = service.getClass().toString();
-      className = className.substring(6); // Remove "class "
-      className = className.replace('.', '/');
+    private native void advertiseProperty(long pObjectBuilder, String name, Class<?> propertyBase);
 
-      // FIXME this is very fragile
-      // If method name match signature
-      if (methodSignature.contains(method.getName()) == true)
-      {
-        advertiseMethod(_p, methodSignature, service, className, description);
-        return;
-      }
+    private native void setThreadSafeness(long pObjectBuilder, boolean isThreadSafe);
+
+    /// Possible thread models for an object
+
+    /**
+     * Enum to declare the thread-safeness state of an {@link AnyObject} instance.
+     * <p>
+     * Use <b>MultiThread</b> if your object is expected to be thread-safe.
+     * Method calls will potentially occur in parallel in multiple threads.
+     * <p>
+     * Use <b>SingleThread</b> to make your object non-thread-safe.
+     * All method calls must occur in the same thread.
+     */
+    public enum ObjectThreadingModel {
+        /// AnyObject is not thread safe, all method calls must occur in the same thread
+        SingleThread,
+        /// AnyObject is thread safe, multiple calls can occur in different threads in parallel
+        MultiThread
     }
-  }
 
-  /**
-   * Advertise a signal with its callback signature.
-   * @param signalSignature Signature of available callback.
-   * @throws Exception If GenericObject is not initialized internally.
-   */
-  public void advertiseSignal(String signalSignature) throws Exception
-  {
-    advertiseSignal(_p, signalSignature);
-  }
+    public DynamicObjectBuilder() {
+        _p = create();
+    }
 
-  public void advertiseProperty(String name, Class<?> propertyBase)
-  {
-    advertiseProperty(_p, name, propertyBase);
-  }
+    /**
+     * Bind method from a qimessaging.service to GenericObject.
+     *
+     * @param methodSignature Signature of method to bind.
+     * @param service         Service implementing method.
+     * @throws Exception on error.
+     */
+    public void advertiseMethod(String methodSignature, QiService service, String description) {
+        Class<? extends Object> c = service.getClass();
+        Method[] methods = c.getDeclaredMethods();
 
-  /**
-   * Declare the thread-safeness state of an instance
-   * @param threadModel if set to ObjectThreadingModel.MultiThread,
-   *        your object is expected to be
-   *        thread safe, and calls to its method will potentially
-   *        occur in parallel in multiple threads.
-   *        If false, qimessaging will use a per-instance mutex
-   *        to prevent multiple calls at the same time.
-   */
-  public void setThreadingModel(ObjectThreadingModel threadModel)
-  {
-    setThreadSafeness(_p, threadModel == ObjectThreadingModel.MultiThread);
-  }
+        for (Method method : methods) {
+            String className = service.getClass().toString();
+            className = className.substring(6); // Remove "class "
+            className = className.replace('.', '/');
 
-  /**
-   * Instantiate new AnyObject after builder template.
-   * @see AnyObject
-   * @return AnyObject
-   */
-  public AnyObject object()
-  {
-    return object(_p);
-  }
+            // FIXME this is very fragile
+            // If method name match signature
+            if (methodSignature.contains(method.getName()) == true) {
+                advertiseMethod(_p, methodSignature, service, className, description);
+                return;
+            }
+        }
+    }
 
-  /**
-   * Called by garbage collector
-   * Finalize is overriden to manually delete C++ data
-   */
-  @Override
-  protected void finalize() throws Throwable
-  {
-    destroy(_p);
-    super.finalize();
-  }
+    /**
+     * Advertise a signal with its callback signature.
+     *
+     * @param signalSignature Signature of available callback.
+     * @throws Exception If GenericObject is not initialized internally.
+     */
+    public void advertiseSignal(String signalSignature) throws Exception {
+        advertiseSignal(_p, signalSignature);
+    }
+
+    public void advertiseProperty(String name, Class<?> propertyBase) {
+        advertiseProperty(_p, name, propertyBase);
+    }
+
+    /**
+     * Declare the thread-safeness state of an instance
+     *
+     * @param threadModel if set to ObjectThreadingModel.MultiThread,
+     *                    your object is expected to be
+     *                    thread safe, and calls to its method will potentially
+     *                    occur in parallel in multiple threads.
+     *                    If false, qimessaging will use a per-instance mutex
+     *                    to prevent multiple calls at the same time.
+     */
+    public void setThreadingModel(ObjectThreadingModel threadModel) {
+        setThreadSafeness(_p, threadModel == ObjectThreadingModel.MultiThread);
+    }
+
+    /**
+     * Instantiate new AnyObject after builder template.
+     *
+     * @return AnyObject
+     * @see AnyObject
+     */
+    public AnyObject object() {
+        return object(_p);
+    }
+
+    /**
+     * Called by garbage collector
+     * Finalize is overriden to manually delete C++ data
+     */
+    @Override
+    protected void finalize() throws Throwable {
+        destroy(_p);
+        super.finalize();
+    }
 }

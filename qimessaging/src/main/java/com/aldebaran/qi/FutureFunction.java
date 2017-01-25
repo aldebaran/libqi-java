@@ -6,10 +6,10 @@ package com.aldebaran.qi;
  * <p>
  * For a simpler use, prefer using one of the two provided implementations:
  * {@link QiCallback} and {@link QiFunction}.
+ *
  * @param <Ret> the {@link Future}'s output type
  * @param <Arg> the {@link Future}'s input type
  */
-public interface FutureFunction<Ret, Arg>
-{
-  Future<Ret> execute(Future<Arg> future) throws Throwable;
+public interface FutureFunction<Ret, Arg> {
+    Future<Ret> execute(Future<Arg> future) throws Throwable;
 }

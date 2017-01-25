@@ -7,7 +7,7 @@ import java.util.Map;
  * {@link Session}.
  */
 public interface ClientAuthenticator {
-  public Map<String, Object> initialAuthData();
+    public Map<String, Object> initialAuthData();
 
-  public Map<String, Object> _processAuth(Map<String, Object> authData);
+    public Map<String, Object> _processAuth(Map<String, Object> authData);
 }

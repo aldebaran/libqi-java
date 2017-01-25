@@ -11,47 +11,45 @@ package com.aldebaran.qi;
  * A ServiceDirectory instance should be connected to a {@link Session} in order
  * to be accessed by other {@link Session}s. When a {@link Session} exposes a
  * service, other connected {@link Session}s can contact that service.
+ *
  * @see Session
  */
 public class ServiceDirectory {
 
-  static
-  {
-    // Loading native C++ libraries.
-    if (!EmbeddedTools.LOADED_EMBEDDED_LIBRARY)
-    {
-      EmbeddedTools loader = new EmbeddedTools();
-      loader.loadEmbeddedLibraries();
+    static {
+        // Loading native C++ libraries.
+        if (!EmbeddedTools.LOADED_EMBEDDED_LIBRARY) {
+            EmbeddedTools loader = new EmbeddedTools();
+            loader.loadEmbeddedLibraries();
+        }
     }
-  }
 
-  // Native function
-  private native long qiTestSDCreate();
-  private native void qiTestSDDestroy(long pServiceDirectory);
-  private native String qiListenUrl(long pServiceDirectory);
-  private native void qiTestSDClose(long pServiceDirectory);
+    // Native function
+    private native long qiTestSDCreate();
 
-  // Members
-  private long _sd;
+    private native void qiTestSDDestroy(long pServiceDirectory);
 
-  public ServiceDirectory()
-  {
-    _sd = qiTestSDCreate();
-  }
+    private native String qiListenUrl(long pServiceDirectory);
 
-  public String listenUrl()
-  {
-    return qiListenUrl(_sd);
-  }
+    private native void qiTestSDClose(long pServiceDirectory);
 
-  @Override
-  protected void finalize()
-  {
-    qiTestSDDestroy(_sd);
-  }
+    // Members
+    private long _sd;
 
-  public void close()
-  {
-    qiTestSDClose(_sd);
-  }
+    public ServiceDirectory() {
+        _sd = qiTestSDCreate();
+    }
+
+    public String listenUrl() {
+        return qiListenUrl(_sd);
+    }
+
+    @Override
+    protected void finalize() {
+        qiTestSDDestroy(_sd);
+    }
+
+    public void close() {
+        qiTestSDClose(_sd);
+    }
 }
