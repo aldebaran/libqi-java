@@ -64,30 +64,26 @@ public class DynamicObjectBuilder {
         _p = create();
     }
 
-    /**
-     * Bind method from a qimessaging.service to GenericObject.
-     *
-     * @param methodSignature Signature of method to bind.
-     * @param service         Service implementing method.
-     * @throws Exception on error.
-     */
-    public void advertiseMethod(String methodSignature, QiService service, String description) {
-        Class<? extends Object> c = service.getClass();
-        Method[] methods = c.getDeclaredMethods();
+  /**
+   * Bind method from a qimessaging.service to GenericObject.
+   * @param methodSignature Signature of method to bind.
+   * @param service Service implementing method.
+   * @throws Exception on error.
+   */
+  public void advertiseMethod(String methodSignature, QiService service, String description) {
+    final Class<? extends QiService> serviceClass = service.getClass();
+    final Method[] methods = serviceClass.getDeclaredMethods();
+    final String serviceClassName = serviceClass.getName().replace('.', '/');
 
-        for (Method method : methods) {
-            String className = service.getClass().toString();
-            className = className.substring(6); // Remove "class "
-            className = className.replace('.', '/');
-
-            // FIXME this is very fragile
-            // If method name match signature
-            if (methodSignature.contains(method.getName()) == true) {
-                advertiseMethod(_p, methodSignature, service, className, description);
-                return;
-            }
-        }
+    for (final Method method : methods) {
+      // FIXME this is very fragile
+      // If method name match signature
+      if (methodSignature.contains(method.getName())) {
+        advertiseMethod(_p, methodSignature, service, serviceClassName, description);
+        return;
+      }
     }
+  }
 
     /**
      * Advertise a signal with its callback signature.

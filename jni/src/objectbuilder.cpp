@@ -1,4 +1,4 @@
-/*
+﻿/*
 **
 ** Author(s):
 **  - Pierre ROULLON <proullon@aldebaran-robotics.com>
@@ -18,6 +18,8 @@
 #include <object_jni.hpp>
 #include <callbridge.hpp>
 #include <objectbuilder.hpp>
+
+qiLogCategory("qimessaging.jni");
 
 JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_DynamicObjectBuilder_create(JNIEnv *QI_UNUSED(env), jobject QI_UNUSED(obj))
 {
@@ -65,15 +67,16 @@ JNIEXPORT void JNICALL Java_com_aldebaran_qi_DynamicObjectBuilder_advertiseMetho
   data = new qi_method_info(instance, signature, jobj);
   gInfoHandler.push(data);
 
-  // Bind method signature on generic java callback
-  sigInfo = qi::signatureSplit(signature);
   try
   {
+    // Bind method signature on generic java callback
+    sigInfo = qi::signatureSplit(signature);
+
     ob->xAdvertiseMethod(sigInfo[0],
-                         sigInfo[1],
-                         sigInfo[2],
-                         qi::AnyFunction::fromDynamicFunction(boost::bind(&call_to_java, signature, data, _1)).dropFirstArgument(),
-                         description);
+        sigInfo[1],
+        sigInfo[2],
+        qi::AnyFunction::fromDynamicFunction(boost::bind(&call_to_java, signature, data, _1)).dropFirstArgument(),
+        description);
   }
   catch (std::runtime_error &e)
   {

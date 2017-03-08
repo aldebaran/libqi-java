@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+﻿cmake_minimum_required(VERSION 2.8)
 project(qimessaging-jni)
 
 find_package(qibuild)
@@ -56,13 +56,15 @@ qi_create_lib(qimessagingjni ${SOURCE} SHARED DEPENDS QI)
 
 qi_stage_lib(qimessagingjni)
 
-qi_create_gtest(
-  test_qijni
+if (NOT ANDROID)
+   qi_create_gtest(
+     test_qijni
 
-  "test/test_qijni.cpp"
+     "test/test_qijni.cpp"
 
-  DEPENDS
-  jni
-  qi
-  qimessagingjni
-)
+     DEPENDS
+     jni
+     qi
+     qimessagingjni
+   )
+endif()

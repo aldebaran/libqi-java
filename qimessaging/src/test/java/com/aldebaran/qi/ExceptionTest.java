@@ -49,6 +49,7 @@ public class ExceptionTest {
     ob.advertiseMethod("echoFloatList::[m]([f])", reply, "Return the exact same list");
     ob.advertiseMethod("createObject::o()", reply, "Return a test object");
     ob.advertiseMethod("iWillThrow::b()", reply, "Throw.");
+    ob.advertiseMethod("printLong::v(l)", reply, "printLong.");
 
     // Connect session to Service Directory
     s.connect(url).sync();
@@ -83,13 +84,14 @@ public class ExceptionTest {
   public void test() {
 
     try {
-      proxy.<Boolean>call("iWillThrow").get();
+      this.proxy.call("printLong",73).get();
+      this.proxy.<Boolean>call("iWillThrow").get();
     } catch (Exception e) {
-      exceptionThrown = true;
+        this.exceptionThrown = true;
       System.out.println("Exception has been thrown: " + e.getMessage());
     }
 
-    assertTrue(exceptionThrown);
+    assertTrue(this.exceptionThrown);
   }
 
 }

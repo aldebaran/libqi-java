@@ -99,13 +99,18 @@ public class ReplyService extends QiService
     return "42 !";
   }
 
+  public void printLong(Long l)
+  {
+    System.out.println("printLong : " + l);
+  }
+
   public Integer answer(Integer val)
   {
     System.out.println("Replying : " + (val + 1));
     return val + 1;
   }
 
-  public Float   answerFloat(Float val)
+  public Float answerFloat(Float val)
   {
     return val + 1f;
   }

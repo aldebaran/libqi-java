@@ -130,6 +130,9 @@ void getJavaSignature(std::string &javaSignature, const std::string& qiSignature
     case qi::Signature::Type_Int32:
       javaSignature.append("Ljava/lang/Integer;");
       break;
+    case qi::Signature::Type_Int64:
+      javaSignature.append("Ljava/lang/Long;");
+      break;
     case qi::Signature::Type_String:
       javaSignature.append("Ljava/lang/String;");
       break;
