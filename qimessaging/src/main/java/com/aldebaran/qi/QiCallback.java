@@ -21,9 +21,8 @@ public abstract class QiCallback<T> implements FutureFunction<Void, T> {
             onResult(future.get());
             return null;
         } catch (ExecutionException e) {
-            Throwable t = e.getCause();
-            onError(t);
-            throw t;
+            onError(e);
+            return null;
         } catch (CancellationException e) {
             onCancel();
             return Future.cancelled();
@@ -33,7 +32,7 @@ public abstract class QiCallback<T> implements FutureFunction<Void, T> {
     public abstract void onResult(T result) throws Throwable;
 
     public void onError(Throwable error) throws Throwable {
-        // do nothing
+      throw error;
     }
 
     public void onCancel() throws Throwable {

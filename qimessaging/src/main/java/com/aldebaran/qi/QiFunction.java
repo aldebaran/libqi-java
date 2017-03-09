@@ -19,7 +19,7 @@ public abstract class QiFunction<Ret, Arg> implements FutureFunction<Ret, Arg> {
         try {
             return onResult(future.get());
         } catch (ExecutionException e) {
-            return onError(e.getCause());
+            return onError(e);
         } catch (CancellationException e) {
             return onCancel();
         }
