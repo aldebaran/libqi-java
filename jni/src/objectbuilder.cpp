@@ -19,8 +19,6 @@
 #include <callbridge.hpp>
 #include <objectbuilder.hpp>
 
-qiLogCategory("qimessaging.jni");
-
 JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_DynamicObjectBuilder_create(JNIEnv *QI_UNUSED(env), jobject QI_UNUSED(obj))
 {
   qi::DynamicObjectBuilder *ob = new qi::DynamicObjectBuilder();
@@ -87,12 +85,12 @@ JNIEXPORT void JNICALL Java_com_aldebaran_qi_DynamicObjectBuilder_advertiseMetho
 JNIEXPORT void JNICALL Java_com_aldebaran_qi_DynamicObjectBuilder_advertiseSignal(JNIEnv *env, jobject QI_UNUSED(obj), jlong pObjectBuilder, jstring eventSignature)
 {
   qi::DynamicObjectBuilder  *ob = reinterpret_cast<qi::DynamicObjectBuilder *>(pObjectBuilder);
-  std::vector<std::string>   sigInfo = qi::signatureSplit(qi::jni::toString(eventSignature));
-  std::string   event = sigInfo[1];
-  std::string   callbackSignature = sigInfo[0] + sigInfo[2];
 
   try
   {
+    std::vector<std::string>   sigInfo = qi::signatureSplit(qi::jni::toString(eventSignature));
+    std::string   event = sigInfo[1];
+    std::string   callbackSignature = sigInfo[0] + sigInfo[2];
     ob->xAdvertiseSignal(event, callbackSignature);
   }
   catch (std::runtime_error &e)

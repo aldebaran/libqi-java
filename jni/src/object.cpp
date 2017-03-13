@@ -125,20 +125,19 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_connect(JNIEnv *env, job
   // jobject structure are local reference and are destroyed when returning to JVM
   instance = env->NewGlobalRef(instance);
 
-  // Remove return value
-  sigInfo = qi::signatureSplit(signature);
-  signature = sigInfo[1];
-  signature.append("::");
-  signature.append(sigInfo[2]);
-
-  // Create a struct holding a jobject instance, jmethodId id and other needed thing for callback
-  // Pass it to void * data to register_method
-  // FIXME jobj is not a global ref, it may be invalid when it will be used
-  data = new qi_method_info(instance, signature, jobj);
-  gInfoHandler.push(data);
-
-
   try {
+    // Remove return value
+    sigInfo = qi::signatureSplit(signature);
+    signature = sigInfo[1];
+    signature.append("::");
+    signature.append(sigInfo[2]);
+
+    // Create a struct holding a jobject instance, jmethodId id and other needed thing for callback
+    // Pass it to void * data to register_method
+    // FIXME jobj is not a global ref, it may be invalid when it will be used
+    data = new qi_method_info(instance, signature, jobj);
+    gInfoHandler.push(data);
+
     qi::SignalLink link =obj.connect(event,
                         qi::SignalSubscriber(
                           qi::AnyFunction::fromDynamicFunction(
