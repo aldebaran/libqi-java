@@ -38,19 +38,19 @@ public class AnyObject {
 
     private long _p;
 
-    private native long property(long pObj, String property);
+    private native long property(long pObj, String property) throws DynamicCallException;
 
-    private native long setProperty(long pObj, String property, Object value);
+    private native long setProperty(long pObj, String property, Object value) throws DynamicCallException;
 
-    private native long asyncCall(long pObject, String method, Object[] args);
+    private native long asyncCall(long pObject, String method, Object[] args) throws DynamicCallException;
 
     private native String printMetaObject(long pObject);
 
     private native void destroy(long pObj);
 
-    private native long connect(long pObject, String method, Object instance, String className, String eventName);
+    private native long connect(long pObject, String method, Object instance, String className, String eventName) throws RuntimeException;
 
-    private native long disconnect(long pObject, long subscriberId);
+    private native long disconnect(long pObject, long subscriberId) throws RuntimeException;
 
     private native long connectSignal(long pObject, String signalName, QiSignalListener listener);
 

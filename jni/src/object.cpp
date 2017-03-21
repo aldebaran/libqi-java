@@ -1,4 +1,4 @@
-/*
+﻿/*
 **
 ** Author(s):
 **  - Pierre ROULLON <proullon@aldebaran-robotics.com>
@@ -34,7 +34,7 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_property(JNIEnv* env, jo
   } catch (qi::FutureUserException& e)
   {
     delete ret;
-    throwNewException(env, e.what());
+    throwNewDynamicCallException(env, e.what());
     return 0;
   }
 
@@ -105,7 +105,7 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_disconnect(JNIEnv *env, 
     obj.disconnect(subscriberId);
   } catch (std::exception& e)
   {
-    throwNewException(env, e.what());
+    throwNewRuntimeException(env, e.what());
   }
   return 0;
 }
@@ -146,7 +146,7 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_connect(JNIEnv *env, job
     return link;
   } catch (std::exception& e)
   {
-    throwNewException(env, e.what());
+    throwNewRuntimeException(env, e.what());
     return 0;
   }
 }

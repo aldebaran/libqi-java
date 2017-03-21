@@ -13,7 +13,7 @@ import java.lang.reflect.Method;
  * method always returns the same instance.
  * <p>
  * This class is typically used to subscribe a new {@link QiService} to a
- * {@link Session}.
+ * {@link Session}
  */
 
 public class DynamicObjectBuilder {
@@ -34,11 +34,11 @@ public class DynamicObjectBuilder {
 
     private native AnyObject object(long pObjectBuilder);
 
-    private native void advertiseMethod(long pObjectBuilder, String method, Object instance, String className, String description);
+    private native void advertiseMethod(long pObjectBuilder, String method, Object instance, String className, String description) throws AdvertisementException;
 
-    private native void advertiseSignal(long pObjectBuilder, String eventSignature);
+    private native void advertiseSignal(long pObjectBuilder, String eventSignature) throws AdvertisementException;
 
-    private native void advertiseProperty(long pObjectBuilder, String name, Class<?> propertyBase);
+    private native void advertiseProperty(long pObjectBuilder, String name, Class<?> propertyBase) throws AdvertisementException;
 
     private native void setThreadSafeness(long pObjectBuilder, boolean isThreadSafe);
 
