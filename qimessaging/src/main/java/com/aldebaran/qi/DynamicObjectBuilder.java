@@ -54,24 +54,53 @@ public class DynamicObjectBuilder {
      * All method calls must occur in the same thread.
      */
     public enum ObjectThreadingModel {
-        /// AnyObject is not thread safe, all method calls must occur in the same thread
+        /** AnyObject is not thread safe, all method calls must occur in the same thread**/
         SingleThread,
-        /// AnyObject is thread safe, multiple calls can occur in different threads in parallel
+        /** AnyObject is thread safe, multiple calls can occur in different threads in parallel**/
         MultiThread
     }
 
+    /**
+     * Create the builder
+     */
     public DynamicObjectBuilder() {
         _p = create();
     }
 
   /**
-   * Bind method from a qimessaging.service to GenericObject.
-   * @param methodSignature Signature of method to bind.
+   * Bind method from a qimessaging.service to GenericObject.<br>
+   * The given signature <b>MUST</b> be a libqi type signature <b>AND</b> use Java compatible types :<br>
+   * <table border=1>
+   *  <tr><th>libqi</th><th>Java</th></tr>
+   *  <tr><td><center>b</center></td><td>{@link Boolean}</td></tr>
+   *  <tr><td><center>c</center></td><td>{@link Character}</td></tr>
+   *  <tr><td><center>v</center></td><td>void</td></tr>
+   *  <tr><td><center>i</center></td><td>{@link Integer}</td></tr>
+   *  <tr><td><center>l</center></td><td>{@link Long}</td></tr>
+   *  <tr><td><center>f</center></td><td>{@link Float}</td></tr>
+   *  <tr><td><center>d</center></td><td>{@link Double}</td></tr>
+   *  <tr><td><center>s</center></td><td>{@link String}</td></tr>
+   *  <tr><td><center>o</center></td><td>{@link Object}</td></tr>
+   *  <tr><td><center>m</center></td><td>{@link Object} (dynamic)</td></tr>
+   *  <tr><td><center>[&lt;type&gt;]</center></td><td>{@link java.util.ArrayList}</td></tr>
+   *  <tr><td><center>{&lt;key&gt;&lt;type&gt;}</center></td><td>{@link java.util.Map}</td></tr>
+   *  <tr><td><center>(&lt;type&gt;....)</center></td><td>{@link Tuple}</td></tr>
+   * </table><br>
+   * <b>WARNING</b> :
+   * <ul>
+   *  <li>If method not found, nothing happen.</li>
+   *  <li>Be sure the method is unique in name, if two methods with same name and different signature,
+   *  you can't be sure it choose the good one</li>
+   *  <li>If method choose (by name) have not the correct Java signature, it will crash later (when call)</li>
+   * </ul>
+   * @param methodSignature Signature of method to bind. It must be a valid libqi type signature
    * @param service Service implementing method.
-   * @throws Exception on error.
+   * @param description Method description
+   * @throws AdvertisementException If signature is not a valid libqi signature type.
+   * @throws SecurityException If given service instance of a class protect from reflection
    */
   public void advertiseMethod(String methodSignature, QiService service, String description) {
-    final Class<? extends QiService> serviceClass = service.getClass();
+    final Class<?> serviceClass = service.getClass();
     final Method[] methods = serviceClass.getDeclaredMethods();
     final String serviceClassName = serviceClass.getName().replace('.', '/');
 
@@ -86,15 +115,21 @@ public class DynamicObjectBuilder {
   }
 
     /**
-     * Advertise a signal with its callback signature.
-     *
+     * Advertise a signal with its callback signature.<br>
+     * The given signature <b>MUST</b> be a libqi type signature
      * @param signalSignature Signature of available callback.
+     * @throws AdvertisementException If signature not a valid libqi signature type.
      * @throws Exception If GenericObject is not initialized internally.
      */
     public void advertiseSignal(String signalSignature) throws Exception {
         advertiseSignal(_p, signalSignature);
     }
 
+    /**
+     * Advertise a property
+     * @param name Property name
+     * @param propertyBase Class warp the property
+     */
     public void advertiseProperty(String name, Class<?> propertyBase) {
         advertiseProperty(_p, name, propertyBase);
     }
@@ -125,7 +160,7 @@ public class DynamicObjectBuilder {
 
     /**
      * Called by garbage collector
-     * Finalize is overriden to manually delete C++ data
+     * Finalize is overridden to manually delete C++ data
      */
     @Override
     protected void finalize() throws Throwable {
