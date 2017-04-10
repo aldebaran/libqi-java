@@ -60,4 +60,15 @@ public class RawApplication {
         qiApplicationRun(_application);
     }
 
+    /**
+     * Called by garbage collector when object destroy.<br>
+     * Override to free the reference in JNI.
+     *
+     * @throws Throwable On destruction issue.
+     */
+    @Override
+    protected void finalize() throws Throwable {
+        this.qiApplicationDestroy(this._application);
+        super.finalize();
+    }
 }

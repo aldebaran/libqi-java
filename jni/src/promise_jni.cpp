@@ -96,3 +96,16 @@ JNIEXPORT void JNICALL Java_com_aldebaran_qi_Promise__1setOnCancel(JNIEnv *env, 
   } );
 
 }
+
+/**
+ * @brief Java_com_aldebaran_qi_Promise__1destroyPromise : Destroy the promise from memory
+ * @param env         Work environment
+ * @param thisPromise Promise object
+ * @param promisePtr  Pointer on promise
+ */
+JNIEXPORT void JNICALL Java_com_aldebaran_qi_Promise__1destroyPromise(JNIEnv *env, jobject thisPromise, jlong promisePtr)
+{
+  qi::Promise<qi::AnyValue> * promise = reinterpret_cast<qi::Promise<qi::AnyValue> *>(promisePtr);
+  delete promise;
+}
+

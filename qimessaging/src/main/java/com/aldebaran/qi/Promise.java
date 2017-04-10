@@ -100,6 +100,18 @@ public class Promise<T> {
         });
     }
 
+    /**
+     * Called by garbage collector when object destroy.<br>
+     * Override to free the reference in JNI.
+     *
+     * @throws Throwable On destruction issue.
+     */
+    @Override
+    protected void finalize() throws Throwable {
+        this._destroyPromise(this.promisePtr);
+        super.finalize();
+    }
+
     private native long _newPromise(int futureCallbackType);
 
     private native long _getFuture(long promisePtr);
@@ -111,4 +123,11 @@ public class Promise<T> {
     private native void _setCancelled(long promisePtr);
 
     private native void _setOnCancel(long promisePtr, CancelRequestCallback<T> callback);
+
+    /**
+     * Destroy the reference in JNI.
+     *
+     * @param promisePointer Pointer to destroy.
+     */
+    private native void _destroyPromise(long promisePointer);
 }
