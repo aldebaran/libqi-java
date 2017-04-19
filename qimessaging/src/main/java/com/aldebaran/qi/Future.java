@@ -1,6 +1,6 @@
 /*
-**  Copyright (C) 2015 Aldebaran Robotics
-**  See COPYING for the license
+*  Copyright (C) 2015 Aldebaran Robotics
+*  See COPYING for the license
 */
 package com.aldebaran.qi;
 
@@ -70,8 +70,11 @@ public class Future<T> implements java.util.concurrent.Future<T> {
 
     private static native long qiFutureCreate(Object value);
 
-    Future(long pFuture) {
-        _fut = pFuture;
+    /** Default callback type */
+    private FutureCallbackType defaultFutureCallbackType = FutureCallbackType.Async;
+
+    Future(final long pFuture) {
+        this._fut = pFuture;
         this.nativeFuture = true;
     }
 
@@ -105,7 +108,17 @@ public class Future<T> implements java.util.concurrent.Future<T> {
         this.canceled = true;
     }
 
-    public static <T> Future<T> of(T value) {
+    /**
+     * Change the default callback type
+     *
+     * @param defaultFutureCallbackType
+     *            New default callback type
+     */
+    void setDefaultFutureCallbackType(FutureCallbackType defaultFutureCallbackType) {
+        this.defaultFutureCallbackType = defaultFutureCallbackType;
+    }
+
+    public static <T> Future<T> of(final T value) {
         return new Future<T>(value);
     }
 
@@ -167,8 +180,8 @@ public class Future<T> implements java.util.concurrent.Future<T> {
         }
     }
 
-    public void connect(Callback<T> callback) {
-        connect(callback, FutureCallbackType.Async);
+    public void connect(final Callback<T> callback) {
+        this.connect(callback, this.defaultFutureCallbackType);
     }
 
     @Override
@@ -303,9 +316,11 @@ public class Future<T> implements java.util.concurrent.Future<T> {
     }
 
     private <Ret> Future<Ret> _then(final FutureFunction<Ret, T> function, final boolean chainOnFailure,
-                                    FutureCallbackType type) {
-        if(!this.nativeFuture) {
-            if(this.error != null) {
+            final FutureCallbackType type) {
+        FutureCallbackType futureCallbackTypePromise = FutureCallbackType.Sync;
+
+        if (!this.nativeFuture) {
+            if (this.error != null) {
                 return Future.fromError(this.error);
             }
 
@@ -313,12 +328,13 @@ public class Future<T> implements java.util.concurrent.Future<T> {
                 return Future.cancelled();
             }
 
+            futureCallbackTypePromise = FutureCallbackType.Async;
             // The value is know, but we want use a thread to have asynchronous call to not block current thread
             // So just do has "native future"
         }
 
         // the promise must be sync according to the Callback (which may be Sync or Async according to the caller)
-        final Promise<Ret> promiseToNotify = new Promise<Ret>(FutureCallbackType.Sync);
+        final Promise<Ret> promiseToNotify = new Promise<Ret>(futureCallbackTypePromise);
         // Adding the callback to the promise to be able to be able to forward the
         // cancel request to the parent future/promise.
         promiseToNotify.setOnCancel(new Promise.CancelRequestCallback<Ret>() {
@@ -344,16 +360,16 @@ public class Future<T> implements java.util.concurrent.Future<T> {
         return _then(function, true, type);
     }
 
-    public <Ret> Future<Ret> then(FutureFunction<Ret, T> function) {
-        return _then(function, true, FutureCallbackType.Async);
+    public <Ret> Future<Ret> then(final FutureFunction<Ret, T> function) {
+        return this._then(function, true, this.defaultFutureCallbackType);
     }
 
     public <Ret> Future<Ret> andThen(FutureFunction<Ret, T> function, FutureCallbackType type) {
         return _then(function, false, type);
     }
 
-    public <Ret> Future<Ret> andThen(FutureFunction<Ret, T> function) {
-        return _then(function, false, FutureCallbackType.Async);
+    public <Ret> Future<Ret> andThen(final FutureFunction<Ret, T> function) {
+        return this._then(function, false, this.defaultFutureCallbackType);
     }
 
     private static <Ret, Arg> Future<Ret> getNextFuture(Future<Arg> future, FutureFunction<Ret, Arg> function, Promise<Ret> promiseToNotify) {

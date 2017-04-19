@@ -38,13 +38,18 @@ public class Promise<T> {
 
     private Future<T> future;
 
+    /**
+     * Create a new promise
+     * @param type Callback type
+     */
     public Promise(FutureCallbackType type) {
-        promisePtr = _newPromise(type.nativeValue);
-        future = new Future<T>(_getFuture(promisePtr));
+        this.promisePtr = this._newPromise(type.nativeValue);
+        this.future = new Future<T>(this._getFuture(this.promisePtr));
+        this.future.setDefaultFutureCallbackType(type);
     }
 
     public Promise() {
-        this(FutureCallbackType.Auto);
+        this(FutureCallbackType.Async);
     }
 
     public Future<T> getFuture() {
