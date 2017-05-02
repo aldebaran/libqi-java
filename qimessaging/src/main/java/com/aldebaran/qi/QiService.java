@@ -9,11 +9,10 @@ package com.aldebaran.qi;
  */
 public abstract class QiService {
 
-  protected AnyObject self;
+    protected AnyObject self;
 
-  public void init(AnyObject self)
-  {
-    this.self = self;
-  }
+    public void init(AnyObject self) {
+        this.self = self;
+    }
 
 }

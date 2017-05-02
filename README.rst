@@ -2,12 +2,6 @@ Compiling and using libqi java bindings
 =======================================
 
 
-If you are from Aldebaran
--------------------------
-
-Go read the instructions on the internal documentation, this README is
-for external contributors only.
-
 Compiling
 ----------
 
@@ -16,7 +10,8 @@ Compiling
 * Get a toolchain (See `here <https://github.com/aldebaran/toolchains/tree/master/feeds>`_
   for a list of supported architectures) ::
 
-    qitoolchain create <toolchain-name> --feed-name <feed-name> git://github.com/aldebaran/toolchains.git
+    qitoolchain create --feed-name <feed-name> <toolchain-name> git://github.com/aldebaran/toolchains.git
+<toolchain-name> : name give to tool chain
 
   (Where ``feed-name`` is the basename of one of the feeds in ``feeds/``, without the
   ``.xml`` extension)
@@ -41,7 +36,7 @@ Compiling
 * Configure and build ``libqi-java`` bindings::
 
     cd sdk/libqi-java/jni
-    qibuild confiure -c <config-name>
+    qibuild configure -c <config-name>
     qibuild make -c <config-name>
 
 * Copy (or create symlinks) so that the qimessaging native libs are treated as resources
@@ -61,3 +56,36 @@ Using libqi-java in an other project
 To use the libqi Java bindings in an other maven project, run::
 
     mvn install -DskipTests=true   # use -f pom-android.xml if relevant
+
+
+Android compilation
++++++++++++++++++++
+
+For Android arm, you have to choose android-arm configuration.
+The first time create the configuration
+    cd ~/work/aldebaran/sdk/libqi-java
+    qitoolchain create --feed-name android-arm android-arm git://github.com/aldebaran/toolchains.git
+
+On each compilation
+    cd ~/work/aldebaran/sdk/libqi-java/jni
+    qibuild configure --release -c android-arm
+    qibuild make -j4 -c android-arm
+    mkdir -p ../qimessaging/lib/armeabi-v7a
+    mkdir -p /tmp/libqi-java/android-arm/
+    qibuild install --runtime -c android-arm
+    
+    cd /tmp/libqi-java/android-arm/
+    
+    for file in $(find -name *.so)
+    do
+       cp $file ~/work/aldebaran/sdk/libqi-java/qimessaging/lib/armeabi-v7a
+    done
+
+    cd ~/work/aldebaran/sdk/libqi-java
+    rm -rf /tmp/libqi-java/android-arm/
+    cp -f jni/build-android-arm/sdk/lib/libgnustl_shared.so qimessaging/lib/armeabi-v7a
+    cd qimessaging
+    mvn install -DskipTests=true # use -f pom-android.xml
+    version=$(cat pom-android.xml | grep -oPm1 "(?<=<version>)[^<]+")
+    zip -r target/libqi-java-$version.jar lib/
+

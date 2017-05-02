@@ -7,15 +7,13 @@ package com.aldebaran.qi;
  * {@link FutureCallbackType#Sync} or {@link FutureCallbackType#Async}, in the
  * {@link Promise} constructor.
  */
-public enum FutureCallbackType
-{
-  // keep values synchronized with qi::FutureCallbackType in libqi/qi/detail/future_fwd.hpp
-  Sync(0), Async(1), Auto(2);
+public enum FutureCallbackType {
+    // keep values synchronized with qi::FutureCallbackType in libqi/qi/detail/future_fwd.hpp
+    Sync(0), Async(1), Auto(2);
 
-  int nativeValue;
+    int nativeValue;
 
-  private FutureCallbackType(int nativeValue)
-  {
-    this.nativeValue = nativeValue;
-  }
+    private FutureCallbackType(int nativeValue) {
+        this.nativeValue = nativeValue;
+    }
 }

@@ -1,4 +1,4 @@
-/*
+﻿/*
 **
 ** Author(s):
 **  - Pierre ROULLON <proullon@aldebaran-robotics.com>
@@ -65,15 +65,16 @@ JNIEXPORT void JNICALL Java_com_aldebaran_qi_DynamicObjectBuilder_advertiseMetho
   data = new qi_method_info(instance, signature, jobj);
   gInfoHandler.push(data);
 
-  // Bind method signature on generic java callback
-  sigInfo = qi::signatureSplit(signature);
   try
   {
+    // Bind method signature on generic java callback
+    sigInfo = qi::signatureSplit(signature);
+
     ob->xAdvertiseMethod(sigInfo[0],
-                         sigInfo[1],
-                         sigInfo[2],
-                         qi::AnyFunction::fromDynamicFunction(boost::bind(&call_to_java, signature, data, _1)).dropFirstArgument(),
-                         description);
+        sigInfo[1],
+        sigInfo[2],
+        qi::AnyFunction::fromDynamicFunction(boost::bind(&call_to_java, signature, data, _1)).dropFirstArgument(),
+        description);
   }
   catch (std::runtime_error &e)
   {
@@ -84,12 +85,12 @@ JNIEXPORT void JNICALL Java_com_aldebaran_qi_DynamicObjectBuilder_advertiseMetho
 JNIEXPORT void JNICALL Java_com_aldebaran_qi_DynamicObjectBuilder_advertiseSignal(JNIEnv *env, jobject QI_UNUSED(obj), jlong pObjectBuilder, jstring eventSignature)
 {
   qi::DynamicObjectBuilder  *ob = reinterpret_cast<qi::DynamicObjectBuilder *>(pObjectBuilder);
-  std::vector<std::string>   sigInfo = qi::signatureSplit(qi::jni::toString(eventSignature));
-  std::string   event = sigInfo[1];
-  std::string   callbackSignature = sigInfo[0] + sigInfo[2];
 
   try
   {
+    std::vector<std::string>   sigInfo = qi::signatureSplit(qi::jni::toString(eventSignature));
+    std::string   event = sigInfo[1];
+    std::string   callbackSignature = sigInfo[0] + sigInfo[2];
     ob->xAdvertiseSignal(event, callbackSignature);
   }
   catch (std::runtime_error &e)

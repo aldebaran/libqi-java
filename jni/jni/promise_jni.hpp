@@ -50,6 +50,9 @@ JNIEXPORT void JNICALL Java_com_aldebaran_qi_Promise__1setCancelled
 JNIEXPORT void JNICALL Java_com_aldebaran_qi_Promise__1setOnCancel
   (JNIEnv *, jobject, jlong, jobject);
 
+JNIEXPORT void JNICALL Java_com_aldebaran_qi_Promise__1destroyPromise
+  (JNIEnv *, jobject, jlong);
+
 #ifdef __cplusplus
 }
 #endif

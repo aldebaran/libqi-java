@@ -1,4 +1,4 @@
-/*
+﻿/*
 **
 ** Author(s):
 **  - Pierre ROULLON <proullon@aldebaran-robotics.com>
@@ -34,27 +34,25 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_property(JNIEnv* env, jo
   } catch (qi::FutureUserException& e)
   {
     delete ret;
-    throwNewException(env, e.what());
+    throwNewDynamicCallException(env, e.what());
     return 0;
   }
 
   return (jlong) ret;
 }
 
-JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_setProperty(JNIEnv* env, jobject QI_UNUSED(jobj), jlong pObj, jstring name, jobject property)
+JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_setProperty(
+    JNIEnv* env, jobject /*jObject*/, jlong objectAddress, jstring jPropertyName, jobject jValue)
 {
-  qi::AnyObject *obj = reinterpret_cast<qi::AnyObject*>(pObj);
-  std::string propName = qi::jni::toString(name);
+  auto objectPtr = reinterpret_cast<qi::AnyObject*>(objectAddress);
+  auto propertyName = qi::jni::toString(jPropertyName);
 
   qi::jni::JNIAttach attach(env);
-
-  auto value = qi::AnyValue::from<jobject>(property);
   try
   {
-    qi::Future<void> propertyFuture = obj->setProperty(propName, std::move(value));
-    qi::Future<qi::AnyValue> future = qi::toAnyValueFuture(std::move(propertyFuture));
-    auto futurePtr = new qi::Future<qi::AnyValue>(std::move(future));
-    return reinterpret_cast<jlong>(futurePtr);
+    std::unique_ptr<qi::Future<qi::AnyValue>> futurePtr{new qi::Future<qi::AnyValue>()};
+    *futurePtr = qi::toAnyValueFuture(objectPtr->setProperty(propertyName, qi::AnyValue::from<jobject>(jValue)).async());
+    return reinterpret_cast<jlong>(futurePtr.release());
   }
   catch (std::runtime_error &e)
   {
@@ -107,7 +105,7 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_disconnect(JNIEnv *env, 
     obj.disconnect(subscriberId);
   } catch (std::exception& e)
   {
-    throwNewException(env, e.what());
+    throwNewRuntimeException(env, e.what());
   }
   return 0;
 }
@@ -127,20 +125,19 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_connect(JNIEnv *env, job
   // jobject structure are local reference and are destroyed when returning to JVM
   instance = env->NewGlobalRef(instance);
 
-  // Remove return value
-  sigInfo = qi::signatureSplit(signature);
-  signature = sigInfo[1];
-  signature.append("::");
-  signature.append(sigInfo[2]);
-
-  // Create a struct holding a jobject instance, jmethodId id and other needed thing for callback
-  // Pass it to void * data to register_method
-  // FIXME jobj is not a global ref, it may be invalid when it will be used
-  data = new qi_method_info(instance, signature, jobj);
-  gInfoHandler.push(data);
-
-
   try {
+    // Remove return value
+    sigInfo = qi::signatureSplit(signature);
+    signature = sigInfo[1];
+    signature.append("::");
+    signature.append(sigInfo[2]);
+
+    // Create a struct holding a jobject instance, jmethodId id and other needed thing for callback
+    // Pass it to void * data to register_method
+    // FIXME jobj is not a global ref, it may be invalid when it will be used
+    data = new qi_method_info(instance, signature, jobj);
+    gInfoHandler.push(data);
+
     qi::SignalLink link =obj.connect(event,
                         qi::SignalSubscriber(
                           qi::AnyFunction::fromDynamicFunction(
@@ -148,7 +145,7 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_connect(JNIEnv *env, job
     return link;
   } catch (std::exception& e)
   {
-    throwNewException(env, e.what());
+    throwNewRuntimeException(env, e.what());
     return 0;
   }
 }

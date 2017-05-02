@@ -1,81 +1,116 @@
 <?xml version="1.0" encoding="utf-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
 
-  <groupId>com.aldebaran</groupId> <!-- QiMessaging Java bindings properties -->
-  <artifactId>libqi-java</artifactId>
-  <version>2.5-SNAPSHOT</version>
-  <packaging>jar</packaging>
-  <name>libqi-java</name>
+    <groupId>com.aldebaran</groupId> <!-- QiMessaging Java bindings properties -->
+    <artifactId>libqi-java</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+    <name>libqi-java</name>
 
-  <distributionManagement>
-    <repository>
-      <id>ftp-kiwi</id>
-      <url>ftp://kiwi.aldebaran.lan/core/qi/maven</url>
-    </repository>
-  </distributionManagement>
+    <distributionManagement>
+        <repository>
+            <id>ftp-kiwi</id>
+            <url>ftp://kiwi.aldebaran.lan/core/qi/maven</url>
+        </repository>
+    </distributionManagement>
 
-  <url>http://aldebaran-robotics.com</url>
-  <description>
-    The QiMessaging library extends C++ object connecting and calls over network.
-    It provides object creation and exposition on the network in C++, Python, C# and Java.
-    Services can be join through a ServiceDirectory, possibly behind gateways and firewalls.
+    <url>http://aldebaran-robotics.com</url>
+    <description>
+        The QiMessaging library extends C++ object connecting and calls over network.
+        It provides object creation and exposition on the network in C++, Python, C# and Java.
+        Services can be join through a ServiceDirectory, possibly behind gateways and firewalls.
 
-    This package contains the Java Bindings for QiMessaging
-  </description>
+        This package contains the Java Bindings for QiMessaging
+    </description>
 
-  <licenses>
-    <license>
-      <name>See COPYING</name>
-      <url>http://aldebaran-robotics.com</url>
-    </license>
-  </licenses>
+    <licenses>
+        <license>
+            <name>See COPYING</name>
+            <url>http://aldebaran-robotics.com</url>
+        </license>
+    </licenses>
 
-  <scm>
-    <connection>scm:git:ssh://git@git.aldebaran.lan/java/qimessaging.git</connection>
-    <developerConnection>scm:git:ssh://git@git.aldebaran.lan/java/qimessaging.git</developerConnection>
-  </scm>
+    <scm>
+        <connection>scm:git:ssh://git@git.aldebaran.lan/java/qimessaging.git</connection>
+        <developerConnection>scm:git:ssh://git@git.aldebaran.lan/java/qimessaging.git</developerConnection>
+    </scm>
 
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
 
-  <dependencies>
-    <dependency> <!-- Dependency to java test suite -->
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.6</version>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
+    <dependencies>
+        <dependency> <!-- Dependency to java test suite -->
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.6</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 
-  <build>
-    <resources>
-      <resource>
-        <directory>native</directory>
-      </resource>
-    </resources>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.0</version>
-        <configuration>
-          <source>1.6</source>
-          <target>1.6</target>
-        </configuration>
-      </plugin>
-    </plugins>
-    <extensions>
-      <extension>
-        <groupId>org.apache.maven.wagon</groupId>
-        <artifactId>wagon-ftp</artifactId>
-        <version>2.9</version>
-      </extension>
-    </extensions>
-  </build>
+    <build>
+        <resources>
+            <resource>
+                <directory>native</directory>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.0</version>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.10.3</version>
+                <configuration>
+                    <finalName>libqi-java</finalName>
+                    <failOnError>false</failOnError>
+                    <sourcepath>src/main/java</sourcepath>
+                    <stylesheetfile>stylesheet.css</stylesheetfile>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <configuration>
+                    <excludeResources>true</excludeResources>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+        <extensions>
+            <extension>
+                <groupId>org.apache.maven.wagon</groupId>
+                <artifactId>wagon-ftp</artifactId>
+                <version>2.9</version>
+            </extension>
+        </extensions>
+    </build>
 
-  <repositories />
+    <repositories/>
 
 </project>
