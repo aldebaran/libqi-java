@@ -1,10 +1,12 @@
 /*
-**  Copyright (C) 2015 Aldebaran Robotics
-**  See COPYING for the license
-*/
+ * * Copyright (C) 2015 Aldebaran Robotics* See COPYING for the license
+ */
 package com.aldebaran.qi;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+
+import com.aldebaran.qi.serialization.SignatureUtilities;
 
 /**
  * Class that exposes directly an {@link AnyObject} that can be manipulated.
@@ -26,7 +28,7 @@ public class DynamicObjectBuilder {
         }
     }
 
-    private long _p;
+    private final long _p;
 
     private native long create();
 
@@ -34,29 +36,38 @@ public class DynamicObjectBuilder {
 
     private native AnyObject object(long pObjectBuilder);
 
-    private native void advertiseMethod(long pObjectBuilder, String method, Object instance, String className, String description) throws AdvertisementException;
+    private native void advertiseMethod(long pObjectBuilder, String method, Object instance, String className,
+            String description) throws AdvertisementException;
 
     private native void advertiseSignal(long pObjectBuilder, String eventSignature) throws AdvertisementException;
 
-    private native void advertiseProperty(long pObjectBuilder, String name, Class<?> propertyBase) throws AdvertisementException;
+    private native void advertiseProperty(long pObjectBuilder, String name, Class<?> propertyBase)
+            throws AdvertisementException;
 
     private native void setThreadSafeness(long pObjectBuilder, boolean isThreadSafe);
 
-    /// Possible thread models for an object
+    // / Possible thread models for an object
 
     /**
-     * Enum to declare the thread-safeness state of an {@link AnyObject} instance.
+     * Enum to declare the thread-safeness state of an {@link AnyObject}
+     * instance.
      * <p>
      * Use <b>MultiThread</b> if your object is expected to be thread-safe.
      * Method calls will potentially occur in parallel in multiple threads.
      * <p>
-     * Use <b>SingleThread</b> to make your object non-thread-safe.
-     * All method calls must occur in the same thread.
+     * Use <b>SingleThread</b> to make your object non-thread-safe. All method
+     * calls must occur in the same thread.
      */
     public enum ObjectThreadingModel {
-        /** AnyObject is not thread safe, all method calls must occur in the same thread**/
+        /**
+         * AnyObject is not thread safe, all method calls must occur in the same
+         * thread
+         **/
         SingleThread,
-        /** AnyObject is thread safe, multiple calls can occur in different threads in parallel**/
+        /**
+         * AnyObject is thread safe, multiple calls can occur in different
+         * threads in parallel
+         **/
         MultiThread
     }
 
@@ -67,59 +78,115 @@ public class DynamicObjectBuilder {
         _p = create();
     }
 
-  /**
-   * Bind method from a qimessaging.service to GenericObject.<br>
-   * The given signature <b>MUST</b> be a libqi type signature <b>AND</b> use Java compatible types :<br>
-   * <table border=1>
-   *  <tr><th>libqi</th><th>Java</th></tr>
-   *  <tr><td><center>b</center></td><td>{@link Boolean}</td></tr>
-   *  <tr><td><center>c</center></td><td>{@link Character}</td></tr>
-   *  <tr><td><center>v</center></td><td>void</td></tr>
-   *  <tr><td><center>i</center></td><td>{@link Integer}</td></tr>
-   *  <tr><td><center>l</center></td><td>{@link Long}</td></tr>
-   *  <tr><td><center>f</center></td><td>{@link Float}</td></tr>
-   *  <tr><td><center>d</center></td><td>{@link Double}</td></tr>
-   *  <tr><td><center>s</center></td><td>{@link String}</td></tr>
-   *  <tr><td><center>o</center></td><td>{@link Object}</td></tr>
-   *  <tr><td><center>m</center></td><td>{@link Object} (dynamic)</td></tr>
-   *  <tr><td><center>[&lt;type&gt;]</center></td><td>{@link java.util.ArrayList}</td></tr>
-   *  <tr><td><center>{&lt;key&gt;&lt;type&gt;}</center></td><td>{@link java.util.Map}</td></tr>
-   *  <tr><td><center>(&lt;type&gt;....)</center></td><td>{@link Tuple}</td></tr>
-   * </table><br>
-   * <b>WARNING</b> :
-   * <ul>
-   *  <li>If method not found, nothing happen.</li>
-   *  <li>Be sure the method is unique in name, if two methods with same name and different signature,
-   *  you can't be sure it choose the good one</li>
-   *  <li>If method choose (by name) have not the correct Java signature, it will crash later (when call)</li>
-   * </ul>
-   * @param methodSignature Signature of method to bind. It must be a valid libqi type signature
-   * @param service Service implementing method.
-   * @param description Method description
-   * @throws AdvertisementException If signature is not a valid libqi signature type.
-   * @throws SecurityException If given service instance of a class protect from reflection
-   */
-  public void advertiseMethod(String methodSignature, QiService service, String description) {
-    final Class<?> serviceClass = service.getClass();
-    final Method[] methods = serviceClass.getDeclaredMethods();
-    final String serviceClassName = serviceClass.getName().replace('.', '/');
+    /**
+     * Bind method from a qimessaging.service to GenericObject.<br>
+     * The given signature <b>MUST</b> be a libqi type signature <b>AND</b> use
+     * Java compatible types :<br>
+     * <table border=1>
+     * <tr>
+     * <th>libqi</th>
+     * <th>Java</th>
+     * </tr>
+     * <tr>
+     * <td><center>b</center></td>
+     * <td>{@link Boolean}</td>
+     * </tr>
+     * <tr>
+     * <td><center>c</center></td>
+     * <td>{@link Character}</td>
+     * </tr>
+     * <tr>
+     * <td><center>v</center></td>
+     * <td>void</td>
+     * </tr>
+     * <tr>
+     * <td><center>i</center></td>
+     * <td>{@link Integer}</td>
+     * </tr>
+     * <tr>
+     * <td><center>l</center></td>
+     * <td>{@link Long}</td>
+     * </tr>
+     * <tr>
+     * <td><center>f</center></td>
+     * <td>{@link Float}</td>
+     * </tr>
+     * <tr>
+     * <td><center>d</center></td>
+     * <td>{@link Double}</td>
+     * </tr>
+     * <tr>
+     * <td><center>s</center></td>
+     * <td>{@link String}</td>
+     * </tr>
+     * <tr>
+     * <td><center>o</center></td>
+     * <td>{@link Object}</td>
+     * </tr>
+     * <tr>
+     * <td><center>m</center></td>
+     * <td>{@link Object} (dynamic)</td>
+     * </tr>
+     * <tr>
+     * <td><center>[&lt;type&gt;]</center></td>
+     * <td>{@link java.util.ArrayList}</td>
+     * </tr>
+     * <tr>
+     * <td><center>{&lt;key&gt;&lt;type&gt;}</center></td>
+     * <td>{@link java.util.Map}</td>
+     * </tr>
+     * <tr>
+     * <td><center>(&lt;type&gt;....)</center></td>
+     * <td>{@link Tuple}</td>
+     * </tr>
+     * </table>
+     * <br>
+     * <b>WARNING</b> :
+     * <ul>
+     * <li>If method not found, nothing happen.</li>
+     * <li>Be sure the method is unique in name, if two methods with same name
+     * and different signature, you can't be sure it choose the good one</li>
+     * <li>If method choose (by name) have not the correct Java signature, it
+     * will crash later (when call)</li>
+     * </ul>
+     *
+     * @param methodSignature
+     *            Signature of method to bind. It must be a valid libqi type
+     *            signature
+     * @param service
+     *            Service implementing method.
+     * @param description
+     *            Method description
+     * @throws AdvertisementException
+     *             If signature is not a valid libqi signature type.
+     * @throws SecurityException
+     *             If given service instance of a class protect from reflection
+     */
+    public void advertiseMethod(String methodSignature, QiService service, String description) {
+        final Class<?> serviceClass = service.getClass();
+        final Method[] methods = serviceClass.getDeclaredMethods();
+        final String serviceClassName = serviceClass.getName().replace('.', '/');
 
-    for (final Method method : methods) {
-      // FIXME this is very fragile
-      // If method name match signature
-      if (methodSignature.contains(method.getName())) {
-        advertiseMethod(_p, methodSignature, service, serviceClassName, description);
-        return;
-      }
+        for (final Method method : methods) {
+            // FIXME this is very fragile
+            // If method name match signature
+            if (methodSignature.contains(method.getName())) {
+                advertiseMethod(_p, methodSignature, service, serviceClassName, description);
+                return;
+            }
+        }
     }
-  }
 
     /**
      * Advertise a signal with its callback signature.<br>
      * The given signature <b>MUST</b> be a libqi type signature
-     * @param signalSignature Signature of available callback.
-     * @throws AdvertisementException If signature not a valid libqi signature type.
-     * @throws Exception If GenericObject is not initialized internally.
+     *
+     * @param signalSignature
+     *            Signature of available callback.
+     * @throws AdvertisementException
+     *             If signature not a valid libqi signature type.
+     * @throws Exception
+     *             If GenericObject is not initialized internally.
      */
     public void advertiseSignal(String signalSignature) throws Exception {
         advertiseSignal(_p, signalSignature);
@@ -127,8 +194,11 @@ public class DynamicObjectBuilder {
 
     /**
      * Advertise a property
-     * @param name Property name
-     * @param propertyBase Class warp the property
+     *
+     * @param name
+     *            Property name
+     * @param propertyBase
+     *            Class warp the property
      */
     public void advertiseProperty(String name, Class<?> propertyBase) {
         advertiseProperty(_p, name, propertyBase);
@@ -137,12 +207,12 @@ public class DynamicObjectBuilder {
     /**
      * Declare the thread-safeness state of an instance
      *
-     * @param threadModel if set to ObjectThreadingModel.MultiThread,
-     *                    your object is expected to be
-     *                    thread safe, and calls to its method will potentially
-     *                    occur in parallel in multiple threads.
-     *                    If false, qimessaging will use a per-instance mutex
-     *                    to prevent multiple calls at the same time.
+     * @param threadModel
+     *            if set to ObjectThreadingModel.MultiThread, your object is
+     *            expected to be thread safe, and calls to its method will
+     *            potentially occur in parallel in multiple threads. If false,
+     *            qimessaging will use a per-instance mutex to prevent multiple
+     *            calls at the same time.
      */
     public void setThreadingModel(ObjectThreadingModel threadModel) {
         setThreadSafeness(_p, threadModel == ObjectThreadingModel.MultiThread);
@@ -159,12 +229,58 @@ public class DynamicObjectBuilder {
     }
 
     /**
-     * Called by garbage collector
-     * Finalize is overridden to manually delete C++ data
+     * Called by garbage collector Finalize is overridden to manually delete C++
+     * data
      */
     @Override
     protected void finalize() throws Throwable {
         destroy(_p);
         super.finalize();
+    }
+
+    /**
+     * Advertise methods from interface.<br>
+     * All methods of given interface are automatically registered.<br>
+     * To specify a description on method add
+     * {@link AdvertisedMethodDescription} annotation on the method.
+     *
+     * @param <INTERFACE>
+     *            Interface type that specifies the list of methods to expose.
+     * @param <INSTANCE>
+     *            Instance type of interface.
+     * @param interfaceClass
+     *            Interface that specifies the list of methods to expose.
+     * @param instance
+     *            Instance of interface implementation.
+     * @return Interface implementation to use for call methods.
+     */
+    @SuppressWarnings("unchecked")
+    public <INTERFACE, INSTANCE extends INTERFACE> INTERFACE advertiseMethods(final Class<INTERFACE> interfaceClass,
+            final INSTANCE instance) {
+        if (!interfaceClass.isInterface()) {
+            throw new IllegalArgumentException(interfaceClass.getName() + " is not an interface!");
+        }
+
+        if (instance == null) {
+            throw new NullPointerException("instance MUST NOT be null!");
+        }
+
+        String description;
+        AdvertisedMethodDescription advertisedMethodDescription;
+
+        for (final Method method : interfaceClass.getDeclaredMethods()) {
+            description = method.toString();
+            advertisedMethodDescription = method.getAnnotation(AdvertisedMethodDescription.class);
+
+            if (advertisedMethodDescription != null) {
+                description = advertisedMethodDescription.description();
+            }
+
+            this.advertiseMethod(this._p, SignatureUtilities.computeSignatureForMethod(method), instance,
+                    interfaceClass.getName(), description);
+        }
+
+        return (INTERFACE) Proxy.newProxyInstance(interfaceClass.getClassLoader(), new Class<?>[] { interfaceClass },
+                new AdvertisedMethodCaller<INTERFACE>(this));
     }
 }

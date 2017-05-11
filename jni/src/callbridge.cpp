@@ -1,4 +1,4 @@
-/*
+﻿/*
 **
 ** Author(s):
 **  - Pierre ROULLON <proullon@aldebaran-robotics.com>
@@ -81,6 +81,18 @@ qi::Future<qi::AnyValue>* call_from_java(JNIEnv *env, qi::AnyObject object, cons
 }
 
 /**
+ * @brief object2value Embed a jobject inside a jvalue
+ * @param object jobject to embed
+ * @return jvalue that embeds the given jobject
+ */
+jvalue object2value(jobject object)
+{
+  jvalue value;
+  value.l = object;
+  return value;
+}
+
+/**
  * @brief call_to_java Heller function to call Java methods.
  * @param signature qitype signature formated
  * @param data pointer on a qi_method_info (which hold Java object class and reference)
@@ -90,7 +102,9 @@ qi::Future<qi::AnyValue>* call_from_java(JNIEnv *env, qi::AnyObject object, cons
 qi::AnyReference call_to_java(std::string signature, void* data, const qi::GenericFunctionParameters& params)
 {
   qi::AnyReference res;
-  jvalue*             args = new jvalue[params.size()];
+  // Arguments given to Java to call NativeTools.callJava method
+  // NativeTools.callJava(Object instance, String methodName, String methodSignature, Object[] methodArguments):Object
+  jvalue*             callJavaArguments = new jvalue[4];
   int                 index = 0;
   JNIEnv*             env = 0;
   qi_method_info*     info = reinterpret_cast<qi_method_info*>(data);
@@ -107,29 +121,31 @@ qi::AnyReference call_to_java(std::string signature, void* data, const qi::Gener
     throwNewException(env, "Internal method informations are not valid");
     return res;
   }
+
   // Translate parameters from AnyValues to jobjects
   qi::GenericFunctionParameters::const_iterator it = params.begin();
   qi::GenericFunctionParameters::const_iterator end = params.end();
   std::vector<qi::TypeInterface*> types;
+  jobjectArray arguments = env->NewObjectArray((jsize)params.size(), cls_object, NULL);
+
   for(; it != end; it++)
   {
-    jvalue value;
-    value.l = JObject_from_AnyValue(*it);
-    qiLogVerbose() << "Converted argument " << (it-params.begin()) << it->type()->infoString();
+    env->SetObjectArrayElement(arguments, index, JObject_from_AnyValue(*it));
+
     if (it->kind() == qi::TypeKind_Dynamic)
     {
-      qiLogVerbose() << "Argument is " << (**it).type()->infoString();
       types.push_back((**it).type());
     }
     else
       types.push_back(it->type());
-    args[index] = value;
+
     index++;
   }
 
   // Check if function is callable
   qi::Signature from = qi::makeTupleSignature(types);
   qi::Signature to = qi::Signature(sigInfo[2]);
+
   if (from.isConvertibleTo(to) == 0)
   {
     std::ostringstream ss;
@@ -140,54 +156,32 @@ qi::AnyReference call_to_java(std::string signature, void* data, const qi::Gener
 
   // Find method class and get methodID
   cls = qi::jni::clazz(info->instance);
+
   if (!cls)
   {
     qiLogError() << "Service class not found";
     throw std::runtime_error("Service class not found");
   }
-  // Find method ID
-  auto findMethodFromSignature = [&](const std::string& signature, std::function<std::string(const std::string&)> signatureConverter)
-  {
-    std::string javaSignature = signatureConverter(signature);
-    qiLogVerbose() << "looking for method " << signature << " -> " << javaSignature;
-    jmethodID mid = env->GetMethodID(cls, sigInfo[1].c_str(), javaSignature.c_str());
-    if (env->ExceptionCheck()) // NoSuchMethodError
-      env->ExceptionClear();
-    if (!mid)
-      mid = env->GetStaticMethodID(cls, sigInfo[1].c_str(), javaSignature.c_str());
-    if (env->ExceptionCheck()) // NoSuchMethodError
-      env->ExceptionClear();
-    return mid;
-  };
 
-  auto mid = findMethodFromSignature(signature, toJavaSignature);
-  if (!mid){
-    // Try finding a method that fits the signature with a Future as return type
-    mid = findMethodFromSignature(signature, toJavaSignatureWithFuture);
-  }
-  if (!mid)
-  {
-    qiLogError() << "Cannot find java method " << signature;
-    throw std::runtime_error("Cannot find method");
-  }
+  std::string javaSignature = toJavaSignature(signature);
+  callJavaArguments[0] = object2value(info->instance);
+  callJavaArguments[1] = object2value(env->NewStringUTF(sigInfo[1].c_str()));
+  callJavaArguments[2] = object2value(env->NewStringUTF(javaSignature.c_str()));
+  callJavaArguments[3] = object2value(arguments);
+  jobject valueResult = env->CallStaticObjectMethodA(cls_nativeTools, method_NativeTools_callJava, callJavaArguments);
 
-  // Call method
-  qiLogVerbose() << "Entering call";
   if (sigInfo[0] == "" || sigInfo[0] == "v")
   {
-    env->CallVoidMethodA(info->instance, mid, args);
     res = qi::AnyReference(qi::typeOf<void>());
   }
   else
   {
-    jobject ret = env->CallObjectMethodA(info->instance, mid, args);
     if (!env->ExceptionCheck())
     {
-      res = AnyValue_from_JObject(ret).first;
-      qi::jni::releaseObject(ret);
+      res = AnyValue_from_JObject(valueResult).first;
+      qi::jni::releaseObject(valueResult);
     }
   }
-  qiLogVerbose() << "Finished call";
 
   // Did method throw?
   if (jthrowable exc = env->ExceptionOccurred())
@@ -211,11 +205,11 @@ qi::AnyReference call_to_java(std::string signature, void* data, const qi::Gener
 
   // Release instance clazz
   qi::jni::releaseClazz(cls);
-
-  // Release arguments
-  while (--index >= 0)
-    qi::jni::releaseObject(args[index].l);
-  delete[] args;
+  // callJavaArguments[0].l is not released by purpose: it is info->instance
+  qi::jni::releaseObject(callJavaArguments[1].l);
+  qi::jni::releaseObject(callJavaArguments[2].l);
+  qi::jni::releaseObject(callJavaArguments[3].l);
+  delete[] callJavaArguments;
 
   return res;
 }

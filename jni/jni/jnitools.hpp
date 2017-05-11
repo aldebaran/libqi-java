@@ -46,6 +46,10 @@ extern jclass cls_arraylist;
 extern jclass cls_map;
 extern jclass cls_hashmap;
 
+extern jclass cls_object;
+extern jclass cls_nativeTools;
+extern jmethodID method_NativeTools_callJava;
+
 // JNI utils
 extern "C"
 {
