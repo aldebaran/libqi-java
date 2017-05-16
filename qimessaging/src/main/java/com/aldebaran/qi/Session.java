@@ -1,10 +1,10 @@
 /*
-**  Copyright (C) 2015 Aldebaran Robotics
-**  See COPYING for the license
-*/
+ * * Copyright (C) 2015 Aldebaran Robotics* See COPYING for the license
+ */
 package com.aldebaran.qi;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -62,9 +62,19 @@ public class Session {
 
     private native void loadService(long pSession, String name);
 
+    /**
+     * List of URL session endpoints.
+     *
+     * @param pSession
+     *            Reference to session in JNI.
+     * @param endpoints
+     *            List to add URL session endpoints.
+     */
+    private native void endpoints(long pSession, List<String> endpoints);
+
     // Members
-    private long _session;
-    private boolean _destroy;
+    private final long _session;
+    private final boolean _destroy;
 
     private List<ConnectionListener> listeners;
 
@@ -94,8 +104,10 @@ public class Session {
     /**
      * Try to connect to given address.
      *
-     * @param serviceDirectoryAddress Address to connect to.
-     * @throws Exception on error.
+     * @param serviceDirectoryAddress
+     *            Address to connect to.
+     * @throws Exception
+     *             on error.
      */
     public Future<Void> connect(String serviceDirectoryAddress) {
         long pFuture = qiSessionConnect(_session, serviceDirectoryAddress);
@@ -105,7 +117,8 @@ public class Session {
     /**
      * Ask for remote service to Service Directory.
      *
-     * @param name Name of service.
+     * @param name
+     *            Name of service.
      * @return the AnyObject future
      */
     public Future<AnyObject> service(String name) {
@@ -121,21 +134,23 @@ public class Session {
     }
 
     /**
-     * Called by garbage collector
-     * Finalize is overriden to manually delete C++ data
+     * Called by garbage collector Finalize is overriden to manually delete C++
+     * data
      */
     @Override
     protected void finalize() throws Throwable {
-        //if (_destroy)
-        //  Session.qiSessionDestroy(_session);
+        // if (_destroy)
+        // Session.qiSessionDestroy(_session);
         super.finalize();
     }
 
     /**
      * Register service on Service Directory
      *
-     * @param name   Name of new service
-     * @param object Instance of service
+     * @param name
+     *            Name of new service
+     * @param object
+     *            Instance of service
      * @return the id of the service
      */
     public int registerService(String name, AnyObject object) {
@@ -145,7 +160,8 @@ public class Session {
     /**
      * Unregister service from Service Directory
      *
-     * @param idx is return by registerService
+     * @param idx
+     *            is return by registerService
      * @see #registerService(String, AnyObject)
      */
     public void unregisterService(int idx) {
@@ -170,7 +186,8 @@ public class Session {
         for (ConnectionListener listener : listeners) {
             try {
                 listener.onConnected();
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 // log exceptions from callbacks, bug ignore them
                 e.printStackTrace();
             }
@@ -181,7 +198,8 @@ public class Session {
         for (ConnectionListener listener : listeners) {
             try {
                 listener.onDisconnected(reason);
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 // log exceptions from callbacks, bug ignore them
                 e.printStackTrace();
             }
@@ -193,7 +211,8 @@ public class Session {
             return;
 
         listeners = new ArrayList<ConnectionListener>();
-        // register only 1 listener to the native part, and dispatch to local listeners
+        // register only 1 listener to the native part, and dispatch to local
+        // listeners
         addConnectionListener(_session, new ConnectionListener() {
             @Override
             public void onDisconnected(String reason) {
@@ -223,5 +242,17 @@ public class Session {
 
     public void loadService(String name) {
         loadService(_session, name);
+    }
+
+    /**
+     * List of URL session endpoints.<br>
+     * The return list is not modifiable.
+     *
+     * @return List of URL session endpoints.
+     */
+    public List<String> endpoints() {
+        final List<String> urls = new ArrayList<String>();
+        this.endpoints(this._session, urls);
+        return Collections.unmodifiableList(urls);
     }
 }

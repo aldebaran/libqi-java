@@ -26,7 +26,7 @@ extern "C"
   JNIEXPORT void JNICALL Java_com_aldebaran_qi_Session_addConnectionListener(JNIEnv *env, jobject obj, jlong pSession, jobject listener);
   JNIEXPORT void JNICALL Java_com_aldebaran_qi_Session_setClientAuthenticatorFactory(JNIEnv *env, jobject obj, jlong pSession, jobject object);
   JNIEXPORT void JNICALL Java_com_aldebaran_qi_Session_loadService(JNIEnv *env, jobject obj, jlong pSession, jstring moduleName);
-
+  JNIEXPORT void JNICALL Java_com_aldebaran_qi_Session_endpoints(JNIEnv * env, jobject obj, jlong pSession, jobject endpoints);
 } // !extern "C"
 
 #endif // !_JAVA_JNI_SESSION_HPP_

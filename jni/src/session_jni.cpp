@@ -346,3 +346,24 @@ JNIEXPORT void JNICALL Java_com_aldebaran_qi_Session_loadService(JNIEnv *env, jo
   session->loadService(moduleName);
   return;
 }
+
+/**
+ * @brief List of URL session end points.
+ * @param env JNI environment.
+ * @param obj Object Java instance.
+ * @param pSession Reference to session in JNI.
+ * @param endpointsList List to add URL session endpoints. (List<String>)
+ */
+JNIEXPORT void JNICALL Java_com_aldebaran_qi_Session_endpoints(JNIEnv * env, jobject obj, jlong pSession, jobject endpointsList)
+{
+  qi::Session* session = reinterpret_cast<qi::Session*>(pSession);
+  std::vector<qi::Url> endpoints = session->endpoints();
+  jmethodID methodAdd = env->GetMethodID(cls_list, "add", "(Ljava/lang/Object;)Z");
+
+  for (std::vector<qi::Url>::iterator it = endpoints.begin(); it != endpoints.end(); ++it)
+  {
+    jstring url = qi::jni::toJstring((*it).str());
+    env->CallBooleanMethod(endpointsList, methodAdd, url);
+    qi::jni::releaseString(url);
+  }
+}
