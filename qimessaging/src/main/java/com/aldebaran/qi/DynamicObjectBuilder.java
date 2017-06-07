@@ -273,7 +273,7 @@ public class DynamicObjectBuilder {
             advertisedMethodDescription = method.getAnnotation(AdvertisedMethodDescription.class);
 
             if (advertisedMethodDescription != null) {
-                description = advertisedMethodDescription.description();
+                description = advertisedMethodDescription.value();
             }
 
             this.advertiseMethod(this._p, SignatureUtilities.computeSignatureForMethod(method), instance,
