@@ -59,9 +59,34 @@ public class NativeTools {
             }
             catch (Exception exception) {
                 exception.printStackTrace();
+                throw new RuntimeException(NativeTools.computeMessage(exception), exception);
             }
         }
 
         return null;
+    }
+
+    /**
+     * Compute complete message of exception or error
+     *
+     * @param throwable
+     *            Exception or error
+     * @return Complete message
+     */
+    public static String computeMessage(Throwable throwable) {
+        final StringBuilder stringBuilder = new StringBuilder();
+        boolean first = true;
+
+        while (throwable != null) {
+            if (!first) {
+                stringBuilder.append(" (caused by) ");
+            }
+
+            stringBuilder.append(throwable.toString());
+            first = false;
+            throwable = throwable.getCause();
+        }
+
+        return stringBuilder.toString();
     }
 }
