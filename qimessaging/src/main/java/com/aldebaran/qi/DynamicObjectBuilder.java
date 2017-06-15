@@ -265,6 +265,11 @@ public class DynamicObjectBuilder {
             throw new NullPointerException("instance MUST NOT be null!");
         }
 
+        // Create the monitor of instance to collect exceptions
+        final AdvertisedMethodMonitor<INTERFACE> advertisedMethodMonitor = new AdvertisedMethodMonitor<INTERFACE>(instance);
+        final Object monitor = Proxy.newProxyInstance(interfaceClass.getClassLoader(), new Class<?>[] { interfaceClass },
+                advertisedMethodMonitor);
+
         String description;
         AdvertisedMethodDescription advertisedMethodDescription;
 
@@ -276,11 +281,11 @@ public class DynamicObjectBuilder {
                 description = advertisedMethodDescription.value();
             }
 
-            this.advertiseMethod(this._p, SignatureUtilities.computeSignatureForMethod(method), instance,
+            this.advertiseMethod(this._p, SignatureUtilities.computeSignatureForMethod(method), monitor,
                     interfaceClass.getName(), description);
         }
 
         return (INTERFACE) Proxy.newProxyInstance(interfaceClass.getClassLoader(), new Class<?>[] { interfaceClass },
-                new AdvertisedMethodCaller<INTERFACE>(this));
+                new AdvertisedMethodCaller<INTERFACE>(this, advertisedMethodMonitor));
     }
 }

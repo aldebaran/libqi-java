@@ -1,6 +1,10 @@
 package com.aldebaran.qi;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.aldebaran.qi.serialization.MethodDescription;
 import com.aldebaran.qi.serialization.SignatureUtilities;
@@ -9,6 +13,64 @@ import com.aldebaran.qi.serialization.SignatureUtilities;
  * Utilities tools to communicate with native code (Code in C++)
  */
 public class NativeTools {
+    /** Header of error message key */
+    private static final String ERROR_MESSAGE_HEADER = "$ERROR_MESSAGE_NativeTools_";
+    /** Footer of error message key */
+    private static final String ERROR_MESSAGE_FOOTER = "$";
+    /** Next message error ID */
+    private static final AtomicLong NEXT_EXCEPTION_ID = new AtomicLong(0);
+    /** Map of error messages stored to be get later */
+    private static final Map<String, Exception> ERRORS_MAP = new HashMap<String, Exception>();
+
+    /**
+     * Get the real exception corresponding to given one.<br>
+     * If the given exception have special message, we get our stored exception,
+     * else return the exception itself
+     *
+     * @param exception
+     *            Exception to get its real version
+     * @return Real exception
+     */
+    static Exception obtainRealException(Exception exception) {
+        // Test if its a managed exception
+        String message = exception.toString();
+        int start = message.indexOf(ERROR_MESSAGE_HEADER);
+
+        if (start < 0) {
+            return exception;
+        }
+
+        int end = message.indexOf(ERROR_MESSAGE_FOOTER, start + ERROR_MESSAGE_HEADER.length());
+
+        if (end < start) {
+            return exception;
+        }
+
+        // /It is a managed exception, extract the key and get the associated
+        // exception
+        String key = message.substring(start, end + ERROR_MESSAGE_FOOTER.length());
+        Exception realException = ERRORS_MAP.get(key);
+
+        if (realException == null) {
+            return exception;
+        }
+
+        return realException;
+    }
+
+    /**
+     * Store an exception and return a replace one to use
+     *
+     * @param exception
+     *            Exception to store
+     * @return Exception to use
+     */
+    private static RuntimeException storeException(Exception exception) {
+        String message = ERROR_MESSAGE_HEADER + NEXT_EXCEPTION_ID.getAndIncrement() + ERROR_MESSAGE_FOOTER;
+        ERRORS_MAP.put(message, exception);
+        return new RuntimeException(message, exception);
+    }
+
     /**
      * Call a Java method (Generally called from JNI)
      *
@@ -57,36 +119,16 @@ public class NativeTools {
                     return SignatureUtilities.convertValueJavaToLibQI(result, methodDescription.getReturnType());
                 }
             }
+            catch (InvocationTargetException invocationTargetException) {
+                // We are interested by the cause, because we want hide the
+                // reflection/proxy part and obtain the real exception
+                throw storeException((Exception) invocationTargetException.getCause());
+            }
             catch (Exception exception) {
-                exception.printStackTrace();
-                throw new RuntimeException(NativeTools.computeMessage(exception), exception);
+                throw storeException(exception);
             }
         }
 
         return null;
-    }
-
-    /**
-     * Compute complete message of exception or error
-     *
-     * @param throwable
-     *            Exception or error
-     * @return Complete message
-     */
-    public static String computeMessage(Throwable throwable) {
-        final StringBuilder stringBuilder = new StringBuilder();
-        boolean first = true;
-
-        while (throwable != null) {
-            if (!first) {
-                stringBuilder.append(" (caused by) ");
-            }
-
-            stringBuilder.append(throwable.toString());
-            first = false;
-            throwable = throwable.getCause();
-        }
-
-        return stringBuilder.toString();
     }
 }

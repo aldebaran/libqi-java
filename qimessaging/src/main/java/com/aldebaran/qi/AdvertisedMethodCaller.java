@@ -18,15 +18,21 @@ class AdvertisedMethodCaller<INTERFACE> implements InvocationHandler {
     private final DynamicObjectBuilder dynamicObjectBuilder;
     /** Object managed by the builder */
     private AnyObject anyObject;
+    /** Monitor manager to get last exception */
+    private final AdvertisedMethodMonitor<INTERFACE> advertisedMethodMonitor;
 
     /**
      * Create the handler.
      *
      * @param dynamicObjectBuilder
      *            Object builder parent
+     * @param advertisedMethodMonitor
+     *            Monitor manager to get last exception
      */
-    AdvertisedMethodCaller(final DynamicObjectBuilder dynamicObjectBuilder) {
+    AdvertisedMethodCaller(final DynamicObjectBuilder dynamicObjectBuilder,
+            final AdvertisedMethodMonitor<INTERFACE> advertisedMethodMonitor) {
         this.dynamicObjectBuilder = dynamicObjectBuilder;
+        this.advertisedMethodMonitor = advertisedMethodMonitor;
     }
 
     /**
@@ -56,6 +62,20 @@ class AdvertisedMethodCaller<INTERFACE> implements InvocationHandler {
             values[i] = SignatureUtilities.convertValueJavaToLibQI(parameters[i], parametersTypes[i]);
         }
 
-        return this.anyObject.call(returnType, methodName, values).get();
+        synchronized (this.anyObject) {
+            try {
+                return this.anyObject.call(returnType, methodName, values).get();
+            }
+            catch (Exception exception) {
+                // Get the last exception
+                Exception exception2 = this.advertisedMethodMonitor.getException();
+
+                if (exception2 != null) {
+                    exception = exception2;
+                }
+
+                throw exception;
+            }
+        }
     }
 }
