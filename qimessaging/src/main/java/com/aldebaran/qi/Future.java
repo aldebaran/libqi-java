@@ -336,8 +336,14 @@ public class Future<T> implements java.util.concurrent.Future<T> {
         }
 
         Throwable throwable = e;
+        String message = null;
 
         while (throwable != null) {
+
+            if (message == null) {
+                message = throwable.getMessage();
+            }
+
             if (throwable instanceof QiException) {
                 return ((QiException) throwable).getMessage();
             }
@@ -345,7 +351,11 @@ public class Future<T> implements java.util.concurrent.Future<T> {
             throwable = throwable.getCause();
         }
 
-        return e.getMessage();
+        if (message == null) {
+            message = e.toString();
+        }
+
+        return message;
     }
 
     @Override
