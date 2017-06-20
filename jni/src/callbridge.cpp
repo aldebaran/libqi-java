@@ -44,7 +44,16 @@ qi::Future<qi::AnyValue>* call_from_java(JNIEnv *env, qi::AnyObject object, cons
   {
     jobject current = env->GetObjectArrayElement(listParams, i);
     objs[i] = current;
-    params.push_back(qi::AnyReference::from(objs[i]));
+
+    //null java is not well interpreted by C++, so we convert it to void
+    if (env->IsSameObject(objs[i], NULL)) {
+        //Convert null java object to void C++
+        params.push_back(qi::AnyReference(qi::typeOf<void>()));
+    } else {
+        //For non null just wrap the value
+        params.push_back(qi::AnyReference::from(objs[i]));
+    }
+
     ++i;
   }
   // Create future and start metacall
