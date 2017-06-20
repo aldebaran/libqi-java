@@ -55,7 +55,12 @@ class AdvertisedMethodCaller<INTERFACE> implements InvocationHandler {
         String methodName = method.getName();
         Type returnType = SignatureUtilities.convertNativeTypeToObjectType(method.getGenericReturnType());
         Type[] parametersTypes = SignatureUtilities.convertNativeTypeToObjectType(method.getGenericParameterTypes());
-        int length = parameters.length;
+        int length = 0;
+
+        if(parameters!=null){
+            length = parameters.length;
+        }
+
         Object[] values = new Object[length];
 
         for (int i = 0; i < length; i++) {
