@@ -64,11 +64,24 @@ JNIEXPORT jobject JNICALL Java_com_aldebaran_qi_Future_qiFutureCallGet(JNIEnv *e
     int qiMsecs = msecs == -1 ? qi::FutureTimeout_Infinite : msecs;
     qi::AnyReference arRes = fut->value(qiMsecs).asReference();
     std::pair<qi::AnyReference, bool> converted = arRes.convert(qi::typeOf<jobject>());
-    jobject result = * (jobject*)converted.first.rawValue();
+    jobject result = NULL;
+
+    //If the converted value haven't a valid type, obtain its rawValue will do a SIGDEV,
+    // because the method rawValue() refer to a not initialized value in this case
+    if(converted.first.type()) {
+        //The converted value is valid
+        result = * (jobject*)converted.first.rawValue();
+    }
+    else {
+        //Not valid, return "null" object to Java
+        return NULL;
+    }
+
     // keep it alive while we remove the global ref
     result = env->NewLocalRef(result);
-    if (converted.second)
+    if (converted.second) {
       converted.first.destroy();
+    }
     return result;
   }
   catch (const qi::FutureException &e)
