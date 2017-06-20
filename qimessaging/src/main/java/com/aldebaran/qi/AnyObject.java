@@ -99,7 +99,7 @@ public class AnyObject {
      * @return a future to the converted result
      */
     public <T> Future<T> getProperty(final QiSerializer serializer, final Type targetType, String property) {
-        return property(property).andThen(new QiFunction<T, Object>() {
+        return property(property).andThen(new QiFunction<Object, T>() {
             @Override
             public Future<T> onResult(Object result) throws Exception {
                 @SuppressWarnings("unchecked")
@@ -148,7 +148,7 @@ public class AnyObject {
     public <T> Future<T> call(final QiSerializer serializer, final Type targetType, String method, Object... args) {
         try {
             Object[] convertedArgs = (Object[]) serializer.serialize(args);
-            return this.call(method, convertedArgs).andThen(new QiFunction<T, Object>() {
+            return this.call(method, convertedArgs).andThen(new QiFunction<Object, T>() {
                 @Override
                 public Future<T> onResult(Object result) throws Exception {
                     @SuppressWarnings("unchecked")
@@ -250,7 +250,7 @@ public class AnyObject {
     }
 
     Future<Void> disconnect(QiSignalConnection connection) {
-        return connection.getFuture().andThen(new QiFunction<Void, Long>() {
+        return connection.getFuture().andThen(new QiFunction<Long, Void>() {
             @Override
             public Future<Void> onResult(Long subscriberId) {
                 long futurePtr = disconnectSignal(_p, subscriberId);

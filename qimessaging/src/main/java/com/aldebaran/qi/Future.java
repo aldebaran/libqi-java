@@ -376,7 +376,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
         return !this.nativeFuture || qiFutureCallIsDone(_fut);
     }
 
-    private <Ret> Future<Ret> _then(final FutureFunction<Ret, T> function, final boolean chainOnFailure,
+    private <Ret> Future<Ret> _then(final FutureFunction<T, Ret> function, final boolean chainOnFailure,
             final FutureCallbackType type) {
         FutureCallbackType futureCallbackTypePromise = FutureCallbackType.Sync;
 
@@ -421,23 +421,23 @@ public class Future<T> implements java.util.concurrent.Future<T> {
         return promiseToNotify.getFuture();
     }
 
-    public <Ret> Future<Ret> then(FutureFunction<Ret, T> function, FutureCallbackType type) {
+    public <Ret> Future<Ret> then(FutureFunction<T, Ret> function, FutureCallbackType type) {
         return _then(function, true, type);
     }
 
-    public <Ret> Future<Ret> then(final FutureFunction<Ret, T> function) {
+    public <Ret> Future<Ret> then(final FutureFunction<T, Ret> function) {
         return this._then(function, true, this.defaultFutureCallbackType);
     }
 
-    public <Ret> Future<Ret> andThen(FutureFunction<Ret, T> function, FutureCallbackType type) {
+    public <Ret> Future<Ret> andThen(FutureFunction<T, Ret> function, FutureCallbackType type) {
         return _then(function, false, type);
     }
 
-    public <Ret> Future<Ret> andThen(final FutureFunction<Ret, T> function) {
+    public <Ret> Future<Ret> andThen(final FutureFunction<T, Ret> function) {
         return this._then(function, false, this.defaultFutureCallbackType);
     }
 
-    private static <Ret, Arg> Future<Ret> getNextFuture(Future<Arg> future, FutureFunction<Ret, Arg> function,
+    private static <Arg, Ret> Future<Ret> getNextFuture(Future<Arg> future, FutureFunction<Arg, Ret> function,
             Promise<Ret> promiseToNotify) {
         try {
             Future<Ret> nextFuture = function.execute(future);
@@ -481,7 +481,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
         }
     }
 
-    private static <Ret, Arg> void chainFuture(Future<Arg> future, FutureFunction<Ret, Arg> function,
+    private static <Arg, Ret> void chainFuture(Future<Arg> future, FutureFunction<Arg, Ret> function,
             final Promise<Ret> promiseToNotify) {
         getNextFuture(future, function, promiseToNotify).connect(new Callback<Ret>() {
             @Override
@@ -596,7 +596,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
         return andThen(new FutureFunction<T, T>() {
             @Override
             public Future<T> execute(Future<T> future) {
-                return waitAll(futures).andThen(new FutureFunction<T, Void>() {
+                return waitAll(futures).andThen(new FutureFunction<Void, T>() {
                     @Override
                     public Future<T> execute(Future<Void> future) {
                         return Future.this;

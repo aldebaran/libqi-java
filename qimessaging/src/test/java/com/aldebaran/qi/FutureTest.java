@@ -104,7 +104,7 @@ public class FutureTest
   {
     try
     {
-      int value = client.service("serviceTest").then(new FutureFunction<Integer, AnyObject>()
+      int value = client.service("serviceTest").then(new FutureFunction<AnyObject, Integer>()
       {
         @Override
         public Future<Integer> execute(Future<AnyObject> arg)
@@ -151,7 +151,7 @@ public class FutureTest
   {
     try
     {
-      Void result = client.service("serviceTest").then(new FutureFunction<Void, AnyObject>()
+      Void result = client.service("serviceTest").then(new FutureFunction<AnyObject, Void>()
       {
         @Override
         public Future<Void> execute(Future<AnyObject> arg)
@@ -171,7 +171,7 @@ public class FutureTest
   {
     try
     {
-      int value = client.service("serviceTest").andThen(new FutureFunction<Integer, AnyObject>()
+      int value = client.service("serviceTest").andThen(new FutureFunction<AnyObject, Integer>()
       {
         @Override
         public Future<Integer> execute(Future<AnyObject> arg)
@@ -192,7 +192,7 @@ public class FutureTest
   {
     try
     {
-      client.service("nonExistant").andThen(new FutureFunction<Void, AnyObject>()
+      client.service("nonExistant").andThen(new FutureFunction<AnyObject, Void>()
       {
         @Override
         public Future<Void> execute(Future<AnyObject> arg)
@@ -213,7 +213,7 @@ public class FutureTest
   {
     try
     {
-      Void result = client.service("serviceTest").andThen(new FutureFunction<Void, AnyObject>()
+      Void result = client.service("serviceTest").andThen(new FutureFunction<AnyObject, Void>()
       {
         @Override
         public Future<Void> execute(Future<AnyObject> arg)
@@ -233,7 +233,7 @@ public class FutureTest
   {
     try
     {
-      client.service("serviceTest").andThen(new FutureFunction<Void, AnyObject>()
+      client.service("serviceTest").andThen(new FutureFunction<AnyObject, Void>()
       {
         @Override
         public Future<Void> execute(Future<AnyObject> arg)
@@ -256,7 +256,7 @@ public class FutureTest
   {
     try
     {
-      int value = client.service("serviceTest").then(new QiFunction<Integer, AnyObject>()
+      int value = client.service("serviceTest").then(new QiFunction<AnyObject, Integer>()
       {
         @Override
         public Future<Integer> onResult(AnyObject service)
@@ -306,7 +306,7 @@ public class FutureTest
   {
     try
     {
-      int value = client.service("serviceTest").andThen(new QiFunction<Integer, AnyObject>()
+      int value = client.service("serviceTest").andThen(new QiFunction<AnyObject, Integer>()
       {
         @Override
         public Future<Integer> onResult(AnyObject service)
@@ -474,7 +474,7 @@ public class FutureTest
     });**/
 
 
-    Future<Void> futureFinished = future.then(new FutureFunction<Void, String>()
+    Future<Void> futureFinished = future.then(new FutureFunction<String, Void>()
     {
       @Override
       public Future<Void> execute(Future<String> future) throws Throwable {
@@ -595,7 +595,7 @@ public class FutureTest
           assertEquals(2, args[1]);
         }
       }, 1, 2);
-      futureFinished = fut.then(new QiFunction<Void, String>() {
+      futureFinished = fut.then(new QiFunction<String, Void>() {
         @Override
         public Future<Void> onResult(String result) throws Throwable {
           return null;
@@ -823,7 +823,7 @@ public class FutureTest
   {
     CancellableOperation cancellable = new CancellableOperation();
     Future<String> future = cancellable.longReply();
-    Future<Void> childFuture = future.then(new QiFunction<Void, String>() {
+    Future<Void> childFuture = future.then(new QiFunction<String, Void>() {
       @Override
       public Future<Void> onResult(String result) throws Throwable {
         return null;

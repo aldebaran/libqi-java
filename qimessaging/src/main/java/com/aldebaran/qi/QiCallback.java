@@ -14,7 +14,7 @@ import java.util.concurrent.ExecutionException;
  *
  * @param <T> the {@link Future}'s type.
  */
-public abstract class QiCallback<T> implements FutureFunction<Void, T> {
+public abstract class QiCallback<T> implements FutureFunction<T, Void> {
     @Override
     public final Future<Void> execute(Future<T> future) throws Throwable {
         try {

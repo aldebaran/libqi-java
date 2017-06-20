@@ -10,6 +10,6 @@ package com.aldebaran.qi;
  * @param <Ret> the {@link Future}'s output type
  * @param <Arg> the {@link Future}'s input type
  */
-public interface FutureFunction<Ret, Arg> {
+public interface FutureFunction<Arg, Ret> {
     Future<Ret> execute(Future<Arg> future) throws Throwable;
 }

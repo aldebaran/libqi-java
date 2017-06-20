@@ -12,7 +12,7 @@ import java.util.concurrent.ExecutionException;
  * @param <Ret> the {@link Future}'s output type
  * @param <Arg> the {@link Future}'s input type
  */
-public abstract class QiFunction<Ret, Arg> implements FutureFunction<Ret, Arg> {
+public abstract class QiFunction<Arg, Ret> implements FutureFunction<Arg, Ret> {
 
     @Override
     public final Future<Ret> execute(Future<Arg> future) throws Throwable {
