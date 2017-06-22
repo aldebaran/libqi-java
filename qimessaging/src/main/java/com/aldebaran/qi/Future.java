@@ -1,7 +1,6 @@
 /*
-*  Copyright (C) 2015 Aldebaran Robotics
-*  See COPYING for the license
-*/
+ * Copyright (C) 2015 Aldebaran Robotics See COPYING for the license
+ */
 package com.aldebaran.qi;
 
 import java.util.concurrent.CancellationException;
@@ -18,7 +17,7 @@ import java.util.concurrent.TimeoutException;
  * an asynchronous computation, from which you can retrieve the value of the
  * result; the {@link Promise} sets the value of this computation, which
  * resolves the associated Future.
- * 
+ *
  * @param <T>
  *            The type of the result
  */
@@ -43,7 +42,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
     // C++ Future
     private long _fut;
     /** Indicates if future has C reference */
-    private boolean nativeFuture;
+    private final boolean nativeFuture;
     /** Known value for not native future */
     private T value;
     /** Last error for not native future */
@@ -82,7 +81,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
 
     /**
      * Create future with known value
-     * 
+     *
      * @param value
      *            Known value
      */
@@ -94,7 +93,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
 
     /**
      * Create future on error
-     * 
+     *
      * @param error
      *            Error
      */
@@ -148,7 +147,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
 
     /**
      * Callbacks to future can be set.
-     * 
+     *
      * @param callback
      *            com.aldebaran.qi.Callback implementation
      * @param args
@@ -243,8 +242,37 @@ public class Future<T> implements java.util.concurrent.Future<T> {
             return this.value;
         }
 
-        Object result = qiFutureCallGet(_fut, msecs);
-        return (T) result;
+        try {
+            return (T) qiFutureCallGet(_fut, msecs);
+        }
+        catch (Exception exception) {
+            Throwable throwable = exception;
+
+            while (throwable != null) {
+                if (throwable instanceof CancellationException) {
+                    throw (CancellationException) throwable;
+                }
+
+                if (throwable instanceof TimeoutException) {
+                    throw (TimeoutException) throwable;
+                }
+
+                if (throwable instanceof QiException) {
+                    throwable = NativeTools.obtainRealException((QiException) throwable);
+
+                    if (throwable instanceof QiException) {
+                        throw (QiException) throwable;
+                    }
+
+                    continue;
+                }
+
+                throwable = throwable.getCause();
+            }
+
+            Exception newException = NativeTools.obtainRealException(exception);
+            throw new ExecutionException(newException.getMessage(), newException);
+        }
     }
 
     @Override
@@ -269,7 +297,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
      * <p>
      * This is especially useful for getting the value of a future that we know
      * is complete with success.
-     * 
+     *
      * @return the future value
      */
     public T getValue() {
@@ -306,11 +334,28 @@ public class Future<T> implements java.util.concurrent.Future<T> {
         if (e == null) {
             return null;
         }
-        Throwable cause = e.getCause();
-        if (cause instanceof QiException) {
-            return ((QiException) cause).getMessage();
+
+        Throwable throwable = e;
+        String message = null;
+
+        while (throwable != null) {
+
+            if (message == null) {
+                message = throwable.getMessage();
+            }
+
+            if (throwable instanceof QiException) {
+                return ((QiException) throwable).getMessage();
+            }
+
+            throwable = throwable.getCause();
         }
-        return e.getMessage();
+
+        if (message == null) {
+            message = e.toString();
+        }
+
+        return message;
     }
 
     @Override
@@ -414,7 +459,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
             // print the trace because the future error is a string, so the
             // stack trace is lost
             t.printStackTrace();
-            return fromError(t.toString());
+            return fromError(t.getMessage());
         }
     }
 
@@ -474,7 +519,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
      * <p>
      * Otherwise, it takes the state of the first failing future (due to
      * cancellation or error).
-     * 
+     *
      * @param futures
      *            the futures to wait for
      * @return a future waiting for all the others
@@ -540,7 +585,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
      * <p>
      * If {@code this} future does not finish successfully, it does not wait for
      * {@code futures}.
-     * 
+     *
      * @param futures
      *            the futures to wait for
      * @return future returning this future value when all {@code futures} are

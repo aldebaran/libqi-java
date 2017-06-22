@@ -35,6 +35,10 @@ jclass cls_arraylist;
 jclass cls_map;
 jclass cls_hashmap;
 
+jclass cls_object;
+jclass cls_nativeTools;
+jmethodID method_NativeTools_callJava;
+
 static void emergency()
 {
   qiLogFatal() << "Emergency, aborting";
@@ -76,6 +80,13 @@ static void init_classes(JNIEnv *env)
 
   cls_map = loadClass(env, "java/util/Map");
   cls_hashmap = loadClass(env, "java/util/HashMap");
+
+  cls_object =loadClass(env, "java/lang/Object");
+  cls_nativeTools = loadClass(env, "com/aldebaran/qi/NativeTools");
+
+  method_NativeTools_callJava = env->GetStaticMethodID(cls_nativeTools,
+                                                       "callJava",
+                                                       "(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;");
 }
 
 JNIEXPORT void JNICALL Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(JNIEnv* env, jclass QI_UNUSED(cls))

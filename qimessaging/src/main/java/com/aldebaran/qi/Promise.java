@@ -1,17 +1,21 @@
 package com.aldebaran.qi;
 
 /**
- * Promise is a writable, single assignment container which sets the value of the {@link Future}.
+ * Promise is a writable, single assignment container which sets the value of
+ * the {@link Future}.
  * <p>
- * Promise and {@link Future} are two complementary concepts. They are designed to synchronise data
- * between multiples threads. The {@link Future} holds the result of an asynchronous computation,
- * from which you can retrieve the value of the result; the Promise sets the value of this computation,
- * which resolves the associated {@link Future}.
+ * Promise and {@link Future} are two complementary concepts. They are designed
+ * to synchronise data between multiples threads. The {@link Future} holds the
+ * result of an asynchronous computation, from which you can retrieve the value
+ * of the result; the Promise sets the value of this computation, which resolves
+ * the associated {@link Future}.
  * <p>
- * For promises that don't need a value and are just used to ensure correct ordering of asynchronous
- * operations, the common pattern to use is {@link java.lang.Void} as a generic type.
+ * For promises that don't need a value and are just used to ensure correct
+ * ordering of asynchronous operations, the common pattern to use is
+ * {@link java.lang.Void} as a generic type.
  *
- * @param <T> The type of the result
+ * @param <T>
+ *            The type of the result
  */
 
 public class Promise<T> {
@@ -28,7 +32,8 @@ public class Promise<T> {
      * An implementation of this interface can be connected to a {@link Promise}
      * in order to be called when the {@link Promise} receives a cancel request.
      *
-     * @param <T> The type of the result
+     * @param <T>
+     *            The type of the result
      */
     public interface CancelRequestCallback<T> {
         void onCancelRequested(Promise<T> promise);
@@ -40,7 +45,9 @@ public class Promise<T> {
 
     /**
      * Create a new promise
-     * @param type Callback type
+     *
+     * @param type
+     *            Callback type
      */
     public Promise(FutureCallbackType type) {
         this.promisePtr = this._newPromise(type.nativeValue);
@@ -61,25 +68,33 @@ public class Promise<T> {
     }
 
     public void setError(String errorMessage) {
-        // we cannot use a Throwable, libqi must be able to send the errors across
+        // we cannot use a Throwable, libqi must be able to send the errors
+        // across
         // the network
+        if (errorMessage == null) {
+            throw new NullPointerException("errorMessage MUST NOT be null!");
+        }
+
         _setError(promisePtr, errorMessage);
     }
 
     public void setCancelled() {
         _setCancelled(promisePtr);
-        // the qi Future must match the semantics of java.util.concurrent.Future, so
+        // the qi Future must match the semantics of
+        // java.util.concurrent.Future, so
         // isCancelled() must return true after any successful call to
         // cancel(…); for consistency, any call to promise.setCancelled() must
-        // guarantee that any future call to future.isCancelled() also returns true
-        //future.setCancelled(); //setCancelled has been deleted
+        // guarantee that any future call to future.isCancelled() also returns
+        // true
+        // future.setCancelled(); //setCancelled has been deleted
     }
 
     /**
-     * Sets a cancel callback. When cancellation is requested, the set callback is
-     * immediately called.
+     * Sets a cancel callback. When cancellation is requested, the set callback
+     * is immediately called.
      *
-     * @param callback The callback to call
+     * @param callback
+     *            The callback to call
      */
     public void setOnCancel(CancelRequestCallback<T> callback) {
         _setOnCancel(promisePtr, callback);
@@ -109,7 +124,8 @@ public class Promise<T> {
      * Called by garbage collector when object destroy.<br>
      * Override to free the reference in JNI.
      *
-     * @throws Throwable On destruction issue.
+     * @throws Throwable
+     *             On destruction issue.
      */
     @Override
     protected void finalize() throws Throwable {
@@ -132,7 +148,8 @@ public class Promise<T> {
     /**
      * Destroy the reference in JNI.
      *
-     * @param promisePointer Pointer to destroy.
+     * @param promisePointer
+     *            Pointer to destroy.
      */
     private native void _destroyPromise(long promisePointer);
 }

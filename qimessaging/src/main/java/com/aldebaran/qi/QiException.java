@@ -1,5 +1,7 @@
 package com.aldebaran.qi;
 
+import java.util.concurrent.ExecutionException;
+
 
 /**
  * {@code QiException} is a subclass of the standard Java
@@ -7,7 +9,7 @@ package com.aldebaran.qi;
  * exceptions</i> that are linked to the qi Framework.
  */
 @SuppressWarnings("serial")
-public class QiException extends Exception {
+public class QiException extends ExecutionException {
     /**
      * Constructs a {@code QiException}.
      */
