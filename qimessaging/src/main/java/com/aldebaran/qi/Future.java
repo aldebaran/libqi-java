@@ -177,7 +177,6 @@ public class Future<T> implements java.util.concurrent.Future<T> {
 
     /**
      * Prefer {@link #then(FutureFunction, FutureCallbackType)} instead (e.g.
-     * {@link QiCallback}).
      */
     public void connect(Callback<T> callback, FutureCallbackType futureCallbackType) {
         if (!this.nativeFuture) {
@@ -376,35 +375,18 @@ public class Future<T> implements java.util.concurrent.Future<T> {
         return !this.nativeFuture || qiFutureCallIsDone(_fut);
     }
 
-    private <Ret> Future<Ret> _then(final FutureFunction<T, Ret> function, final boolean chainOnFailure,
-            final FutureCallbackType type) {
+    public <R> Future<R> then(final FutureFunction<T, R> function, FutureCallbackType type) {
         FutureCallbackType futureCallbackTypePromise = FutureCallbackType.Sync;
-
-        if (!this.nativeFuture) {
-            if (this.error != null || this.canceled) {
-                try {
-                    return function.execute(this);
-                }
-                catch (Throwable e) {
-                    return Future.fromError(this.error);
-                }
-            }
-
-            futureCallbackTypePromise = FutureCallbackType.Async;
-            // The value is know, but we want use a thread to have asynchronous
-            // call to not block current thread
-            // So just do has "native future"
-        }
 
         // the promise must be sync according to the Callback (which may be Sync
         // or Async according to the caller)
-        final Promise<Ret> promiseToNotify = new Promise<Ret>(futureCallbackTypePromise);
+        final Promise<R> promiseToNotify = new Promise<R>(futureCallbackTypePromise);
         // Adding the callback to the promise to be able to be able to forward
         // the
         // cancel request to the parent future/promise.
-        promiseToNotify.setOnCancel(new Promise.CancelRequestCallback<Ret>() {
+        promiseToNotify.setOnCancel(new Promise.CancelRequestCallback<R>() {
             @Override
-            public void onCancelRequested(Promise<Ret> promise) {
+            public void onCancelRequested(Promise<R> promise) {
                 Future.this.requestCancellation();
             }
         });
@@ -412,8 +394,13 @@ public class Future<T> implements java.util.concurrent.Future<T> {
         connect(new Callback<T>() {
             @Override
             public void onFinished(Future<T> future) {
-                if (chainOnFailure || !notifyIfFailed(future, promiseToNotify)) {
-                    chainFuture(future, function, promiseToNotify);
+                try {
+                    R result = function.execute(future);
+                    promiseToNotify.setValue(result);
+                } catch (CancellationException throwable) {
+                    promiseToNotify.setCancelled();
+                } catch (Throwable throwable) {
+                    promiseToNotify.setError(throwable.getMessage());
                 }
             }
         }, type);
@@ -421,95 +408,47 @@ public class Future<T> implements java.util.concurrent.Future<T> {
         return promiseToNotify.getFuture();
     }
 
-    public <Ret> Future<Ret> then(FutureFunction<T, Ret> function, FutureCallbackType type) {
-        return _then(function, true, type);
+    public <R> Future<R> then(final FutureFunction<T, R> function) {
+        return this.then(function, this.defaultFutureCallbackType);
     }
 
-    public <Ret> Future<Ret> then(final FutureFunction<T, Ret> function) {
-        return this._then(function, true, this.defaultFutureCallbackType);
-    }
+    public <R> Future<R> andThen(final Function<T, R> function, FutureCallbackType type) {
+        FutureCallbackType futureCallbackTypePromise = FutureCallbackType.Sync;
 
-    public <Ret> Future<Ret> andThen(FutureFunction<T, Ret> function, FutureCallbackType type) {
-        return _then(function, false, type);
-    }
-
-    public <Ret> Future<Ret> andThen(final FutureFunction<T, Ret> function) {
-        return this._then(function, false, this.defaultFutureCallbackType);
-    }
-
-    private static <Arg, Ret> Future<Ret> getNextFuture(Future<Arg> future, FutureFunction<Arg, Ret> function,
-            Promise<Ret> promiseToNotify) {
-        try {
-            Future<Ret> nextFuture = function.execute(future);
-
-            final Future<Ret> result = (nextFuture != null) ? nextFuture : Future.<Ret> of(null);
-            promiseToNotify.setOnCancel(new Promise.CancelRequestCallback<Ret>() {
-                @Override
-                public void onCancelRequested(Promise<Ret> promise) {
-                    result.requestCancellation();
-                }
-            });
-
-            // for convenience, the function can return null, which means a
-            // future with a null value
-
-            return result;
-        }
-        catch (Throwable t) {
-            // print the trace because the future error is a string, so the
-            // stack trace is lost
-            t.printStackTrace();
-            return fromError(t.getMessage());
-        }
-    }
-
-    private static <T> void notifyPromiseFromFuture(Future<T> future, Promise<T> promiseToNotify) {
-        if (future.hasError()) {
-            if (!promiseToNotify.getFuture().isDone() || !promiseToNotify.getFuture().isCancelled()) {
-                promiseToNotify.setError(future.getErrorMessage());
-            }
-        }
-        else if (future.isCancelled()) {
-            if (!promiseToNotify.getFuture().isDone() || !promiseToNotify.getFuture().isCancelled()) {
-                promiseToNotify.setCancelled();
-            }
-        }
-        else {
-            if (!promiseToNotify.getFuture().isDone() || !promiseToNotify.getFuture().isCancelled()) {
-                promiseToNotify.setValue(future.getValue());
-            }
-        }
-    }
-
-    private static <Arg, Ret> void chainFuture(Future<Arg> future, FutureFunction<Arg, Ret> function,
-            final Promise<Ret> promiseToNotify) {
-        getNextFuture(future, function, promiseToNotify).connect(new Callback<Ret>() {
+        // the promise must be sync according to the Callback (which may be Sync
+        // or Async according to the caller)
+        final Promise<R> promiseToNotify = new Promise<R>(futureCallbackTypePromise);
+        // Adding the callback to the promise to be able to be able to forward
+        // the
+        // cancel request to the parent future/promise.
+        promiseToNotify.setOnCancel(new Promise.CancelRequestCallback<R>() {
             @Override
-            public void onFinished(Future<Ret> future) {
-                notifyPromiseFromFuture(future, promiseToNotify);
+            public void onCancelRequested(Promise<R> promise) {
+                Future.this.requestCancellation();
             }
         });
+
+        connect(new Callback<T>() {
+            @Override
+            public void onFinished(Future<T> future) {
+                try {
+                    R result = function.execute(future.get());
+                    promiseToNotify.setValue(result);
+                } catch (CancellationException throwable) {
+                    promiseToNotify.setCancelled();
+                } catch (Throwable throwable) {
+                    promiseToNotify.setError(throwable.getMessage());
+                }
+            }
+        }, type);
+
+        return promiseToNotify.getFuture();
     }
 
-    private static <T> boolean notifyIfFailed(Future<T> future, Promise<?> promiseToNotify) {
-        if (future.hasError()) {
-            if (!promiseToNotify.getFuture().isDone() || !promiseToNotify.getFuture().isCancelled()) {
-                promiseToNotify.setError(future.getErrorMessage());
-            }
-
-            return true;
-        }
-
-        if (future.isCancelled()) {
-            if (!promiseToNotify.getFuture().isDone() || !promiseToNotify.getFuture().isCancelled()) {
-                promiseToNotify.setCancelled();
-            }
-
-            return true;
-        }
-
-        return false;
+    public <R> Future<R> andThen(final Function<T, R> function) {
+        return this.andThen(function, this.defaultFutureCallbackType);
     }
+
 
     /**
      * Wait for all {@code futures} to complete.
@@ -593,17 +532,18 @@ public class Future<T> implements java.util.concurrent.Future<T> {
      */
     public Future<T> waitFor(final Future<?>... futures) {
         // do not wait for futures if this does not finish successfully
-        return andThen(new FutureFunction<T, T>() {
+        return andThen(new Function<T, T>() {
             @Override
-            public Future<T> execute(Future<T> future) {
-                return waitAll(futures).andThen(new FutureFunction<Void, T>() {
+            public T execute(T value) throws ExecutionException {
+                waitAll(futures).andThen(new Function<Void, T>() {
                     @Override
-                    public Future<T> execute(Future<Void> future) {
-                        return Future.this;
+                    public T execute(Void future) throws ExecutionException {
+                        return Future.this.get();
                     }
-                });
+                }).get();
+                return null;
             }
-        });
+        }, FutureCallbackType.Async);
     }
 
     /**
@@ -615,7 +555,6 @@ public class Future<T> implements java.util.concurrent.Future<T> {
         if (this.nativeFuture) {
             this.qiFutureDestroy(this._fut);
         }
-
         super.finalize();
     }
 }

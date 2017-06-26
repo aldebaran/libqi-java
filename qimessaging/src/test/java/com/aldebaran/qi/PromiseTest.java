@@ -79,13 +79,12 @@ public class PromiseTest
     promise.setValue(null);
     final CountDownLatch countDownLatch = new CountDownLatch(1);
     final AtomicLong callbackThreadId = new AtomicLong();
-    promise.getFuture().andThen(new QiCallback<Void>()
-    {
+    promise.getFuture().andThen(new Function<Void, Void>() {
       @Override
-      public void onResult(Void result)
-      {
+      public Void execute(Void value) throws Throwable {
         callbackThreadId.set(Thread.currentThread().getId());
         countDownLatch.countDown();
+        return null;
       }
     });
     countDownLatch.await();

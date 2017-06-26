@@ -12,11 +12,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.aldebaran.qi.ServiceDirectory;
-import com.aldebaran.qi.Session;
-import com.aldebaran.qi.ReplyService;
-import com.aldebaran.qi.AnyObject;
-
 import static org.junit.Assert.*;
 
 import org.junit.After;
@@ -107,9 +102,9 @@ public class FutureTest
       int value = client.service("serviceTest").then(new FutureFunction<AnyObject, Integer>()
       {
         @Override
-        public Future<Integer> execute(Future<AnyObject> arg)
-        {
-          return arg.getValue().call("answer", 42);
+        public Integer execute(Future<AnyObject> arg) throws ExecutionException {
+          Future<Integer> future = arg.getValue().call("answer", 42);
+          return future.get();
         }
       }).get();
       // answer adds 1 to the value
@@ -128,8 +123,7 @@ public class FutureTest
       client.service("nonExistant").then(new FutureFunction<AnyObject, AnyObject>()
       {
         @Override
-        public Future<AnyObject> execute(Future<AnyObject> arg)
-        {
+        public AnyObject execute(Future<AnyObject> arg) throws ExecutionException {
           try {
             arg.get();
             fail("get() must fail, the service does not exist");
@@ -137,7 +131,7 @@ public class FutureTest
           {
             // expected exception
           }
-          return client.service("serviceTest");
+          return client.service("serviceTest").get();
         }
       }).get();
     } catch (Exception e)
@@ -154,7 +148,7 @@ public class FutureTest
       Void result = client.service("serviceTest").then(new FutureFunction<AnyObject, Void>()
       {
         @Override
-        public Future<Void> execute(Future<AnyObject> arg)
+        public Void execute(Future<AnyObject> arg)
         {
           return null;
         }
@@ -171,12 +165,11 @@ public class FutureTest
   {
     try
     {
-      int value = client.service("serviceTest").andThen(new FutureFunction<AnyObject, Integer>()
+      int value = client.service("serviceTest").andThen(new Function<AnyObject, Integer>()
       {
         @Override
-        public Future<Integer> execute(Future<AnyObject> arg)
-        {
-          return arg.getValue().call("answer", 42);
+        public Integer execute(AnyObject arg) throws ExecutionException {
+          return (Integer) arg.call("answer", 42).get();
         }
       }).get();
       // answer adds 1 to the value
@@ -192,10 +185,10 @@ public class FutureTest
   {
     try
     {
-      client.service("nonExistant").andThen(new FutureFunction<AnyObject, Void>()
+      client.service("nonExistant").andThen(new Function<AnyObject, Void>()
       {
         @Override
-        public Future<Void> execute(Future<AnyObject> arg)
+        public Void execute(AnyObject arg)
         {
           fail("The first future has failed, this code should never be called");
           return null;
@@ -213,13 +206,13 @@ public class FutureTest
   {
     try
     {
-      Void result = client.service("serviceTest").andThen(new FutureFunction<AnyObject, Void>()
+      Void result = client.service("serviceTest").andThen(new Function<AnyObject, Void>()
       {
         @Override
-        public Future<Void> execute(Future<AnyObject> arg)
-        {
+        public Void execute(AnyObject value) throws Throwable {
           return null;
         }
+
       }).get();
       assertNull(result);
     } catch (Exception e)
@@ -233,11 +226,10 @@ public class FutureTest
   {
     try
     {
-      client.service("serviceTest").andThen(new FutureFunction<AnyObject, Void>()
+      client.service("serviceTest").andThen(new Function<AnyObject, Object>()
       {
         @Override
-        public Future<Void> execute(Future<AnyObject> arg)
-        {
+        public Object execute(AnyObject value) throws Throwable {
           throw new RuntimeException("something went wrong (fake)");
         }
       }).get();
@@ -256,12 +248,11 @@ public class FutureTest
   {
     try
     {
-      int value = client.service("serviceTest").then(new QiFunction<AnyObject, Integer>()
+      int value = client.service("serviceTest").then(new FutureFunction<AnyObject, Integer>()
       {
         @Override
-        public Future<Integer> onResult(AnyObject service)
-        {
-          return service.call("answer", 42);
+        public Integer execute(Future<AnyObject> future) throws Throwable {
+          return (Integer) future.get().call("answer", 42).get();
         }
       }).get();
       // answer adds 1 to the value
@@ -278,20 +269,16 @@ public class FutureTest
     final AtomicBoolean onErrorCalled = new AtomicBoolean();
     try
     {
-      client.service("nonExistant").then(new QiFunction<AnyObject, AnyObject>()
+      client.service("nonExistant").then(new FutureFunction<AnyObject, AnyObject>()
       {
         @Override
-        public Future<AnyObject> onResult(AnyObject service)
-        {
+        public AnyObject execute(Future<AnyObject> future) throws Throwable {
+          if(future.hasError()) {
+            onErrorCalled.set(true);
+            return client.service("serviceTest").get();
+          }
           fail("onResult() must not be called, the service does not exist");
           return null;
-        }
-
-        @Override
-        public Future<AnyObject> onError(Throwable error) throws ExecutionException
-        {
-          onErrorCalled.set(true);
-          return client.service("serviceTest");
         }
       }).get();
     } catch (Exception e)
@@ -306,12 +293,11 @@ public class FutureTest
   {
     try
     {
-      int value = client.service("serviceTest").andThen(new QiFunction<AnyObject, Integer>()
+      int value = client.service("serviceTest").andThen(new Function<AnyObject, Integer>()
       {
         @Override
-        public Future<Integer> onResult(AnyObject service)
-        {
-          return service.call("answer", 42);
+        public Integer execute(AnyObject service) throws Throwable {
+          return (Integer) service.call("answer", 42).get();
         }
       }).get();
       // answer adds 1 to the value
@@ -327,12 +313,12 @@ public class FutureTest
   {
     try
     {
-      client.service("nonExistant").andThen(new QiCallback<AnyObject>()
+      client.service("nonExistant").andThen(new Function<AnyObject, Void>()
       {
         @Override
-        public void onResult(AnyObject service)
-        {
+        public Void execute(AnyObject value) throws Throwable {
           fail("The first future has failed, this code should never be called");
+          return null;
         }
       }).get();
       fail("get() must fail");
@@ -345,12 +331,12 @@ public class FutureTest
   @Test
   public void testThenVoidFunction() throws Exception {
     final AtomicBoolean called = new AtomicBoolean();
-    client.service("serviceTest").andThen(new QiCallback<AnyObject>()
+    client.service("serviceTest").andThen(new Function<AnyObject, Object>()
     {
       @Override
-      public void onResult(AnyObject service)
-      {
+      public Object execute(AnyObject value) throws Throwable {
         called.set(true);
+        return null;
       }
     }).get();
     // answer adds 1 to the value
@@ -363,14 +349,15 @@ public class FutureTest
     promise.setValue(null);
     final CountDownLatch countDownLatch = new CountDownLatch(1);
     final AtomicLong callbackThreadId = new AtomicLong();
-    promise.getFuture().andThen(new QiCallback<Void>()
+    promise.getFuture().andThen(new Function<Void, Object>()
     {
       @Override
-      public void onResult(Void result)
-      {
+      public Object execute(Void value) throws Throwable {
         callbackThreadId.set(Thread.currentThread().getId());
         countDownLatch.countDown();
+        return null;
       }
+
     }, thenType);
     countDownLatch.await();
     return Thread.currentThread().getId() == callbackThreadId.get();
@@ -418,14 +405,14 @@ public class FutureTest
     Promise<X> promise = new Promise<X>();
     promise.setValue(new X(42));
     Future<X> future = promise.getFuture();
-    X x = future.andThen(new QiFunction<X, X>()
+    X x = future.andThen(new Function<X, X>()
 
     {
       @Override
-      public Future<X> onResult(X x) throws Exception
-      {
-        return Future.of(new X(x.value + 1));
+      public X execute(X x) throws Throwable {
+        return new X(x.value + 1);
       }
+
     }).get();
     assertEquals(43, x.value);
   }
@@ -477,7 +464,7 @@ public class FutureTest
     Future<Void> futureFinished = future.then(new FutureFunction<String, Void>()
     {
       @Override
-      public Future<Void> execute(Future<String> future) throws Throwable {
+      public Void execute(Future<String> future) throws Throwable {
         finished.set(true);
         return null;
       }
@@ -503,10 +490,10 @@ public class FutureTest
     Future<Void> futureFinished = future.then(new FutureFunction<Void, Void>()
     {
       @Override
-      public Future<Void> execute(Future<Void> future) throws Throwable {
+      public Void execute(Future<Void> future) throws Throwable {
         assertTrue(future.hasError());
         finished.set(true);
-        return future;
+        return null;
       }
     });
 
@@ -529,14 +516,13 @@ public class FutureTest
 
     // the callback may be called from another thread
     final AtomicBoolean finished = new AtomicBoolean();
-    Future<Void> futureFinished = future.andThen(new FutureFunction<Void, Void>()
+    Future<Void> futureFinished = future.andThen(new Function<Void, Void>()
     {
       @Override
-      public Future<Void> execute(Future<Void> future) throws Throwable {
-        // This callback should not be called
-        assertTrue(future.hasError());
+      public Void execute(Void value) throws Throwable {
+        assertTrue(false);
         finished.set(true);
-        return future;
+        return null;
       }
     });
 
@@ -595,9 +581,9 @@ public class FutureTest
           assertEquals(2, args[1]);
         }
       }, 1, 2);
-      futureFinished = fut.then(new QiFunction<String, Void>() {
+      futureFinished = fut.then(new FutureFunction<String, Void>() {
         @Override
-        public Future<Void> onResult(String result) throws Throwable {
+        public Void execute(Future<String> future) throws Throwable {
           return null;
         }
       });
@@ -823,9 +809,9 @@ public class FutureTest
   {
     CancellableOperation cancellable = new CancellableOperation();
     Future<String> future = cancellable.longReply();
-    Future<Void> childFuture = future.then(new QiFunction<String, Void>() {
+    Future<Void> childFuture = future.then(new FutureFunction<String, Void>() {
       @Override
-      public Future<Void> onResult(String result) throws Throwable {
+      public Void execute(Future<String> future) throws Throwable {
         return null;
       }
     });
@@ -838,10 +824,10 @@ public class FutureTest
   {
     final Future<String> future = Future.of("Test");
     final Future<String> otherFuture = proxy.call(String.class, "getCancellableFuture", "toto");
-    final Future<String> childFuture = future.then(new QiFunction<String, String>() {
+    final Future<String> childFuture = future.then(new FutureFunction<String, String>() {
       @Override
-      public Future<String> onResult(String result) throws Throwable {
-        return otherFuture;
+      public String execute(Future<String> future) throws Throwable {
+        return otherFuture.get();
       }
     });
 
