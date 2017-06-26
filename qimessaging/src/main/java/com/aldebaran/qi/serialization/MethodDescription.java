@@ -14,18 +14,20 @@ public class MethodDescription {
      * Couple of next read index and read class.
      */
     static class ClassIndex {
-        /** Next index to read. */
+        /**
+         * Next index to read.
+         */
         final int index;
-        /** Read class */
+        /**
+         * Read class
+         */
         final Class<?> claz;
 
         /**
          * Create the couple.
          *
-         * @param index
-         *            Next index to read.
-         * @param claz
-         *            Read class.
+         * @param index Next index to read.
+         * @param claz  Read class.
          */
         ClassIndex(final int index, final Class<?> claz) {
             this.index = index;
@@ -43,7 +45,9 @@ public class MethodDescription {
         }
     }
 
-    /** "Distance" between primitive type and its Object representation */
+    /**
+     * "Distance" between primitive type and its Object representation
+     */
     private static final int DISTANCE_PRIMITIVE_OBJECT = 1;
     /**
      * "Distance" between numbers: need expand or truncate the value to do the
@@ -56,13 +60,10 @@ public class MethodDescription {
      * It returns a couple of read class and next index to read the rest of the
      * characters array.
      *
-     * @param offset
-     *            Offset where start to read.
-     * @param characters
-     *            Contains a JNI signature.
+     * @param offset     Offset where start to read.
+     * @param characters Contains a JNI signature.
      * @return Couple of read class and next index to read.
-     * @throws IllegalArgumentException
-     *             If characters array not a valid JNI signature.
+     * @throws IllegalArgumentException If characters array not a valid JNI signature.
      */
     static ClassIndex nextClassIndex(int offset, final char[] characters) {
         Class<?> claz;
@@ -113,13 +114,12 @@ public class MethodDescription {
 
                 try {
                     claz = Class.forName(string);
-                }
-                catch (final ClassNotFoundException e) {
+                } catch (final ClassNotFoundException e) {
                     e.printStackTrace();
                     throw new IllegalArgumentException(new String(characters) + " not valid JNI signature", e);
                 }
             }
-                break;
+            break;
             case '[': {
                 int count = 0;
 
@@ -139,7 +139,7 @@ public class MethodDescription {
                 claz = array.getClass();
                 offset = classIndex.index - 1;
             }
-                break;
+            break;
             default:
                 throw new IllegalArgumentException(new String(characters) + " not valid JNI signature");
         }
@@ -150,13 +150,10 @@ public class MethodDescription {
     /**
      * Compute method description with method name and JNI signature.
      *
-     * @param methodName
-     *            Method name.
-     * @param signatureJNI
-     *            JNI signature.
+     * @param methodName   Method name.
+     * @param signatureJNI JNI signature.
      * @return Method description created.
-     * @throws IllegalArgumentException
-     *             If signatureJNI not a valid JNI signature.
+     * @throws IllegalArgumentException If signatureJNI not a valid JNI signature.
      */
     public static MethodDescription fromJNI(final String methodName, final String signatureJNI) {
         final char[] characters = signatureJNI.toCharArray();
@@ -184,11 +181,9 @@ public class MethodDescription {
 
                     if (isParameter) {
                         parametersType.add(classIndex.claz);
-                    }
-                    else if (returnType == null) {
+                    } else if (returnType == null) {
                         returnType = classIndex.claz;
-                    }
-                    else {
+                    } else {
                         throw new IllegalArgumentException(signatureJNI + " not valid JNI signature");
                     }
             }
@@ -201,22 +196,25 @@ public class MethodDescription {
         return new MethodDescription(methodName, returnType, parametersType.toArray(new Class[parametersType.size()]));
     }
 
-    /** Method name. */
+    /**
+     * Method name.
+     */
     private final String methodName;
-    /** Method return type. */
+    /**
+     * Method return type.
+     */
     private final Class<?> returnType;
-    /** Method parameters types. */
+    /**
+     * Method parameters types.
+     */
     private final Class<?>[] parametersType;
 
     /**
      * Create method description.
      *
-     * @param methodName
-     *            Method name.
-     * @param returnType
-     *            Method return type.
-     * @param parametersType
-     *            Method parameters types.
+     * @param methodName     Method name.
+     * @param returnType     Method return type.
+     * @param parametersType Method parameters types.
      */
     public MethodDescription(final String methodName, final Class<?> returnType, final Class<?>[] parametersType) {
         this.methodName = methodName;
@@ -261,8 +259,7 @@ public class MethodDescription {
      * method description. More the value is near 0, more the compatibility is
      * easy.
      *
-     * @param method
-     *            Method to measure the "distance" with.
+     * @param method Method to measure the "distance" with.
      * @return The computed "distance".
      */
     public int distance(final Method method) {
@@ -293,10 +290,8 @@ public class MethodDescription {
      * .<br>
      * It avoids the overflow issue.
      *
-     * @param integer1
-     *            First integer.
-     * @param integer2
-     *            Second integer.
+     * @param integer1 First integer.
+     * @param integer2 Second integer.
      * @return The addition.
      */
     private static int addLimited(final int integer1, final int integer2) {
@@ -317,10 +312,8 @@ public class MethodDescription {
      * For other values of "distance" it means the given the classes are
      * compatible. More the value is near 0, more the compatibility is easy.
      *
-     * @param class1
-     *            First class.
-     * @param class2
-     *            Second class.
+     * @param class1 First class.
+     * @param class2 Second class.
      * @return Computed "distance".
      */
     private static int distance(final Class<?> class1, final Class<?> class2) {

@@ -1,25 +1,33 @@
 package com.aldebaran.qi;
 
+import com.aldebaran.qi.serialization.MethodDescription;
+import com.aldebaran.qi.serialization.SignatureUtilities;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.aldebaran.qi.serialization.MethodDescription;
-import com.aldebaran.qi.serialization.SignatureUtilities;
-
 /**
  * Utilities tools to communicate with native code (Code in C++)
  */
 public class NativeTools {
-    /** Header of error message key */
+    /**
+     * Header of error message key
+     */
     private static final String ERROR_MESSAGE_HEADER = "$ERROR_MESSAGE_NativeTools_";
-    /** Footer of error message key */
+    /**
+     * Footer of error message key
+     */
     private static final String ERROR_MESSAGE_FOOTER = "$";
-    /** Next message error ID */
+    /**
+     * Next message error ID
+     */
     private static final AtomicLong NEXT_EXCEPTION_ID = new AtomicLong(0);
-    /** Map of error messages stored to be get later */
+    /**
+     * Map of error messages stored to be get later
+     */
     private static final Map<String, Exception> ERRORS_MAP = new HashMap<String, Exception>();
 
     /**
@@ -27,8 +35,7 @@ public class NativeTools {
      * If the given exception have special message, we get our stored exception,
      * else return the exception itself
      *
-     * @param exception
-     *            Exception to get its real version
+     * @param exception Exception to get its real version
      * @return Real exception
      */
     static Exception obtainRealException(Exception exception) {
@@ -61,8 +68,7 @@ public class NativeTools {
     /**
      * Store an exception and return a replace one to use
      *
-     * @param exception
-     *            Exception to store
+     * @param exception Exception to store
      * @return Exception to use
      */
     private static RuntimeException storeException(Exception exception) {
@@ -74,18 +80,14 @@ public class NativeTools {
     /**
      * Call a Java method (Generally called from JNI)
      *
-     * @param instance
-     *            Instance on which the method is called.
-     * @param methodName
-     *            Method name to call.
-     * @param javaSignature
-     *            Method Java signature.
-     * @param arguments
-     *            Method parameters.
+     * @param instance      Instance on which the method is called.
+     * @param methodName    Method name to call.
+     * @param javaSignature Method Java signature.
+     * @param arguments     Method parameters.
      * @return Method result.
      */
     public static Object callJava(final Object instance, final String methodName, final String javaSignature,
-            final Object[] arguments) {
+                                  final Object[] arguments) {
         if (instance != null) {
             try {
                 MethodDescription methodDescription = MethodDescription.fromJNI(methodName, javaSignature);
@@ -118,13 +120,11 @@ public class NativeTools {
 
                     return SignatureUtilities.convertValueJavaToLibQI(result, methodDescription.getReturnType());
                 }
-            }
-            catch (InvocationTargetException invocationTargetException) {
+            } catch (InvocationTargetException invocationTargetException) {
                 // We are interested by the cause, because we want hide the
                 // reflection/proxy part and obtain the real exception
                 throw storeException((Exception) invocationTargetException.getCause());
-            }
-            catch (Exception exception) {
+            } catch (Exception exception) {
                 throw storeException(exception);
             }
         }

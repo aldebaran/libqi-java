@@ -4,43 +4,37 @@
 */
 package com.aldebaran.qi;
 
-import static org.junit.Assert.assertEquals;
-
 import org.junit.Test;
 
-public class TestSharedLibrary
-{
+import static org.junit.Assert.assertEquals;
 
-  @Test
-  public void testGetNameLinux()
-  {
-    String osName = System.getProperty("os.name");
-    if (!osName.startsWith("Linux"))
-    {
-      return;
+public class TestSharedLibrary {
+
+    @Test
+    public void testGetNameLinux() {
+        String osName = System.getProperty("os.name");
+        if (!osName.startsWith("Linux")) {
+            return;
+        }
+
+        String libname = SharedLibrary.getLibraryName("qi");
+        assertEquals("libqi.so", libname);
+
     }
 
-    String libname = SharedLibrary.getLibraryName("qi");
-    assertEquals("libqi.so", libname);
+    @Test
+    public void testGetNameWindows() {
+        String osName = System.getProperty("os.name");
+        if (!osName.startsWith("Windows")) {
+            return;
+        }
 
-  }
-
-  @Test
-  public void testGetNameWindows()
-  {
-    String osName = System.getProperty("os.name");
-    if (!osName.startsWith("Windows"))
-    {
-      return;
+        String libname = SharedLibrary.getLibraryName("qi");
+        assertEquals("qi.dll", libname);
     }
 
-    String libname = SharedLibrary.getLibraryName("qi");
-    assertEquals("qi.dll", libname);
-  }
-
-  @Test
-  public void testLoadLibQi()
-  {
-    assertEquals(true, SharedLibrary.loadLib("qi"));
-  }
+    @Test
+    public void testLoadLibQi() {
+        assertEquals(true, SharedLibrary.loadLib("qi"));
+    }
 }

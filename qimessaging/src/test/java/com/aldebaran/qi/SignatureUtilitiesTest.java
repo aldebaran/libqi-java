@@ -1,23 +1,19 @@
 package com.aldebaran.qi;
 
+import com.aldebaran.qi.serialization.SignatureUtilities;
+import junit.framework.Assert;
+import org.junit.Test;
+
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 
-import junit.framework.Assert;
-
-import org.junit.Test;
-
-import com.aldebaran.qi.serialization.SignatureUtilities;
-
 /**
  * Tests of {@link SignatureUtilities}
- *
  */
 public class SignatureUtilitiesTest {
     /**
      * Interface to have some methods with different signatures for test
-     *
      */
     static interface Signatures {
         public void voidNoParameter();
@@ -53,7 +49,6 @@ public class SignatureUtilitiesTest {
 
     /**
      * Tuple with fields in good order
-     *
      */
     @QiStruct
     static class Triplet extends Tuple {
@@ -71,7 +66,6 @@ public class SignatureUtilitiesTest {
 
     /**
      * Tuple with fields in random order
-     *
      */
     @QiStruct
     static class Triplet2 extends Tuple {
@@ -90,8 +84,7 @@ public class SignatureUtilitiesTest {
     /**
      * Obtain a method of {@link Signatures} interface
      *
-     * @param name
-     *            Method name
+     * @param name Method name
      * @return Obtained method
      */
     static Method getMethod(final String name) {
@@ -108,12 +101,9 @@ public class SignatureUtilitiesTest {
      * Check if {@link SignatureUtilities#computeSignatureForMethod} return the
      * good signature
      *
-     * @param description
-     *            Message associate to the test
-     * @param signature
-     *            Expected signature
-     * @param method
-     *            Method name to test
+     * @param description Message associate to the test
+     * @param signature   Expected signature
+     * @param method      Method name to test
      */
     private void assertSignature(final String description, final String signature, final String method) {
         Assert.assertEquals(description, signature,

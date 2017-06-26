@@ -246,13 +246,13 @@ public class AnyObject {
     }
 
     Future<Void> disconnect(QiSignalConnection connection) {
-        return connection.getFuture().andThen(new Function<Long,Void>() {
+        return connection.getFuture().andThen(new Function<Long, Void>() {
             @Override
             public Void execute(Long value) throws Throwable {
                 new Future<Void>(disconnectSignal(pointer, value)).get();
                 return null;
             }
-        },FutureCallbackType.Async);
+        }, FutureCallbackType.Async);
     }
 
     /**

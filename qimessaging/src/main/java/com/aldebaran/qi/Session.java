@@ -65,10 +65,8 @@ public class Session {
     /**
      * List of URL session endpoints.
      *
-     * @param pSession
-     *            Reference to session in JNI.
-     * @param endpoints
-     *            List to add URL session endpoints.
+     * @param pSession  Reference to session in JNI.
+     * @param endpoints List to add URL session endpoints.
      */
     private native void endpoints(long pSession, List<String> endpoints);
 
@@ -104,10 +102,8 @@ public class Session {
     /**
      * Try to connect to given address.
      *
-     * @param serviceDirectoryAddress
-     *            Address to connect to.
-     * @throws Exception
-     *             on error.
+     * @param serviceDirectoryAddress Address to connect to.
+     * @throws Exception on error.
      */
     public Future<Void> connect(String serviceDirectoryAddress) {
         long pFuture = qiSessionConnect(_session, serviceDirectoryAddress);
@@ -117,8 +113,7 @@ public class Session {
     /**
      * Ask for remote service to Service Directory.
      *
-     * @param name
-     *            Name of service.
+     * @param name Name of service.
      * @return the AnyObject future
      */
     public Future<AnyObject> service(String name) {
@@ -147,10 +142,8 @@ public class Session {
     /**
      * Register service on Service Directory
      *
-     * @param name
-     *            Name of new service
-     * @param object
-     *            Instance of service
+     * @param name   Name of new service
+     * @param object Instance of service
      * @return the id of the service
      */
     public int registerService(String name, AnyObject object) {
@@ -160,8 +153,7 @@ public class Session {
     /**
      * Unregister service from Service Directory
      *
-     * @param idx
-     *            is return by registerService
+     * @param idx is return by registerService
      * @see #registerService(String, AnyObject)
      */
     public void unregisterService(int idx) {
@@ -186,8 +178,7 @@ public class Session {
         for (ConnectionListener listener : listeners) {
             try {
                 listener.onConnected();
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 // log exceptions from callbacks, bug ignore them
                 e.printStackTrace();
             }
@@ -198,8 +189,7 @@ public class Session {
         for (ConnectionListener listener : listeners) {
             try {
                 listener.onDisconnected(reason);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 // log exceptions from callbacks, bug ignore them
                 e.printStackTrace();
             }

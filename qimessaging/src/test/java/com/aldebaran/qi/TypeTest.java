@@ -4,361 +4,315 @@
 */
 package com.aldebaran.qi;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
-import com.aldebaran.qi.ServiceDirectory;
-import com.aldebaran.qi.Session;
-import com.aldebaran.qi.ReplyService;
-import com.aldebaran.qi.AnyObject;
-
-import static org.junit.Assert.*;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.*;
+
+import static org.junit.Assert.*;
+
 /**
  * Integration test for QiMessaging java bindings.
  */
-public class TypeTest
-{
-  public AnyObject           proxy = null;
-  public AnyObject           obj = null;
-  public Session          s = null;
-  public Session          client = null;
-  public ServiceDirectory sd = null;
+public class TypeTest {
+    public AnyObject proxy = null;
+    public AnyObject obj = null;
+    public Session s = null;
+    public Session client = null;
+    public ServiceDirectory sd = null;
 
-  @Before
-  public void setUp() throws Exception
-  {
-    //Application.setLogCategory("qimessaging.jni", 6);
-    sd = new ServiceDirectory();
-    s = new Session();
-    client = new Session();
+    @Before
+    public void setUp() throws Exception {
+        //Application.setLogCategory("qimessaging.jni", 6);
+        sd = new ServiceDirectory();
+        s = new Session();
+        client = new Session();
 
-    // Get Service directory listening url.
-    String url = sd.listenUrl();
+        // Get Service directory listening url.
+        String url = sd.listenUrl();
 
-    // Create new QiMessaging generic object
-    DynamicObjectBuilder ob = new DynamicObjectBuilder();
+        // Create new QiMessaging generic object
+        DynamicObjectBuilder ob = new DynamicObjectBuilder();
 
-    // Get instance of ReplyService
-    QiService reply = new ReplyService();
+        // Get instance of ReplyService
+        QiService reply = new ReplyService();
 
-    // Register event 'Fire'
-    ob.advertiseSignal("fire::(i)");
-    ob.advertiseMethod("reply::s(s)", reply, "Concatenate given argument with 'bim !'");
-    ob.advertiseMethod("answer::s()", reply, "Return given argument");
-    ob.advertiseMethod("add::i(iii)", reply, "Return sum of arguments");
-    ob.advertiseMethod("info::(sib)(sib)", reply, "Return a tuple containing given arguments");
-    ob.advertiseMethod("answer::i(i)", reply, "Return given parameter plus 1");
-    ob.advertiseMethod("answerFloat::f(f)", reply, "Return given parameter plus 1");
-    ob.advertiseMethod("answerBool::b(b)", reply, "Flip given parameter and return it");
-    ob.advertiseMethod("abacus::{ib}({ib})", reply, "Flip all booleans in map");
-    ob.advertiseMethod("echoFloatList::[m]([f])", reply, "Return the exact same list");
-    ob.advertiseMethod("createObject::o()", reply, "Return a test object");
-    ob.advertiseMethod("generic::b(m)", reply, "Take a value as argument");
+        // Register event 'Fire'
+        ob.advertiseSignal("fire::(i)");
+        ob.advertiseMethod("reply::s(s)", reply, "Concatenate given argument with 'bim !'");
+        ob.advertiseMethod("answer::s()", reply, "Return given argument");
+        ob.advertiseMethod("add::i(iii)", reply, "Return sum of arguments");
+        ob.advertiseMethod("info::(sib)(sib)", reply, "Return a tuple containing given arguments");
+        ob.advertiseMethod("answer::i(i)", reply, "Return given parameter plus 1");
+        ob.advertiseMethod("answerFloat::f(f)", reply, "Return given parameter plus 1");
+        ob.advertiseMethod("answerBool::b(b)", reply, "Flip given parameter and return it");
+        ob.advertiseMethod("abacus::{ib}({ib})", reply, "Flip all booleans in map");
+        ob.advertiseMethod("echoFloatList::[m]([f])", reply, "Return the exact same list");
+        ob.advertiseMethod("createObject::o()", reply, "Return a test object");
+        ob.advertiseMethod("generic::b(m)", reply, "Take a value as argument");
 
-    // Connect session to Service Directory
-    s.connect(url).sync();
+        // Connect session to Service Directory
+        s.connect(url).sync();
 
-    // Register service as serviceTest
-    obj = ob.object();
-    assertTrue("Service must be registered", s.registerService("serviceTest", obj) > 0);
+        // Register service as serviceTest
+        obj = ob.object();
+        assertTrue("Service must be registered", s.registerService("serviceTest", obj) > 0);
 
-    // Connect client session to service directory
-    client.connect(url).sync();
+        // Connect client session to service directory
+        client.connect(url).sync();
 
-    // Get a proxy to serviceTest
-    proxy = client.service("serviceTest").get();
-    assertNotNull(proxy);
-  }
-
-  @After
-  public void tearDown()
-  {
-    obj = null;
-    proxy = null;
-
-    s.close();
-    client.close();
-    sd.close();
-
-    s = null;
-    client = null;
-    sd = null;
-  }
-
-  /**
-   * Test String conversion
-   */
-  @Test
-  public void testString()
-  {
-    String ret = null;
-    try {
-      ret = proxy.<String>call("reply", "plaf").get();
-    }
-    catch (Exception e)
-    {
-      fail("Call Error must not be thrown : " + e.getMessage());
+        // Get a proxy to serviceTest
+        proxy = client.service("serviceTest").get();
+        assertNotNull(proxy);
     }
 
-    assertEquals("plafbim !", ret);
+    @After
+    public void tearDown() {
+        obj = null;
+        proxy = null;
 
-    try {
-      ret = proxy.<String>call("answer").get();
-    }
-    catch (Exception e)
-    {
-      fail("Call Error must not be thrown : " + e.getMessage());
-    }
+        s.close();
+        client.close();
+        sd.close();
 
-    assertEquals("42 !", ret);
-  }
-
-  /**
-   * Test Integer conversion
-   */
-  @Test
-  public void testInt()
-  {
-    Integer ret = null;
-    try {
-      ret = proxy.<Integer>call("answer", 41).get();
-    }
-    catch (Exception e)
-    {
-      fail("Call Error must not be thrown : " + e.getMessage());
+        s = null;
+        client = null;
+        sd = null;
     }
 
-    assertEquals(42, ret.intValue());
-  }
+    /**
+     * Test String conversion
+     */
+    @Test
+    public void testString() {
+        String ret = null;
+        try {
+            ret = proxy.<String>call("reply", "plaf").get();
+        } catch (Exception e) {
+            fail("Call Error must not be thrown : " + e.getMessage());
+        }
 
-  /**
-   * Test Float conversion
-   */
-  @Test
-  public void testFloat()
-  {
-    Float ret = null;
-    try {
-      ret = proxy.<Float>call("answerFloat", 41.2f).get();
-    }
-    catch (Exception e)
-    {
-      fail("Call Error must not be thrown : " + e.getMessage());
-    }
+        assertEquals("plafbim !", ret);
 
-    assertEquals(42.2f, ret.floatValue(), 0.1f);
-  }
+        try {
+            ret = proxy.<String>call("answer").get();
+        } catch (Exception e) {
+            fail("Call Error must not be thrown : " + e.getMessage());
+        }
 
-  /**
-   * Test Boolean conversion
-   */
-  @Test
-  public void testBoolean()
-  {
-    Boolean ret = null;
-    try {
-      ret = proxy.<Boolean>call("answerBool", false).get();
-    }
-    catch (Exception e)
-    {
-      fail("Call Error must not be thrown : " + e.getMessage());
+        assertEquals("42 !", ret);
     }
 
-    assertTrue("Result must be true", ret);
-  }
+    /**
+     * Test Integer conversion
+     */
+    @Test
+    public void testInt() {
+        Integer ret = null;
+        try {
+            ret = proxy.<Integer>call("answer", 41).get();
+        } catch (Exception e) {
+            fail("Call Error must not be thrown : " + e.getMessage());
+        }
 
-  /**
-   * Test Map conversion
-   */
-  @Test
-  public void testEmptyMap()
-  {
-    Map<Integer, Boolean> args = new HashMap<Integer, Boolean>();
-
-    Map<Integer, Boolean> ret = null;
-    try {
-      ret = proxy.<HashMap<Integer, Boolean> >call("abacus", args).get();
-    }
-    catch (Exception e)
-    {
-      fail("Call Error must not be thrown : " + e.getMessage());
+        assertEquals(42, ret.intValue());
     }
 
-    assertTrue("Result must be empty", ret.size() == 0);
-  }
+    /**
+     * Test Float conversion
+     */
+    @Test
+    public void testFloat() {
+        Float ret = null;
+        try {
+            ret = proxy.<Float>call("answerFloat", 41.2f).get();
+        } catch (Exception e) {
+            fail("Call Error must not be thrown : " + e.getMessage());
+        }
 
-  /**
-   * Test Map conversion
-   */
-  @Test
-  public void testIntegerBooleanHashMap()
-  {
-    _testIntegerBooleanMap(new HashMap<Integer, Boolean>());
-  }
-
-  @Test
-  public void testIntegerBooleanHashtable()
-  {
-    _testIntegerBooleanMap(new Hashtable<Integer, Boolean>());
-  }
-
-  private void _testIntegerBooleanMap(Map<Integer, Boolean> args)
-  {
-    args.put(4, true);
-    args.put(3, false);
-    args.put(2, false);
-    args.put(1, true);
-
-    Map<Integer, Boolean> ret = null;
-    try {
-      ret = proxy.<Map<Integer, Boolean>>call("abacus", args).get();
-    }
-    catch (Exception e)
-    {
-      fail("Call Error must not be thrown : " + e.getMessage());
+        assertEquals(42.2f, ret.floatValue(), 0.1f);
     }
 
-    assertFalse("Result must be false", ret.get(1));
-    assertTrue("Result must be true", ret.get(2));
-    assertTrue("Result must be true", ret.get(3));
-    assertFalse("Result must be false", ret.get(4));
-  }
+    /**
+     * Test Boolean conversion
+     */
+    @Test
+    public void testBoolean() {
+        Boolean ret = null;
+        try {
+            ret = proxy.<Boolean>call("answerBool", false).get();
+        } catch (Exception e) {
+            fail("Call Error must not be thrown : " + e.getMessage());
+        }
 
-  /**
-   * Test List conversion
-   */
-  @Test
-  public void testEmptyList()
-  {
-    List<Float> args = new ArrayList<Float>();
-
-    List<Float> ret = null;
-    try {
-      ret = proxy.<List<Float>>call("echoFloatList", args).get();
-    }
-    catch (Exception e)
-    {
-      fail("Call Error must not be thrown : " + e.getMessage());
+        assertTrue("Result must be true", ret);
     }
 
-    assertTrue("Result must be empty", ret.size() == 0);
-  }
+    /**
+     * Test Map conversion
+     */
+    @Test
+    public void testEmptyMap() {
+        Map<Integer, Boolean> args = new HashMap<Integer, Boolean>();
 
-  /**
-   * Test List conversion
-   */
-  @Test
-  public void testFloatArrayList() {
-    _testFloatList(new ArrayList<Float>());
-  }
+        Map<Integer, Boolean> ret = null;
+        try {
+            ret = proxy.<HashMap<Integer, Boolean>>call("abacus", args).get();
+        } catch (Exception e) {
+            fail("Call Error must not be thrown : " + e.getMessage());
+        }
 
-  @Test
-  public void testFloatLinkedList() {
-    _testFloatList(new LinkedList<Float>());
-  }
-
-  private void _testFloatList(List<Float> args)
-  {
-    args.add(13.3f);
-    args.add(1342.3f);
-    args.add(13.4f);
-    args.add(1.0f);
-    args.add(0.1f);
-
-    List<Float> ret = null;
-    try {
-      ret = proxy.<ArrayList<Float> >call("echoFloatList", args).get();
-    }
-    catch (Exception e)
-    {
-      fail("Call Error must not be thrown : " + e.getMessage());
+        assertTrue("Result must be empty", ret.size() == 0);
     }
 
-    assertEquals(args, ret);
-  }
-
-  @Test
-  public void testValue()
-  {
-    String str = "hello world";
-    Boolean ret = null;
-
-    try {
-      ret = proxy.<Boolean>call("generic", str).get();
-    }
-    catch (Exception e)
-    {
-      fail("Call Error must not be thrown : " + e.getMessage());
+    /**
+     * Test Map conversion
+     */
+    @Test
+    public void testIntegerBooleanHashMap() {
+        _testIntegerBooleanMap(new HashMap<Integer, Boolean>());
     }
 
-    assertTrue(ret);
-  }
-
-  @Test
-  public void testConvert()
-  {
-    Object o = AnyObject.decodeJSON("1");
-    System.out.println(o.getClass().getName());
-    assertTrue(o instanceof Number);
-    assertEquals(((Number) o).intValue(), 1);
-    String str = AnyObject.encodeJSON(o);
-    assertEquals(str, "1");
-
-    o = AnyObject.decodeJSON("1.5");
-    System.out.println(o.getClass().getName());
-    System.out.println(o.toString());
-    assertTrue(o instanceof java.lang.Float);
-    assertTrue(((Float)o).equals(1.5f));
-    str = AnyObject.encodeJSON(o);
-    assertEquals(str, "1.5");
-
-    o = AnyObject.decodeJSON("\"foo\"");
-    assertTrue(o instanceof java.lang.String);
-    assertTrue(((String)o).equals("foo"));
-    str = AnyObject.encodeJSON(o);
-    assertEquals(str, "\"foo\"");
-
-    System.gc(); // just for fun
-
-    o = AnyObject.decodeJSON("[1, 2, 3]");
-    assertTrue(o instanceof List);
-    List l = (List)o;
-    assertEquals(l.size(), 3);
-    assertEquals(((Number) l.get(0)).intValue(), 1);
-    assertEquals(((Number) l.get(2)).intValue(), 3);
-    str = AnyObject.encodeJSON(o);
-    // be leniant on non-significant formatting
-    assertEquals(str.replace(" ",""), "[1,2,3]");
-  }
-  @Test
-  public void testConvertBig()
-  {
-    System.out.println("big test started");
-    String mega = "[";
-    for (int i=0; i<1000; i++)
-    {
-      mega += Integer.toString(i) + ",";
-      //System.out.println("megamega..." + mega);
+    @Test
+    public void testIntegerBooleanHashtable() {
+        _testIntegerBooleanMap(new Hashtable<Integer, Boolean>());
     }
-    mega += "1]";
-    System.out.println("big test decoding");
-    Object o = AnyObject.decodeJSON(mega);
-    System.out.println("big test decoded");
-    assertTrue(o instanceof List);
-    List l = (List)o;
-    assertEquals(l.size(), 1001);
-    assertEquals(((Number) l.get(100)).intValue(), 100);
-    String str = AnyObject.encodeJSON(o);
-    assertEquals(str.replace(" ",""), mega);
-    System.out.println("big test finished");
-  }
+
+    private void _testIntegerBooleanMap(Map<Integer, Boolean> args) {
+        args.put(4, true);
+        args.put(3, false);
+        args.put(2, false);
+        args.put(1, true);
+
+        Map<Integer, Boolean> ret = null;
+        try {
+            ret = proxy.<Map<Integer, Boolean>>call("abacus", args).get();
+        } catch (Exception e) {
+            fail("Call Error must not be thrown : " + e.getMessage());
+        }
+
+        assertFalse("Result must be false", ret.get(1));
+        assertTrue("Result must be true", ret.get(2));
+        assertTrue("Result must be true", ret.get(3));
+        assertFalse("Result must be false", ret.get(4));
+    }
+
+    /**
+     * Test List conversion
+     */
+    @Test
+    public void testEmptyList() {
+        List<Float> args = new ArrayList<Float>();
+
+        List<Float> ret = null;
+        try {
+            ret = proxy.<List<Float>>call("echoFloatList", args).get();
+        } catch (Exception e) {
+            fail("Call Error must not be thrown : " + e.getMessage());
+        }
+
+        assertTrue("Result must be empty", ret.size() == 0);
+    }
+
+    /**
+     * Test List conversion
+     */
+    @Test
+    public void testFloatArrayList() {
+        _testFloatList(new ArrayList<Float>());
+    }
+
+    @Test
+    public void testFloatLinkedList() {
+        _testFloatList(new LinkedList<Float>());
+    }
+
+    private void _testFloatList(List<Float> args) {
+        args.add(13.3f);
+        args.add(1342.3f);
+        args.add(13.4f);
+        args.add(1.0f);
+        args.add(0.1f);
+
+        List<Float> ret = null;
+        try {
+            ret = proxy.<ArrayList<Float>>call("echoFloatList", args).get();
+        } catch (Exception e) {
+            fail("Call Error must not be thrown : " + e.getMessage());
+        }
+
+        assertEquals(args, ret);
+    }
+
+    @Test
+    public void testValue() {
+        String str = "hello world";
+        Boolean ret = null;
+
+        try {
+            ret = proxy.<Boolean>call("generic", str).get();
+        } catch (Exception e) {
+            fail("Call Error must not be thrown : " + e.getMessage());
+        }
+
+        assertTrue(ret);
+    }
+
+    @Test
+    public void testConvert() {
+        Object o = AnyObject.decodeJSON("1");
+        System.out.println(o.getClass().getName());
+        assertTrue(o instanceof Number);
+        assertEquals(((Number) o).intValue(), 1);
+        String str = AnyObject.encodeJSON(o);
+        assertEquals(str, "1");
+
+        o = AnyObject.decodeJSON("1.5");
+        System.out.println(o.getClass().getName());
+        System.out.println(o.toString());
+        assertTrue(o instanceof java.lang.Float);
+        assertTrue(((Float) o).equals(1.5f));
+        str = AnyObject.encodeJSON(o);
+        assertEquals(str, "1.5");
+
+        o = AnyObject.decodeJSON("\"foo\"");
+        assertTrue(o instanceof java.lang.String);
+        assertTrue(((String) o).equals("foo"));
+        str = AnyObject.encodeJSON(o);
+        assertEquals(str, "\"foo\"");
+
+        System.gc(); // just for fun
+
+        o = AnyObject.decodeJSON("[1, 2, 3]");
+        assertTrue(o instanceof List);
+        List l = (List) o;
+        assertEquals(l.size(), 3);
+        assertEquals(((Number) l.get(0)).intValue(), 1);
+        assertEquals(((Number) l.get(2)).intValue(), 3);
+        str = AnyObject.encodeJSON(o);
+        // be leniant on non-significant formatting
+        assertEquals(str.replace(" ", ""), "[1,2,3]");
+    }
+
+    @Test
+    public void testConvertBig() {
+        System.out.println("big test started");
+        String mega = "[";
+        for (int i = 0; i < 1000; i++) {
+            mega += Integer.toString(i) + ",";
+            //System.out.println("megamega..." + mega);
+        }
+        mega += "1]";
+        System.out.println("big test decoding");
+        Object o = AnyObject.decodeJSON(mega);
+        System.out.println("big test decoded");
+        assertTrue(o instanceof List);
+        List l = (List) o;
+        assertEquals(l.size(), 1001);
+        assertEquals(((Number) l.get(100)).intValue(), 100);
+        String str = AnyObject.encodeJSON(o);
+        assertEquals(str.replace(" ", ""), mega);
+        System.out.println("big test finished");
+    }
 }
