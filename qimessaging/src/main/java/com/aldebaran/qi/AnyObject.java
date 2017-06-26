@@ -36,7 +36,7 @@ public class AnyObject {
         }
     }
 
-    private long pointer;
+    private long _p;
 
     private native long property(long pObj, String property) throws DynamicCallException;
 
@@ -68,15 +68,15 @@ public class AnyObject {
      *
      * @see DynamicObjectBuilder
      */
-    AnyObject(long pointer) {
-        this.pointer = pointer;
+    AnyObject(long _p) {
+        this._p = _p;
     }
 
     public Future<Void> setProperty(QiSerializer serializer, String property, Object o) {
         try {
             // convert custom structs to tuples if necessary
             Object convertedProperty = serializer.serialize(o);
-            return new Future<Void>(setProperty(pointer, property, convertedProperty));
+            return new Future<Void>(setProperty(_p, property, convertedProperty));
         } catch (QiConversionException e) {
             throw new QiRuntimeException(e);
         }
@@ -87,7 +87,7 @@ public class AnyObject {
     }
 
     public <T> Future<T> property(String property) {
-        return new Future<T>(property(pointer, property));
+        return new Future<T>(property(_p, property));
     }
 
     /**
@@ -130,7 +130,7 @@ public class AnyObject {
      * @throws DynamicCallException
      */
     public <T> Future<T> call(String method, Object... args) {
-        return new Future<T>(asyncCall(pointer, method, args));
+        return new Future<T>(asyncCall(_p, method, args));
     }
 
     /**
@@ -191,14 +191,14 @@ public class AnyObject {
 
             // If method name match signature
             if (callback.contains(method.getName()) == true)
-                return connect(pointer, callback, object, className, eventName);
+                return connect(_p, callback, object, className, eventName);
         }
 
         throw new QiRuntimeException("Cannot find " + callback + " in object " + object);
     }
 
     public QiSignalConnection connect(String signalName, QiSignalListener listener) {
-        long futurePtr = connectSignal(pointer, signalName, listener);
+        long futurePtr = connectSignal(_p, signalName, listener);
         return new QiSignalConnection(this, new Future<Long>(futurePtr));
     }
 
@@ -249,7 +249,7 @@ public class AnyObject {
         return connection.getFuture().andThen(new Function<Long, Void>() {
             @Override
             public Void execute(Long value) throws Throwable {
-                new Future<Void>(disconnectSignal(pointer, value)).get();
+                new Future<Void>(disconnectSignal(_p, value)).get();
                 return null;
             }
         }, FutureCallbackType.Async);
@@ -262,7 +262,7 @@ public class AnyObject {
      */
     @Deprecated
     public long disconnect(long subscriberId) {
-        return disconnect(pointer, subscriberId);
+        return disconnect(_p, subscriberId);
     }
 
     /**
@@ -273,12 +273,12 @@ public class AnyObject {
      * @see DynamicObjectBuilder#advertiseSignal(long, String)
      */
     public void post(String eventName, Object... args) {
-        post(pointer, eventName, args);
+        post(_p, eventName, args);
     }
 
     @Override
     public String toString() {
-        return printMetaObject(pointer);
+        return printMetaObject(_p);
     }
 
     /**
@@ -287,7 +287,7 @@ public class AnyObject {
      */
     @Override
     protected void finalize() throws Throwable {
-        destroy(pointer);
+        destroy(_p);
         super.finalize();
     }
 
