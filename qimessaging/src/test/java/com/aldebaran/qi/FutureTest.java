@@ -418,6 +418,8 @@ public class FutureTest {
             public Void execute(Future<Void> future) throws Throwable {
                 assertTrue(future.hasError());
                 finished.set(true);
+                //We getting the result of the future to propagate the exception.
+                future.get();
                 return null;
             }
         });
