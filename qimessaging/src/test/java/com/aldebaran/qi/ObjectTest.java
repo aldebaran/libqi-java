@@ -191,7 +191,7 @@ public class ObjectTest {
             String expected = "cannot convert parameters from (sii) to (iii)";
             System.out.println(e.getMessage());
             System.out.println(expected);
-            assertEquals(expected, e.getCause().getMessage());
+            assertEquals(expected, e.getMessage());
         }
         assertTrue(ok);
 
