@@ -154,32 +154,6 @@ public class Future<T> implements java.util.concurrent.Future<T> {
     }
 
     /**
-     * Callbacks to future can be set.
-     *
-     * @param callback com.aldebaran.qi.Callback implementation
-     * @param args     Argument to be forwarded to callback functions.
-     * @return true on success.
-     * @since 1.20
-     */
-    @Deprecated
-    public boolean addCallback(com.aldebaran.qi.Callback<T> callback, Object... args) {
-        if (!this.nativeFuture) {
-            if (this.error != null) {
-                callback.onFailure(this, args);
-            } else if (this.canceled) {
-                callback.onComplete(this, args);
-            } else {
-                callback.onSuccess(this, args);
-            }
-
-            return true;
-        }
-
-        String className = callback.getClass().getName().replace('.', '/');
-        return qiFutureCallConnect(_fut, callback, className, args);
-    }
-
-    /**
      * Prefer {@link #then(FutureFunction, FutureCallbackType)} instead (e.g.
      */
     public void connect(Callback<T> callback, FutureCallbackType futureCallbackType) {
