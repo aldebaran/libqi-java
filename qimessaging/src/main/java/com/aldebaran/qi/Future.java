@@ -373,6 +373,10 @@ public class Future<T> implements java.util.concurrent.Future<T> {
         return !this.nativeFuture || qiFutureCallIsDone(_fut);
     }
 
+    public synchronized boolean isSuccess(){
+        return !this.isCancelled() && !this.hasError();
+    }
+
     public <R> Future<R> then(final FutureFunction<T, R> function, FutureCallbackType type) {
         FutureCallbackType futureCallbackTypePromise = FutureCallbackType.Sync;
 
