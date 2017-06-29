@@ -4,11 +4,18 @@ package com.aldebaran.qi;
  * Interface used to provide a mechanism for chaining {@link Future}s by supplying
  * it to: {@link Future#andThen(Function)}.
  * <p>
- * For a simpler use, prefer using one of the two provided implementations:
+ * For a simpler use, prefer using {@link FunctionCallback} implementation.
  *
- * @param <R> the {@link Future}'s output type
  * @param <T> the {@link Future}'s input type
+ * @param <R> the {@link Future}'s result type
  */
 public interface Function<T, R> {
+    /**
+     * Apply this function to the given argument
+     *
+     * @param value the function argument
+     * @return the function result
+     * @throws Throwable
+     **/
     R execute(T value) throws Throwable;
 }
