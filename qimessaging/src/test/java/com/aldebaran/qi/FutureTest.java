@@ -460,61 +460,6 @@ public class FutureTest {
     }
 
     @Test
-    public void testCallback() {
-        AnyObject proxy = null;
-        Future<String> fut = null;
-        Future<Void> futureFinished = null;
-
-
-        // Get a proxy to serviceTest
-        try {
-            proxy = client.service("serviceTest").get();
-        } catch (Exception e1) {
-            fail("Cannot get serviceTest :" + e1.getMessage());
-        }
-
-        // Call a 2s long function
-        try {
-            fut = proxy.call("longReply", "plaf");
-            fut.addCallback(new Callback<String>() {
-
-                public void onSuccess(Future<String> future, Object[] args) {
-                    onSuccessCalled = true;
-                    assertEquals(1, args[0]);
-                    assertEquals(2, args[1]);
-                }
-
-                public void onFailure(Future<String> future, Object[] args) {
-                    fail("onFailure must not be called");
-                }
-
-                public void onComplete(Future<String> future, Object[] args) {
-                    onCompleteCalled = true;
-                    assertEquals(1, args[0]);
-                    assertEquals(2, args[1]);
-                }
-            }, 1, 2);
-            futureFinished = fut.then(new FutureFunction<String, Void>() {
-                @Override
-                public Void execute(Future<String> future) throws Throwable {
-                    return null;
-                }
-            });
-        } catch (DynamicCallException e) {
-            fail("Error calling answer function : " + e.getMessage());
-        }
-
-        try {
-            fut.get();
-            futureFinished.get();
-        } catch (Exception e) {
-            fail("fut.get() must not fail");
-        }
-        assertTrue(onSuccessCalled);
-        assertTrue(onCompleteCalled);
-    }
-
-    @Test
     public void testLongCall() {
         Future<String> fut = null;
 
