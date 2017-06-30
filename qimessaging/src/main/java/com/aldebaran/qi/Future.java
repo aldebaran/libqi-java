@@ -388,6 +388,20 @@ public class Future<T> implements java.util.concurrent.Future<T> {
         return this.then(function, this.defaultFutureCallbackType);
     }
 
+    public Future<Void> then(final FutureConsumer<T> consumer) {
+        return this.then(consumer, this.defaultFutureCallbackType);
+    }
+
+    public Future<Void> then(final FutureConsumer<T> consumer, FutureCallbackType type) {
+        return this.then(new FutureFunction<T, Void>() {
+            @Override
+            public Void execute(Future<T> future) throws Throwable {
+                consumer.consume(future);
+                return null;
+            }
+        }, type);
+    }
+
     public <R> Future<R> andThen(final Function<T, R> function, FutureCallbackType type) {
         FutureCallbackType futureCallbackTypePromise = FutureCallbackType.Sync;
 
@@ -420,9 +434,22 @@ public class Future<T> implements java.util.concurrent.Future<T> {
 
         return promiseToNotify.getFuture();
     }
-
     public <R> Future<R> andThen(final Function<T, R> function) {
         return this.andThen(function, this.defaultFutureCallbackType);
+    }
+
+    public Future<Void> andThen(final Consumer<T> consumer, FutureCallbackType type) {
+        return this.andThen(new Function<T, Void>() {
+            @Override
+            public Void execute(T value) throws Throwable {
+                consumer.consume(value);
+                return null;
+            }
+        }, type);
+    }
+
+    public Future<Void> andThen(final Consumer<T> consumer) {
+        return this.andThen(consumer, this.defaultFutureCallbackType);
     }
 
 

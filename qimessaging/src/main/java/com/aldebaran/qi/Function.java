@@ -4,7 +4,7 @@ package com.aldebaran.qi;
  * Interface used to provide a mechanism for chaining {@link Future}s by supplying
  * it to: {@link Future#andThen(Function)}.
  * <p>
- * For a simpler use, prefer using {@link FunctionCallback} implementation.
+ * For a simpler use, prefer using {@link Consumer} implementation.
  *
  * @param <T> the {@link Future}'s input type
  * @param <R> the {@link Future}'s result type
