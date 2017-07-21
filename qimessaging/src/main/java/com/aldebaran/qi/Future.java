@@ -13,12 +13,13 @@ import java.util.concurrent.TimeoutException;
  * represents the result of an asynchronous computation.
  * <p>
  * {@link Promise} and Future are two complementary concepts. They are designed
- * to synchronise data between multiples threads. The Future holds the result of
+ * to synchronize data between multiples threads. The Future holds the result of
  * an asynchronous computation, from which you can retrieve the value of the
  * result; the {@link Promise} sets the value of this computation, which
  * resolves the associated Future.
  *
- * @param <T> The type of the result
+ * @param <T>
+ *            The type of the result
  */
 public class Future<T> implements java.util.concurrent.Future<T> {
 
@@ -35,29 +36,9 @@ public class Future<T> implements java.util.concurrent.Future<T> {
     }
 
     private static final int TIMEOUT_INFINITE = -1;
-    /**
-     * Canceled future
-     */
-    private static final Future<?> CANCELED_FUTURE = new Future();
 
     // C++ Future
-    private long _fut;
-    /**
-     * Indicates if future has C reference
-     */
-    private final boolean nativeFuture;
-    /**
-     * Known value for not native future
-     */
-    private T value;
-    /**
-     * Last error for not native future
-     */
-    private String error;
-    /**
-     * Cancel state for not native future
-     */
-    private boolean canceled;
+    private final long _fut;
 
     // Native C API object functions
     private native boolean qiFutureCallCancel(long pFuture);
@@ -70,15 +51,79 @@ public class Future<T> implements java.util.concurrent.Future<T> {
 
     private native boolean qiFutureCallIsDone(long pFuture);
 
-    private native boolean qiFutureCallConnect(long pFuture, Object callback, String className, Object[] args);
-
     private native void qiFutureCallWaitWithTimeout(long pFuture, int timeout);
 
     private native void qiFutureDestroy(long pFuture);
 
     private native void qiFutureCallConnectCallback(long pFuture, Callback<?> callback, int futureCallbackType);
 
-    private static native long qiFutureCreate(Object value);
+    /**
+     * Call native future "andThen" for Function(P)->R
+     *
+     * @param future
+     *            Future pointer
+     * @param function
+     *            Function to callback
+     * @return Pointer of created future
+     */
+    private native long qiFutureAndThen(long future, Function<T, ?> function);
+
+    /**
+     * Call native future "andThen" for Consumer(P)
+     *
+     * @param future
+     *            Future pointer
+     * @param consumer
+     *            Function to callback
+     * @return Pointer of created future
+     */
+    private native long qiFutureAndThenVoid(long future, Consumer<T> consumer);
+
+    /**
+     * Call native future "andThen" for Function(P)->Future&lt;R&gt; and unwrap
+     * automatically
+     *
+     * @param future
+     *            Future pointer
+     * @param futureOfFutureFunction
+     *            Function to callback
+     * @return Pointer of created future
+     */
+    private native long qiFutureAndThenUnwrap(long future, Function<T, ?> futureOfFutureFunction);
+
+    /**
+     * Call native future <b>then</b> for Function(Future&lt;P&gt;)->R
+     *
+     * @param future
+     *            Future pointer
+     * @param function
+     *            Function to callback
+     * @return Pointer on created future
+     */
+    private native long qiFutureThen(long future, Function<Future<T>, ?> futureFunction);
+
+    /**
+     * Call native future <b>then</b> for Consumer(Future&lt;P&gt;)
+     *
+     * @param future
+     *            Future pointer
+     * @param function
+     *            Function to callback
+     * @return Pointer on created future
+     */
+    private native long qiFutureThenVoid(long future, Consumer<Future<T>> futureFunction);
+
+    /**
+     * Call native future <b>then</b> for
+     * Function(Future&lt;P&gt;)->Future&lt;R&gt; and unwrap automatically
+     *
+     * @param future
+     *            Future pointer
+     * @param function
+     *            Function to callback
+     * @return Pointer on created future
+     */
+    private native long qiFutureThenUnwrap(long future, Function<Future<T>, ?> futureOfFutureFunction);
 
     /**
      * Default callback type
@@ -87,43 +132,13 @@ public class Future<T> implements java.util.concurrent.Future<T> {
 
     Future(final long pFuture) {
         this._fut = pFuture;
-        this.nativeFuture = true;
-    }
-
-    /**
-     * Create future with known value
-     *
-     * @param value Known value
-     */
-    Future(T value) {
-        this.nativeFuture = false;
-        this.value = value;
-        this.canceled = false;
-    }
-
-    /**
-     * Create future on error
-     *
-     * @param error Error
-     */
-    Future(String error) {
-        this.nativeFuture = false;
-        this.error = error == null ? "" : error;
-        this.canceled = false;
-    }
-
-    /**
-     * Create a canceled future
-     */
-    private Future() {
-        this.nativeFuture = false;
-        this.canceled = true;
     }
 
     /**
      * Change the default callback type
      *
-     * @param defaultFutureCallbackType New default callback type
+     * @param defaultFutureCallbackType
+     *            New default callback type
      */
     void setDefaultFutureCallbackType(FutureCallbackType defaultFutureCallbackType) {
         this.defaultFutureCallbackType = defaultFutureCallbackType;
@@ -136,17 +151,19 @@ public class Future<T> implements java.util.concurrent.Future<T> {
     }
 
     public static <T> Future<T> cancelled() {
-        return (Future<T>) CANCELED_FUTURE;
+        Promise<T> promise = new Promise();
+        promise.setCancelled();
+        return promise.getFuture();
     }
 
     public static <T> Future<T> fromError(String errorMessage) {
-        return new Future<T>(errorMessage);
+        Promise<T> promise = new Promise<T>();
+        promise.setError(errorMessage);
+        return promise.getFuture();
     }
 
     public void sync(long timeout, TimeUnit unit) {
-        if (this.nativeFuture) {
-            qiFutureCallWaitWithTimeout(_fut, (int) unit.toMillis(timeout));
-        }
+        qiFutureCallWaitWithTimeout(_fut, (int) unit.toMillis(timeout));
     }
 
     public void sync() {
@@ -157,11 +174,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
      * Prefer {@link #then(FutureFunction, FutureCallbackType)} instead (e.g.
      */
     public void connect(Callback<T> callback, FutureCallbackType futureCallbackType) {
-        if (!this.nativeFuture) {
-            callback.onFinished(this);
-        } else {
-            qiFutureCallConnectCallback(_fut, callback, futureCallbackType.nativeValue);
-        }
+        qiFutureCallConnectCallback(_fut, callback, futureCallbackType.nativeValue);
     }
 
     public void connect(final Callback<T> callback) {
@@ -170,10 +183,6 @@ public class Future<T> implements java.util.concurrent.Future<T> {
 
     @Override
     public boolean cancel(boolean mayInterruptIfRunning) {
-        if (!this.nativeFuture) {
-            return this.canceled;
-        }
-
         // ignore mayInterruptIfRunning, can't map it to native libqi
         // This must be a blocking call to be compliant with Java's Future
         qiFutureCallCancel(_fut);
@@ -185,18 +194,12 @@ public class Future<T> implements java.util.concurrent.Future<T> {
      * Sends asynchronously a request to cancel the execution of this task.
      */
     public synchronized void requestCancellation() {
-        if (this.nativeFuture) {
-            // This call is compliant with native libqi's Future.cancel()
-            qiFutureCallCancelRequest(_fut);
-        }
+        // This call is compliant with native libqi's Future.cancel()
+        qiFutureCallCancelRequest(_fut);
     }
 
     @Deprecated
     public synchronized boolean cancel() {
-        if (!this.nativeFuture) {
-            return this.canceled;
-        }
-
         // Leave this method as it is (even if returning a boolean doesn't make
         // sense)
         // to avoid breaking projects that were already using it.
@@ -206,21 +209,10 @@ public class Future<T> implements java.util.concurrent.Future<T> {
 
     @SuppressWarnings("unchecked")
     private T get(int msecs) throws ExecutionException, TimeoutException {
-        if (!this.nativeFuture) {
-            if (this.error != null) {
-                throw new ExecutionException(this.error, new Throwable());
-            }
-
-            if (this.canceled) {
-                throw new CancellationException();
-            }
-
-            return this.value;
-        }
-
         try {
             return (T) qiFutureCallGet(_fut, msecs);
-        } catch (Exception exception) {
+        }
+        catch (Exception exception) {
             Throwable throwable = exception;
 
             while (throwable != null) {
@@ -254,7 +246,8 @@ public class Future<T> implements java.util.concurrent.Future<T> {
     public T get() throws ExecutionException {
         try {
             return get(TIMEOUT_INFINITE);
-        } catch (TimeoutException e) {
+        }
+        catch (TimeoutException e) {
             // should never happen
             throw new RuntimeException(e);
         }
@@ -277,7 +270,8 @@ public class Future<T> implements java.util.concurrent.Future<T> {
     public T getValue() {
         try {
             return get();
-        } catch (ExecutionException e) {
+        }
+        catch (ExecutionException e) {
             // this is an error to call getValue() if the future is not finished
             // with a value
             throw new RuntimeException(e);
@@ -288,9 +282,11 @@ public class Future<T> implements java.util.concurrent.Future<T> {
         try {
             get();
             return null;
-        } catch (ExecutionException e) {
+        }
+        catch (ExecutionException e) {
             return e;
-        } catch (CancellationException e) {
+        }
+        catch (CancellationException e) {
             return null;
         }
     }
@@ -331,9 +327,6 @@ public class Future<T> implements java.util.concurrent.Future<T> {
 
     @Override
     public synchronized boolean isCancelled() {
-        if (!this.nativeFuture) {
-            return this.canceled;
-        }
         // inherited from java.util.concurrent.Future, it must match its
         // semantics
         // i.e. it must return true after any successful call to cancel(…)
@@ -344,114 +337,111 @@ public class Future<T> implements java.util.concurrent.Future<T> {
 
     @Override
     public synchronized boolean isDone() {
-        return !this.nativeFuture || qiFutureCallIsDone(_fut);
+        return qiFutureCallIsDone(_fut);
     }
 
-    public synchronized boolean isSuccess(){
+    public synchronized boolean isSuccess() {
         return !this.isCancelled() && !this.hasError();
     }
 
-    public <R> Future<R> then(final FutureFunction<T, R> function, FutureCallbackType type) {
-        FutureCallbackType futureCallbackTypePromise = FutureCallbackType.Sync;
-
-        // the promise must be sync according to the Callback (which may be Sync
-        // or Async according to the caller)
-        final Promise<R> promiseToNotify = new Promise<R>(futureCallbackTypePromise);
-        // Adding the callback to the promise to be able to be able to forward
-        // the
-        // cancel request to the parent future/promise.
-        promiseToNotify.setOnCancel(new Promise.CancelRequestCallback<R>() {
-            @Override
-            public void onCancelRequested(Promise<R> promise) {
-                Future.this.requestCancellation();
-            }
-        });
-
-        connect(new Callback<T>() {
-            @Override
-            public void onFinished(Future<T> future) {
-                try {
-                    R result = function.execute(future);
-                    promiseToNotify.setValue(result);
-                } catch (CancellationException throwable) {
-                    promiseToNotify.setCancelled();
-                } catch (Throwable throwable) {
-                    promiseToNotify.setError(throwable.getMessage());
-                }
-            }
-        }, type);
-
-        return promiseToNotify.getFuture();
+    /**
+     * Launch a task when the task link when this future finished (succeed,
+     * error or cancelled)
+     *
+     * @param <R>
+     *            Function result type
+     * @param function
+     *            Function to call when action the task link when this future
+     *            finished
+     * @return Future for able to link to the end of the global execution (the
+     *         task link to this future and given function) status
+     */
+    public <R> Future<R> map(final Function<Future<T>, R> function) {
+        final long futurePointer = this.qiFutureThen(this._fut, function);
+        return new Future<R>(futurePointer);
     }
 
-    public <R> Future<R> then(final FutureFunction<T, R> function) {
-        return this.then(function, this.defaultFutureCallbackType);
+    /**
+     * Launch a task when the task link when this future finished (succeed,
+     * error or cancelled)
+     *
+     * @param consumer
+     *            Consumer to call when action the task link when this future
+     *            finished
+     * @return Future for able to link to the end of the global execution (the
+     *         task link to this future and given ) status
+     */
+    public Future<Void> then(final Consumer<Future<T>> consumer) {
+        final long futurePointer = this.qiFutureThenVoid(this._fut, consumer);
+        return new Future<Void>(futurePointer);
     }
 
-    public Future<Void> then(final FutureConsumer<T> consumer) {
-        return this.then(consumer, this.defaultFutureCallbackType);
+    /**
+     * Launch a task when the task link when this future finished (succeed,
+     * error or cancelled).<br>
+     * Instead of return a Future<Future<R>>, it will automatically unwrap the
+     * result to have a Future&lt;R&gt;
+     *
+     * @param <R>
+     *            Function result type
+     * @param function
+     *            Function to call when action the task link when this future
+     *            finished
+     * @return Future for able to link to the end of the global execution (the
+     *         task link to this future and given ) status
+     */
+    public <R> Future<R> flatMap(final Function<Future<T>, Future<R>> function) {
+        final long pointer = this.qiFutureThenUnwrap(this._fut, function);
+        return new Future<R>(pointer);
     }
 
-    public Future<Void> then(final FutureConsumer<T> consumer, FutureCallbackType type) {
-        return this.then(new FutureFunction<T, Void>() {
-            @Override
-            public Void execute(Future<T> future) throws Throwable {
-                consumer.consume(future);
-                return null;
-            }
-        }, type);
+    /**
+     * Launch a task when the task link when this future succeed only
+     *
+     * @param <R>
+     *            Function result type
+     * @param function
+     *            Function to call when action the task link when this future
+     *            succeed only
+     * @return Future for able to link to the end of the global execution (the
+     *         task link to this future and given function) status
+     */
+    public <R> Future<R> andMap(final Function<T, R> function) {
+        final long futurePointer = this.qiFutureAndThen(this._fut, function);
+        return new Future<R>(futurePointer);
     }
 
-    public <R> Future<R> andThen(final Function<T, R> function, FutureCallbackType type) {
-        FutureCallbackType futureCallbackTypePromise = FutureCallbackType.Sync;
-
-        // the promise must be sync according to the Callback (which may be Sync
-        // or Async according to the caller)
-        final Promise<R> promiseToNotify = new Promise<R>(futureCallbackTypePromise);
-        // Adding the callback to the promise to be able to be able to forward
-        // the
-        // cancel request to the parent future/promise.
-        promiseToNotify.setOnCancel(new Promise.CancelRequestCallback<R>() {
-            @Override
-            public void onCancelRequested(Promise<R> promise) {
-                Future.this.requestCancellation();
-            }
-        });
-
-        connect(new Callback<T>() {
-            @Override
-            public void onFinished(Future<T> future) {
-                try {
-                    R result = function.execute(future.get());
-                    promiseToNotify.setValue(result);
-                } catch (CancellationException throwable) {
-                    promiseToNotify.setCancelled();
-                } catch (Throwable throwable) {
-                    promiseToNotify.setError(throwable.getMessage());
-                }
-            }
-        }, type);
-
-        return promiseToNotify.getFuture();
-    }
-    public <R> Future<R> andThen(final Function<T, R> function) {
-        return this.andThen(function, this.defaultFutureCallbackType);
-    }
-
-    public Future<Void> andThen(final Consumer<T> consumer, FutureCallbackType type) {
-        return this.andThen(new Function<T, Void>() {
-            @Override
-            public Void execute(T value) throws Throwable {
-                consumer.consume(value);
-                return null;
-            }
-        }, type);
-    }
-
+    /**
+     * Launch a task when the task link when this future succeed only
+     *
+     * @param consumer
+     *            Consumer to call when action the task link when this future
+     *            succeed only
+     * @return Future for able to link to the end of the global execution (the
+     *         task link to this future and given ) status
+     */
     public Future<Void> andThen(final Consumer<T> consumer) {
-        return this.andThen(consumer, this.defaultFutureCallbackType);
+        final long futurePointer = this.qiFutureAndThenVoid(this._fut, consumer);
+        return new Future<Void>(futurePointer);
     }
 
+    /**
+     * Launch a task when the task link when this future succeed only.<br>
+     * Instead of return a Future<Future<R>>, it will automatically unwrap the
+     * result to have a Future&lt;R&gt;
+     *
+     * @param <R>
+     *            Function result type
+     * @param function
+     *            Function to call when action the task link when this future
+     *            succeed only
+     * @return Future for able to link to the end of the global execution (the
+     *         task link to this future and given ) status
+     */
+    public <R> Future<R> andFlatMap(final Function<T, Future<R>> function) {
+        final long pointer = this.qiFutureAndThenUnwrap(this._fut, function);
+        return new Future<R>(pointer);
+    }
 
     /**
      * Wait for all {@code futures} to complete.
@@ -462,7 +452,8 @@ public class Future<T> implements java.util.concurrent.Future<T> {
      * Otherwise, it takes the state of the first failing future (due to
      * cancellation or error).
      *
-     * @param futures the futures to wait for
+     * @param futures
+     *            the futures to wait for
      * @return a future waiting for all the others
      */
     public static Future<Void> waitAll(final Future<?>... futures) {
@@ -493,10 +484,12 @@ public class Future<T> implements java.util.concurrent.Future<T> {
                             if (future.isCancelled()) {
                                 promise.setCancelled();
                                 waitData.stopped = true;
-                            } else if (future.hasError()) {
+                            }
+                            else if (future.hasError()) {
                                 promise.setError(future.getErrorMessage());
                                 waitData.stopped = true;
-                            } else {
+                            }
+                            else {
                                 waitData.runningFutures--;
 
                                 if (waitData.runningFutures == 0) {
@@ -525,35 +518,33 @@ public class Future<T> implements java.util.concurrent.Future<T> {
      * If {@code this} future does not finish successfully, it does not wait for
      * {@code futures}.
      *
-     * @param futures the futures to wait for
+     * @param futures
+     *            the futures to wait for
      * @return future returning this future value when all {@code futures} are
-     * finished successfully
+     *         finished successfully
      */
     public Future<T> waitFor(final Future<?>... futures) {
-        // do not wait for futures if this does not finish successfully
-        return andThen(new Function<T, T>() {
+        return this.andFlatMap(new Function<T, Future<T>>() {
             @Override
-            public T execute(T value) throws ExecutionException {
-                waitAll(futures).andThen(new Function<Void, T>() {
+            public Future<T> execute(final T value) throws Throwable {
+                return Future.waitAll(futures).andMap(new Function<Void, T>() {
                     @Override
-                    public T execute(Void future) throws ExecutionException {
-                        return Future.this.get();
+                    public T execute(Void ignored) throws Throwable {
+                        return value;
                     }
-                }).get();
-                return null;
+
+                });
             }
-        }, FutureCallbackType.Async);
+        });
     }
 
     /**
-     * Called by garbage collector Finalize is overriden to manually delete C++
+     * Called by garbage collector Finalize is overridden to manually delete C++
      * data
      */
     @Override
     protected void finalize() throws Throwable {
-        if (this.nativeFuture) {
-            this.qiFutureDestroy(this._fut);
-        }
+        this.qiFutureDestroy(this._fut);
         super.finalize();
     }
 }

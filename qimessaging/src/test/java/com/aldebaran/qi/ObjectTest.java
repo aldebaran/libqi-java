@@ -4,9 +4,12 @@
 */
 package com.aldebaran.qi;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.lang.reflect.Type;
 import java.util.HashMap;
@@ -14,7 +17,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-import static org.junit.Assert.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 public class ObjectTest {
     public AnyObject proxy = null;
@@ -131,17 +136,17 @@ public class ObjectTest {
     @Test
     public void getObject() {
         boolean ok;
-        AnyObject ro = null;
+        AnyObject anyObject = null;
 
         try {
-            ro = proxy.<AnyObject>call("createObject").get();
+            anyObject = proxy.<AnyObject>call("createObject").get();
         } catch (Exception e) {
             fail("Call must not fail: " + e.getMessage());
         }
 
-        assertNotNull(ro);
+        assertNotNull(anyObject);
         try {
-            assertEquals("foo", ro.<String>property("name").get());
+            assertEquals("foo", anyObject.<String>property("name").get());
         } catch (Exception e1) {
             fail("Property must not fail");
         }
@@ -150,22 +155,22 @@ public class ObjectTest {
         settings.put("foo", true);
         settings.put("bar", "This is bar");
         try {
-            ro.setProperty("settings", settings);
+            anyObject.setProperty("settings", settings).get();
         } catch (Exception e) {
             fail("Call must succeed: " + e.getMessage());
         }
         Map<Object, Object> readSettings = null;
         try {
-            readSettings = ro.<Map<Object, Object>>property("settings").get();
+            readSettings = anyObject.<Map<Object, Object>>property("settings").get();
         } catch (ExecutionException e) {
             fail("Execution must not fail: " + e.getMessage());
         }
-        assertEquals(readSettings.get("foo"), true);
-        assertEquals(readSettings.get("bar"), "This is bar");
+        assertEquals(true, readSettings.get("foo"));
+        assertEquals("This is bar", readSettings.get("bar"));
 
         String ret = null;
         try {
-            ret = ro.<String>call("answer").get();
+            ret = anyObject.<String>call("answer").get();
         } catch (Exception e) {
             fail("Call must succeed : " + e.getMessage());
         }
@@ -173,7 +178,7 @@ public class ObjectTest {
 
         ok = false;
         try {
-            ret = ro.<String>call("add", 42).get();
+            ret = anyObject.<String>call("add", 42).get();
         } catch (Exception e) {
             ok = true;
             String expected = "Arguments types did not match for add:\n  Candidate:\n  add::(iii) (1)\n";
@@ -185,7 +190,7 @@ public class ObjectTest {
 
         ok = false;
         try {
-            ret = ro.<String>call("add", "42", 42, 42).get();
+            ret = anyObject.<String>call("add", "42", 42, 42).get();
         } catch (ExecutionException e) {
             ok = true;
             String expected = "cannot convert parameters from (sii) to (iii)";
@@ -197,7 +202,7 @@ public class ObjectTest {
 
         ok = false;
         try {
-            ret = ro.<String>call("addFoo").get();
+            ret = anyObject.<String>call("addFoo").get();
         } catch (Exception e) {
             ok = true;
             String expected = "Can't find method: addFoo\n";

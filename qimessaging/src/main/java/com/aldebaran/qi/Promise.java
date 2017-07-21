@@ -14,7 +14,8 @@ package com.aldebaran.qi;
  * ordering of asynchronous operations, the common pattern to use is
  * {@link java.lang.Void} as a generic type.
  *
- * @param <T> The type of the result
+ * @param <T>
+ *            The type of the result
  */
 
 public class Promise<T> {
@@ -31,7 +32,8 @@ public class Promise<T> {
      * An implementation of this interface can be connected to a {@link Promise}
      * in order to be called when the {@link Promise} receives a cancel request.
      *
-     * @param <T> The type of the result
+     * @param <T>
+     *            The type of the result
      */
     public interface CancelRequestCallback<T> {
         void onCancelRequested(Promise<T> promise);
@@ -44,7 +46,8 @@ public class Promise<T> {
     /**
      * Create a new promise
      *
-     * @param type Callback type
+     * @param type
+     *            Callback type
      */
     public Promise(FutureCallbackType type) {
         this.promisePtr = this._newPromise(type.nativeValue);
@@ -90,24 +93,26 @@ public class Promise<T> {
      * Sets a cancel callback. When cancellation is requested, the set callback
      * is immediately called.
      *
-     * @param callback The callback to call
+     * @param callback
+     *            The callback to call
      */
     public void setOnCancel(CancelRequestCallback<T> callback) {
         _setOnCancel(promisePtr, callback);
     }
 
     public void connectFromFuture(Future<T> future) {
-        future.then(new FutureFunction<T, Void>() {
+        future.then(new Consumer<Future<T>>() {
             @Override
-            public Void execute(Future<T> future) throws Throwable {
+            public void consume(Future<T> future) throws Throwable {
                 if (future.isCancelled()) {
                     setCancelled();
-                } else if (future.hasError()) {
+                }
+                else if (future.hasError()) {
                     setError(future.getError().getMessage());
-                } else {
+                }
+                else {
                     setValue(future.get());
                 }
-                return null;
             }
         });
 
@@ -117,7 +122,8 @@ public class Promise<T> {
      * Called by garbage collector when object destroy.<br>
      * Override to free the reference in JNI.
      *
-     * @throws Throwable On destruction issue.
+     * @throws Throwable
+     *             On destruction issue.
      */
     @Override
     protected void finalize() throws Throwable {
@@ -140,7 +146,8 @@ public class Promise<T> {
     /**
      * Destroy the reference in JNI.
      *
-     * @param promisePointer Pointer to destroy.
+     * @param promisePointer
+     *            Pointer to destroy.
      */
     private native void _destroyPromise(long promisePointer);
 }

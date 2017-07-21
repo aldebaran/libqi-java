@@ -37,6 +37,7 @@ extern jclass cls_long;
 extern jclass cls_boolean;
 
 extern jclass cls_future;
+extern jfieldID field_future_pointer;
 extern jclass cls_anyobject;
 extern jclass cls_tuple;
 

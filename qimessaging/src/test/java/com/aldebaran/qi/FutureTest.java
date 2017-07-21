@@ -4,15 +4,24 @@
 */
 package com.aldebaran.qi;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
-import java.util.concurrent.*;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static org.junit.Assert.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Integration test for QiMessaging java bindings.
@@ -90,7 +99,7 @@ public class FutureTest {
     @Test
     public void testThenSuccess() {
         try {
-            int value = client.service("serviceTest").then(new FutureFunction<AnyObject, Integer>() {
+            int value = client.service("serviceTest").map(new Function<Future<AnyObject>, Integer>() {
                 @Override
                 public Integer execute(Future<AnyObject> arg) throws ExecutionException {
                     Future<Integer> future = arg.getValue().call("answer", 42);
@@ -99,7 +108,8 @@ public class FutureTest {
             }).get();
             // answer adds 1 to the value
             assertEquals(42 + 1, value);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             fail("get() must not fail");
         }
     }
@@ -107,19 +117,21 @@ public class FutureTest {
     @Test
     public void testThenFailure() {
         try {
-            client.service("nonExistant").then(new FutureFunction<AnyObject, AnyObject>() {
+            client.service("nonExistant").map(new Function<Future<AnyObject>, AnyObject>() {
                 @Override
                 public AnyObject execute(Future<AnyObject> arg) throws ExecutionException {
                     try {
                         arg.get();
                         fail("get() must fail, the service does not exist");
-                    } catch (Exception e) {
+                    }
+                    catch (Exception e) {
                         // expected exception
                     }
                     return client.service("serviceTest").get();
                 }
             }).get();
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             fail("get() must not fail, the second future should succeed");
         }
     }
@@ -127,14 +139,14 @@ public class FutureTest {
     @Test
     public void testThenReturnNull() {
         try {
-            Void result = client.service("serviceTest").then(new FutureFunction<AnyObject, Void>() {
+            Void result = client.service("serviceTest").then(new Consumer<Future<AnyObject>>() {
                 @Override
-                public Void execute(Future<AnyObject> arg) {
-                    return null;
+                public void consume(Future<AnyObject> arg) {
                 }
             }).get();
             assertNull(result);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             fail("get() must not fail");
         }
     }
@@ -142,7 +154,7 @@ public class FutureTest {
     @Test
     public void testAndThenSuccess() {
         try {
-            int value = client.service("serviceTest").andThen(new Function<AnyObject, Integer>() {
+            int value = client.service("serviceTest").andMap(new Function<AnyObject, Integer>() {
                 @Override
                 public Integer execute(AnyObject arg) throws ExecutionException {
                     return (Integer) arg.call("answer", 42).get();
@@ -150,7 +162,8 @@ public class FutureTest {
             }).get();
             // answer adds 1 to the value
             assertEquals(42 + 1, value);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             fail("get() must not fail");
         }
     }
@@ -158,7 +171,7 @@ public class FutureTest {
     @Test
     public void testAndThenFailure() {
         try {
-            client.service("nonExistant").andThen(new Function<AnyObject, Void>() {
+            client.service("nonExistant").andMap(new Function<AnyObject, Void>() {
                 @Override
                 public Void execute(AnyObject arg) {
                     fail("The first future has failed, this code should never be called");
@@ -166,7 +179,8 @@ public class FutureTest {
                 }
             }).get();
             fail("get() must fail");
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             // expected exception
         }
     }
@@ -174,15 +188,15 @@ public class FutureTest {
     @Test
     public void testAndThenReturnNull() {
         try {
-            Void result = client.service("serviceTest").andThen(new Function<AnyObject, Void>() {
+            Void result = client.service("serviceTest").andThen(new Consumer<AnyObject>() {
                 @Override
-                public Void execute(AnyObject value) throws Throwable {
-                    return null;
+                public void consume(AnyObject value) throws Throwable {
                 }
 
             }).get();
             assertNull(result);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             fail("get() must not fail");
         }
     }
@@ -190,14 +204,15 @@ public class FutureTest {
     @Test
     public void testQiFunctionException() {
         try {
-            client.service("serviceTest").andThen(new Function<AnyObject, Object>() {
+            client.service("serviceTest").andMap(new Function<AnyObject, Object>() {
                 @Override
                 public Object execute(AnyObject value) throws Throwable {
                     throw new RuntimeException("something went wrong (fake)");
                 }
             }).get();
             fail("get() must fail");
-        } catch (ExecutionException e) {
+        }
+        catch (ExecutionException e) {
             // expected exception
             assertTrue("Exception must contain the error from the future",
                     e.getMessage().contains("something went wrong (fake)"));
@@ -207,7 +222,7 @@ public class FutureTest {
     @Test
     public void testThenAdapterSuccess() {
         try {
-            int value = client.service("serviceTest").then(new FutureFunction<AnyObject, Integer>() {
+            int value = client.service("serviceTest").map(new Function<Future<AnyObject>, Integer>() {
                 @Override
                 public Integer execute(Future<AnyObject> future) throws Throwable {
                     return (Integer) future.get().call("answer", 42).get();
@@ -215,7 +230,8 @@ public class FutureTest {
             }).get();
             // answer adds 1 to the value
             assertEquals(42 + 1, value);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             fail("get() must not fail");
         }
     }
@@ -224,7 +240,7 @@ public class FutureTest {
     public void testThenAdapterFailure() {
         final AtomicBoolean onErrorCalled = new AtomicBoolean();
         try {
-            client.service("nonExistant").then(new FutureFunction<AnyObject, AnyObject>() {
+            client.service("nonExistant").map(new Function<Future<AnyObject>, AnyObject>() {
                 @Override
                 public AnyObject execute(Future<AnyObject> future) throws Throwable {
                     if (future.hasError()) {
@@ -235,7 +251,8 @@ public class FutureTest {
                     return null;
                 }
             }).get();
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             fail("get() must not fail, the second future should succeed");
         }
         assertTrue("onError() must be called", onErrorCalled.get());
@@ -244,7 +261,7 @@ public class FutureTest {
     @Test
     public void testAndThenAdapterSuccess() {
         try {
-            int value = client.service("serviceTest").andThen(new Function<AnyObject, Integer>() {
+            int value = client.service("serviceTest").andMap(new Function<AnyObject, Integer>() {
                 @Override
                 public Integer execute(AnyObject service) throws Throwable {
                     return (Integer) service.call("answer", 42).get();
@@ -252,7 +269,8 @@ public class FutureTest {
             }).get();
             // answer adds 1 to the value
             assertEquals(42 + 1, value);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             fail("get() must not fail");
         }
     }
@@ -260,7 +278,7 @@ public class FutureTest {
     @Test
     public void testAndThenAdapterFailure() {
         try {
-            client.service("nonExistant").andThen(new Function<AnyObject, Void>() {
+            client.service("nonExistant").andMap(new Function<AnyObject, Void>() {
                 @Override
                 public Void execute(AnyObject value) throws Throwable {
                     fail("The first future has failed, this code should never be called");
@@ -268,7 +286,8 @@ public class FutureTest {
                 }
             }).get();
             fail("get() must fail");
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             // expected exception
         }
     }
@@ -276,7 +295,7 @@ public class FutureTest {
     @Test
     public void testThenVoidFunction() throws Exception {
         final AtomicBoolean called = new AtomicBoolean();
-        client.service("serviceTest").andThen(new Function<AnyObject, Object>() {
+        client.service("serviceTest").andMap(new Function<AnyObject, Object>() {
             @Override
             public Object execute(AnyObject value) throws Throwable {
                 called.set(true);
@@ -287,12 +306,12 @@ public class FutureTest {
         assertTrue(called.get());
     }
 
-    public static boolean isCallbackExecutedOnSameThread(FutureCallbackType promiseType, FutureCallbackType thenType) throws InterruptedException {
+    public static boolean isCallbackExecutedOnSameThread(FutureCallbackType promiseType) throws InterruptedException {
         Promise<Void> promise = new Promise<Void>(promiseType);
         promise.setValue(null);
         final CountDownLatch countDownLatch = new CountDownLatch(1);
         final AtomicLong callbackThreadId = new AtomicLong();
-        promise.getFuture().andThen(new Function<Void, Object>() {
+        promise.getFuture().andMap(new Function<Void, Object>() {
             @Override
             public Object execute(Void value) throws Throwable {
                 callbackThreadId.set(Thread.currentThread().getId());
@@ -300,34 +319,9 @@ public class FutureTest {
                 return null;
             }
 
-        }, thenType);
+        });
         countDownLatch.await();
         return Thread.currentThread().getId() == callbackThreadId.get();
-    }
-
-    private static void expectSync(FutureCallbackType promiseType, FutureCallbackType thenType) throws InterruptedException {
-        assertTrue(isCallbackExecutedOnSameThread(promiseType, thenType));
-    }
-
-    private static void expectAsync(FutureCallbackType promiseType, FutureCallbackType thenType) throws InterruptedException {
-        assertFalse(isCallbackExecutedOnSameThread(promiseType, thenType));
-    }
-
-    @Test
-    public void testFutureCallbackTypes() throws InterruptedException {
-        // the type of "then" is Sync, so the resulting type is always Sync
-        expectSync(FutureCallbackType.Sync, FutureCallbackType.Sync);
-        expectSync(FutureCallbackType.Async, FutureCallbackType.Sync);
-        expectSync(FutureCallbackType.Auto, FutureCallbackType.Sync);
-
-        // the type of "then" is Async, so the resulting type is always Async
-        expectAsync(FutureCallbackType.Sync, FutureCallbackType.Async);
-        expectAsync(FutureCallbackType.Async, FutureCallbackType.Async);
-        expectAsync(FutureCallbackType.Auto, FutureCallbackType.Async);
-
-        // the type of "then" is Auto, so the resulting type is the promise type
-        expectSync(FutureCallbackType.Sync, FutureCallbackType.Auto);
-        expectAsync(FutureCallbackType.Async, FutureCallbackType.Auto);
     }
 
     @Test
@@ -343,7 +337,7 @@ public class FutureTest {
         Promise<X> promise = new Promise<X>();
         promise.setValue(new X(42));
         Future<X> future = promise.getFuture();
-        X x = future.andThen(new Function<X, X>()
+        X x = future.andMap(new Function<X, X>()
 
         {
             @Override
@@ -360,7 +354,8 @@ public class FutureTest {
         try {
             int value = Future.of(42).get();
             assertEquals(42, value);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             fail("get() must not fail");
         }
     }
@@ -370,7 +365,8 @@ public class FutureTest {
         try {
             Object value = Future.of(null).get();
             assertNull(value);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             fail("get() must not fail");
         }
     }
@@ -381,17 +377,14 @@ public class FutureTest {
 
         // the callback may be called from another thread
         final AtomicBoolean finished = new AtomicBoolean(false);
-/**
- future.connect(new Future.Callback<String>()
- {
- @Override public void onFinished(Future<String> future)
- {
- finished.set(true);
- }
- });**/
+        /**
+         * future.connect(new Future.Callback<String>() {
+         *
+         * @Override public void onFinished(Future<String> future) {
+         *           finished.set(true); } });
+         **/
 
-
-        Future<Void> futureFinished = future.then(new FutureFunction<String, Void>() {
+        Future<Void> futureFinished = future.map(new Function<Future<String>, Void>() {
             @Override
             public Void execute(Future<String> future) throws Throwable {
                 finished.set(true);
@@ -400,7 +393,8 @@ public class FutureTest {
         });
         try {
             futureFinished.get();
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             fail("get() must not fail");
         }
 
@@ -413,12 +407,13 @@ public class FutureTest {
 
         // the callback may be called from another thread
         final AtomicBoolean finished = new AtomicBoolean();
-        Future<Void> futureFinished = future.then(new FutureFunction<Void, Void>() {
+        Future<Void> futureFinished = future.map(new Function<Future<Void>, Void>() {
             @Override
             public Void execute(Future<Void> future) throws Throwable {
                 assertTrue(future.hasError());
                 finished.set(true);
-                //We getting the result of the future to propagate the exception.
+                // We getting the result of the future to propagate the
+                // exception.
                 future.get();
                 return null;
             }
@@ -427,7 +422,8 @@ public class FutureTest {
         try {
             futureFinished.get();
             fail("get() must fail");
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             // expected exception
         }
         assertTrue(futureFinished.hasError());
@@ -440,7 +436,7 @@ public class FutureTest {
 
         // the callback may be called from another thread
         final AtomicBoolean finished = new AtomicBoolean();
-        Future<Void> futureFinished = future.andThen(new Function<Void, Void>() {
+        Future<Void> futureFinished = future.andMap(new Function<Void, Void>() {
             @Override
             public Void execute(Void value) throws Throwable {
                 assertTrue(false);
@@ -452,7 +448,8 @@ public class FutureTest {
         try {
             futureFinished.get();
             fail("get() must fail");
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             // expected exception
         }
         assertTrue(futureFinished.hasError());
@@ -466,7 +463,8 @@ public class FutureTest {
         // Call a 2s long function
         try {
             fut = proxy.call("longReply", "plaf");
-        } catch (DynamicCallException e) {
+        }
+        catch (DynamicCallException e) {
             fail("Error calling answer function : " + e.getMessage());
         }
 
@@ -476,7 +474,8 @@ public class FutureTest {
             count++;
             try {
                 Thread.sleep(100);
-            } catch (InterruptedException e) {
+            }
+            catch (InterruptedException e) {
             }
         }
 
@@ -486,7 +485,8 @@ public class FutureTest {
         try {
             String result = fut.get();
             assertEquals("plafbim !", result);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             fail("Call has been interrupted (" + e.getMessage() + ")");
         }
     }
@@ -499,7 +499,8 @@ public class FutureTest {
         // Call a 2s long function
         try {
             fut = proxy.call("longReply", "plaf");
-        } catch (DynamicCallException e) {
+        }
+        catch (DynamicCallException e) {
             System.out.println("Error calling answer function : " + e.getMessage());
             return;
         }
@@ -507,9 +508,11 @@ public class FutureTest {
         boolean hasTimeout = false;
         try {
             fut.get(200, TimeUnit.MILLISECONDS);
-        } catch (TimeoutException e) {
+        }
+        catch (TimeoutException e) {
             hasTimeout = true;
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
         }
 
         assertTrue("Future.get() must timeout", hasTimeout);
@@ -517,7 +520,8 @@ public class FutureTest {
         try {
             String ret = fut.get();
             assertEquals("plafbim !", ret);
-        } catch (Exception e1) {
+        }
+        catch (Exception e1) {
             fail("InterruptedException must not be thrown");
         }
     }
@@ -530,7 +534,8 @@ public class FutureTest {
         // Call a 2s long function
         try {
             fut = proxy.call("longReply", "plaf");
-        } catch (DynamicCallException e) {
+        }
+        catch (DynamicCallException e) {
             System.out.println("Error calling answer function : " + e.getMessage());
             return;
         }
@@ -539,9 +544,11 @@ public class FutureTest {
         try {
             ret = fut.get(3, TimeUnit.SECONDS);
             System.out.println("Got ret");
-        } catch (TimeoutException e) {
+        }
+        catch (TimeoutException e) {
             fail("Call must not timeout");
-        } catch (Exception e1) {
+        }
+        catch (Exception e1) {
             fail("InterruptedException must not be thrown");
         }
 
@@ -555,7 +562,8 @@ public class FutureTest {
         try {
             fut = proxy.call("longReply", "plaf");
             fut.sync(150, TimeUnit.MILLISECONDS);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
         }
 
         assertFalse(fut.isDone());
@@ -575,7 +583,8 @@ public class FutureTest {
             // Arbitrary chosen non valid address
             fut = test.connect("tcp://198.18.0.1:9559");
             fut.sync(1, TimeUnit.SECONDS);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             fail("No way! : " + e.getMessage());
         }
 
@@ -586,7 +595,8 @@ public class FutureTest {
     public void testExecutionException() {
         try {
             proxy.call("throwUp").get();
-        } catch (ExecutionException e) {
+        }
+        catch (ExecutionException e) {
             assertTrue("ExecutionException cause should extend QiException", e.getCause() instanceof QiException);
             return;
         }
@@ -603,7 +613,8 @@ public class FutureTest {
                     return;
                 try {
                     Thread.sleep(1000);
-                } catch (InterruptedException e) {
+                }
+                catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
@@ -641,7 +652,7 @@ public class FutureTest {
     public void testThenBackwardCancel() throws ExecutionException {
         CancellableOperation cancellable = new CancellableOperation();
         Future<String> future = cancellable.longReply();
-        Future<Void> childFuture = future.then(new FutureFunction<String, Void>() {
+        Future<Void> childFuture = future.map(new Function<Future<String>, Void>() {
             @Override
             public Void execute(Future<String> future) throws Throwable {
                 return null;
@@ -651,11 +662,11 @@ public class FutureTest {
         future.get();
     }
 
-//    @Test(expected = CancellationException.class)
+    // @Test(expected = CancellationException.class)
     public void testThenForwardCancel() throws ExecutionException {
         final Future<String> future = Future.of("Test");
         final Future<String> otherFuture = proxy.call(String.class, "getCancellableFuture", "toto");
-        final Future<String> childFuture = future.then(new FutureFunction<String, String>() {
+        final Future<String> childFuture = future.map(new Function<Future<String>, String>() {
             @Override
             public String execute(Future<String> future) throws Throwable {
                 return otherFuture.get();
@@ -671,9 +682,9 @@ public class FutureTest {
             VALUE, ERROR, CANCEL
         }
 
-        private Promise<Long> promise;
-        private long milliseconds;
-        private Type finishType;
+        private final Promise<Long> promise;
+        private final long milliseconds;
+        private final Type finishType;
 
         AsyncWait(Promise<Long> promise, long milliseconds, Type finishType) {
             this.promise = promise;
@@ -685,7 +696,8 @@ public class FutureTest {
         public void run() {
             try {
                 Thread.sleep(milliseconds);
-            } catch (InterruptedException e) {
+            }
+            catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
             switch (finishType) {
@@ -756,20 +768,20 @@ public class FutureTest {
         p.getFuture().get(0, TimeUnit.SECONDS); // must not throw
     }
 
-//    @Test
+    // @Test
     public void testAdvertisedFutureReturn() throws ExecutionException, InterruptedException {
         Future f = proxy.call(Future.class, "getFuture", "toto");
         assertEquals("ENDtoto", f.get());
     }
 
-//    @Test
+    // @Test
     public void testFutureCancelAdvertisedMethod() throws ExecutionException {
         Future f = proxy.call(Future.class, "getCancellableFuture", "toto");
         f.cancel(true);
         assertTrue(f.isCancelled());
     }
 
-//    @Test(expected = CancellationException.class)
+    // @Test(expected = CancellationException.class)
     public void testCancelPropagationOnWaitAll() throws ExecutionException, TimeoutException, InterruptedException {
         Future cancellableFut = proxy.call(Future.class, "getCancellableFuture", "toto");
         Future otherCancellableFut = proxy.call(Future.class, "getCancellableFuture", "toto");

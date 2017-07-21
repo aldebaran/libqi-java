@@ -1,8 +1,10 @@
 package com.aldebaran.qi;
 
 /**
- * Interface used to provide a mechanism for chaining {@link Future}s by supplying
- * it to: {@link Future#andThen(Function)}.
+ * Interface used to provide a mechanism for chaining {@link Future}s by
+ * supplying it to: {@link Future#andMap(Function)},
+ * {@link Future#andFlatMap(Function)}, {@link Future#map(Function)} and
+ * {@link Future#flatMap(Function)}
  * <p>
  * For a simpler use, prefer using {@link Consumer} implementation.
  *

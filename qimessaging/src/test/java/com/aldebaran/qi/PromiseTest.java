@@ -1,13 +1,11 @@
 package com.aldebaran.qi;
 
-import org.junit.Assert;
-import org.junit.Test;
-
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicLong;
+
+import org.junit.Assert;
+import org.junit.Test;
 
 public class PromiseTest {
     @Test
@@ -47,7 +45,8 @@ public class PromiseTest {
                 try {
                     Thread.sleep(100);
                     promise.setValue(42);
-                } catch (InterruptedException e) {
+                }
+                catch (InterruptedException e) {
                     // ignore
                 }
             }
@@ -55,37 +54,11 @@ public class PromiseTest {
         try {
             future.get(50, TimeUnit.MILLISECONDS);
             Assert.fail("Value should not be available yet");
-        } catch (TimeoutException e) {
+        }
+        catch (TimeoutException e) {
             // expected exception
         }
         int value = future.get();
         Assert.assertEquals(42, value);
-    }
-
-    public static boolean isCallbackExecutedOnSameThread(FutureCallbackType futureCallbackType) throws InterruptedException {
-        Promise<Void> promise = new Promise<Void>(futureCallbackType);
-        promise.setValue(null);
-        final CountDownLatch countDownLatch = new CountDownLatch(1);
-        final AtomicLong callbackThreadId = new AtomicLong();
-        promise.getFuture().andThen(new Function<Void, Void>() {
-            @Override
-            public Void execute(Void value) throws Throwable {
-                callbackThreadId.set(Thread.currentThread().getId());
-                countDownLatch.countDown();
-                return null;
-            }
-        });
-        countDownLatch.await();
-        return Thread.currentThread().getId() == callbackThreadId.get();
-    }
-
-    @Test
-    public void testAsyncType() throws InterruptedException {
-        Assert.assertFalse(isCallbackExecutedOnSameThread(FutureCallbackType.Async));
-    }
-
-    @Test
-    public void testSyncType() throws InterruptedException {
-        Assert.assertTrue(isCallbackExecutedOnSameThread(FutureCallbackType.Sync));
     }
 }
