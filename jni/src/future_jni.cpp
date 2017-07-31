@@ -31,22 +31,27 @@ static jobject extractValue(JNIEnv *env, const qi::AnyValue& value)
     try
     {
         qi::AnyReference arRes = value.asReference();
+        qi::TypeInterface* typeInterface = arRes.type();
+
+        if(typeInterface->info() == qi::typeOf<qi::AnyValue>()->info())
+        {
+            //If the AnyReference contains an AnyValue,
+            //Then we get the value from this AnyValue
+            return extractValue(env, *reinterpret_cast<qi::AnyValue*>(arRes.rawValue()));
+        }
+
         std::pair<qi::AnyReference, bool> converted = arRes.convert(qi::typeOf<jobject>());
-        jobject result = nullptr;
 
         //If the converted value doesn't have a valid type, trying to obtain its rawValue will do a SIGSEGV,
         // because the method rawValue() refers to a non initialized value in this case
-        if(converted.first.type())
-        {
-            //The converted value is valid
-            result = * reinterpret_cast<jobject*>(converted.first.rawValue());
-        }
-        else
+        if(! converted.first.type())
         {
             //Not valid, return "null" object to Java
             return nullptr;
         }
 
+        //The converted value is valid
+        jobject result = * reinterpret_cast<jobject*>(converted.first.rawValue());
         // keep it alive while we remove the global ref
         result = env->NewLocalRef(result);
 
