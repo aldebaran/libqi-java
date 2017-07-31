@@ -1,7 +1,6 @@
 /*
-**  Copyright (C) 2015 Aldebaran Robotics
-**  See COPYING for the license
-*/
+ * * Copyright (C) 2015 SoftBank Robotics* See COPYING for the license
+ */
 package com.aldebaran.qi;
 
 import static org.junit.Assert.assertEquals;
@@ -18,6 +17,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+
+import junit.framework.Assert;
 
 import org.junit.After;
 import org.junit.Before;
@@ -788,5 +789,287 @@ public class FutureTest {
         Future f = Future.waitAll(cancellableFut, otherCancellableFut);
         assertTrue(f.cancel(true));
         otherCancellableFut.get();
+    }
+
+    /**
+     * Test of "then" in optimal condition (All succeed)
+     */
+    @Test
+    public void testThenSucceed() {
+        SleepThread sleepThread = new SleepThread(10, 42);
+        Future<Integer> first = sleepThread.future();
+        SleepFunction2 sleepFunction2 = new SleepFunction2(10, 73);
+        Future<Integer> result = first.map(sleepFunction2);
+
+        try {
+            Assert.assertEquals(73, (int) result.get());
+            Assert.assertEquals(42, (int) first.get());
+            Assert.assertEquals(SleepThread.Status.SUCCEED, sleepThread.status());
+            Assert.assertFalse(sleepThread.cancelRequested());
+            Assert.assertTrue(sleepFunction2.executed());
+        }
+        catch (Exception exception) {
+            Assert.fail("Unexpected error: " + exception);
+            exception.printStackTrace();
+        }
+    }
+
+    /**
+     * Future result = future.then(continuation)<br>
+     * Test if "future" cancelled before it finished
+     */
+    @Test
+    public void testThenFirstNotFinishedFirstCancelled() {
+        SleepThread sleepThread = new SleepThread(1000, 42);
+        Future<Integer> first = sleepThread.future();
+        SleepFunction2 sleepFunction2 = new SleepFunction2(10, 73);
+        Future<Integer> result = first.map(sleepFunction2);
+        first.requestCancellation();
+
+        try {
+            result.sync();
+            Assert.assertFalse(result.isCancelled());
+            Assert.assertTrue(first.isCancelled());
+            Assert.assertEquals(SleepThread.Status.CANCELLED, sleepThread.status());
+            Assert.assertTrue(sleepThread.cancelRequested());
+            Assert.assertTrue(sleepFunction2.executed());
+        }
+        catch (Exception exception) {
+            Assert.fail("Unexpected error: " + exception);
+            exception.printStackTrace();
+        }
+    }
+
+    /**
+     * Future result = future.then(continuation)<br>
+     * Test if "future" cancelled after it finished
+     */
+    @Test
+    public void testThenFisrtFinishedFirstCancelled() {
+        SleepThread sleepThread = new SleepThread(1, 42);
+        Future<Integer> first = sleepThread.future();
+        SleepFunction2 sleepFunction2 = new SleepFunction2(1000, 73);
+        Future<Integer> result = first.map(sleepFunction2);
+
+        try {
+            Thread.sleep(250);
+        }
+        catch (Exception ignored) {
+        }
+
+        first.requestCancellation();
+
+        try {
+            result.sync();
+            Assert.assertFalse(result.isCancelled());
+            Assert.assertFalse(first.isCancelled());
+            Assert.assertEquals(SleepThread.Status.SUCCEED, sleepThread.status());
+            Assert.assertFalse(sleepThread.cancelRequested());
+            Assert.assertTrue(sleepFunction2.executed());
+        }
+        catch (Exception exception) {
+            Assert.fail("Unexpected error: " + exception);
+            exception.printStackTrace();
+        }
+    }
+
+    /**
+     * Future result = future.then(continuation)<br>
+     * Test if "result" cancelled before "future" finished
+     */
+    @Test
+    public void testThenFirstNotFinishedSecondCancelled() {
+        SleepThread sleepThread = new SleepThread(1000, 42);
+        Future<Integer> first = sleepThread.future();
+        SleepFunction2 sleepFunction2 = new SleepFunction2(10, 73);
+        Future<Integer> result = first.map(sleepFunction2);
+        result.requestCancellation();
+
+        try {
+            result.sync();
+            Assert.assertFalse(result.isCancelled());
+            Assert.assertTrue(first.isCancelled());
+            Assert.assertEquals(SleepThread.Status.CANCELLED, sleepThread.status());
+            Assert.assertTrue(sleepThread.cancelRequested());
+            Assert.assertTrue(sleepFunction2.executed());
+        }
+        catch (Exception exception) {
+            Assert.fail("Unexpected error: " + exception);
+            exception.printStackTrace();
+        }
+    }
+
+    /**
+     * Future result = future.then(continuation)<br>
+     * Test if "result" cancelled after "future" finished
+     */
+    @Test
+    public void testThenFirstFinishedSecondCancelled() {
+        SleepThread sleepThread = new SleepThread(1, 42);
+        Future<Integer> first = sleepThread.future();
+        SleepFunction2 sleepFunction2 = new SleepFunction2(1000, 73);
+        Future<Integer> result = first.map(sleepFunction2);
+
+        try {
+            Thread.sleep(250);
+        }
+        catch (Exception ignored) {
+        }
+
+        result.requestCancellation();
+
+        try {
+            result.sync();
+            Assert.assertFalse(result.isCancelled());
+            Assert.assertFalse(first.isCancelled());
+            Assert.assertEquals(SleepThread.Status.SUCCEED, sleepThread.status());
+            Assert.assertFalse(sleepThread.cancelRequested());
+            Assert.assertTrue(sleepFunction2.executed());
+        }
+        catch (Exception exception) {
+            Assert.fail("Unexpected error: " + exception);
+            exception.printStackTrace();
+        }
+    }
+
+    /**
+     * Test of "andThen" in optimal condition (All succeed)
+     */
+    @Test
+    public void testAndThenSucceed() {
+        SleepThread sleepThread = new SleepThread(10, 42);
+        Future<Integer> first = sleepThread.future();
+        SleepFunction sleepFunction = new SleepFunction(10, 73);
+        Future<Integer> result = first.andMap(sleepFunction);
+
+        try {
+            Assert.assertEquals(73, (int) result.get());
+            Assert.assertEquals(42, (int) first.get());
+            Assert.assertEquals(SleepThread.Status.SUCCEED, sleepThread.status());
+            Assert.assertFalse(sleepThread.cancelRequested());
+            Assert.assertTrue(sleepFunction.executed());
+        }
+        catch (Exception exception) {
+            Assert.fail("Unexpected error: " + exception);
+            exception.printStackTrace();
+        }
+    }
+
+    /**
+     * Future result = future.andThen(continuation)<br>
+     * Test if "future" cancelled before it finished
+     */
+    @Test
+    public void testAndThenFirstNotFinishedFirstCancelled() {
+        SleepThread sleepThread = new SleepThread(1000, 42);
+        Future<Integer> first = sleepThread.future();
+        SleepFunction sleepFunction = new SleepFunction(10, 73);
+        Future<Integer> result = first.andMap(sleepFunction);
+        first.requestCancellation();
+
+        try {
+            result.sync();
+            Assert.assertTrue(result.isCancelled());
+            Assert.assertTrue(first.isCancelled());
+            Assert.assertEquals(SleepThread.Status.CANCELLED, sleepThread.status());
+            Assert.assertTrue(sleepThread.cancelRequested());
+            Assert.assertFalse(sleepFunction.executed());
+        }
+        catch (Exception exception) {
+            Assert.fail("Unexpected error: " + exception);
+            exception.printStackTrace();
+        }
+    }
+
+    /**
+     * Future result = future.andThen(continuation)<br>
+     * Test if "future" cancelled after it finished
+     */
+    @Test
+    public void testAndThenFisrtFinishedFirstCancelled() {
+        SleepThread sleepThread = new SleepThread(1, 42);
+        Future<Integer> first = sleepThread.future();
+        SleepFunction sleepFunction = new SleepFunction(1000, 73);
+        Future<Integer> result = first.andMap(sleepFunction);
+
+        try {
+            Thread.sleep(250);
+        }
+        catch (Exception ignored) {
+        }
+
+        first.requestCancellation();
+
+        try {
+            result.sync();
+            Assert.assertFalse(result.isCancelled());
+            Assert.assertFalse(first.isCancelled());
+            Assert.assertEquals(SleepThread.Status.SUCCEED, sleepThread.status());
+            Assert.assertFalse(sleepThread.cancelRequested());
+            Assert.assertTrue(sleepFunction.executed());
+        }
+        catch (Exception exception) {
+            Assert.fail("Unexpected error: " + exception);
+            exception.printStackTrace();
+        }
+    }
+
+    /**
+     * Future result = future.andThen(continuation)<br>
+     * Test if "result" cancelled before "future" finished
+     */
+    @Test
+    public void testAndThenFirstNotFinishedSecondCancelled() {
+        SleepThread sleepThread = new SleepThread(1000, 42);
+        Future<Integer> first = sleepThread.future();
+        SleepFunction sleepFunction = new SleepFunction(10, 73);
+        Future<Integer> result = first.andMap(sleepFunction);
+        result.requestCancellation();
+
+        try {
+            result.sync();
+            Assert.assertTrue(result.isCancelled());
+            Assert.assertTrue(first.isCancelled());
+            Assert.assertEquals(SleepThread.Status.CANCELLED, sleepThread.status());
+            Assert.assertTrue(sleepThread.cancelRequested());
+            Assert.assertFalse(sleepFunction.executed());
+        }
+        catch (Exception exception) {
+            Assert.fail("Unexpected error: " + exception);
+            exception.printStackTrace();
+        }
+    }
+
+    /**
+     * Future result = future.andThen(continuation)<br>
+     * Test if "result" cancelled after "future" finished
+     */
+    @Test
+    public void testAndThenFirstFinishedSecondCancelled() {
+        SleepThread sleepThread = new SleepThread(1, 42);
+        Future<Integer> first = sleepThread.future();
+        SleepFunction sleepFunction = new SleepFunction(1000, 73);
+        Future<Integer> result = first.andMap(sleepFunction);
+
+        try {
+            Thread.sleep(250);
+        }
+        catch (Exception ignored) {
+        }
+
+        result.requestCancellation();
+
+        try {
+            result.sync();
+            Assert.assertFalse(result.isCancelled());
+            Assert.assertFalse(first.isCancelled());
+            Assert.assertEquals(SleepThread.Status.SUCCEED, sleepThread.status());
+            Assert.assertFalse(sleepThread.cancelRequested());
+            Assert.assertTrue(sleepFunction.executed());
+        }
+        catch (Exception exception) {
+            Assert.fail("Unexpected error: " + exception);
+            exception.printStackTrace();
+        }
     }
 }
