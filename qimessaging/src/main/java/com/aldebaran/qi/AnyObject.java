@@ -102,7 +102,7 @@ public class AnyObject {
      * @return a future to the converted result
      */
     public <T> Future<T> getProperty(final QiSerializer serializer, final Type targetType, String property) {
-        return property(property).andMap(new Function<Object, T>() {
+        return property(property).andThenApply(new Function<Object, T>() {
             @Override
             public T execute(Object value) throws Throwable {
                 return (T) serializer.deserialize(value, targetType);
@@ -156,7 +156,7 @@ public class AnyObject {
     public <T> Future<T> call(final QiSerializer serializer, final Type targetType, String method, Object... args) {
         try {
             Object[] convertedArgs = (Object[]) serializer.serialize(args);
-            return this.call(method, convertedArgs).andMap(new Function<Object, T>() {
+            return this.call(method, convertedArgs).andThenApply(new Function<Object, T>() {
                 @Override
                 public T execute(Object value) throws Throwable {
                     return (T) serializer.deserialize(value, targetType);
@@ -268,7 +268,7 @@ public class AnyObject {
     }
 
     Future<Void> disconnect(QiSignalConnection connection) {
-        return connection.getFuture().andFlatMap(new Function<Long, Future<Void>>() {
+        return connection.getFuture().andThenCompose(new Function<Long, Future<Void>>() {
             @Override
             public Future<Void> execute(Long value) throws Throwable {
                 return new Future<Void>(disconnectSignal(_p, value));

@@ -356,7 +356,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
      * @return Future for able to link to the end of the global execution (the
      *         task link to this future and given function) status
      */
-    public <R> Future<R> map(final Function<Future<T>, R> function) {
+    public <R> Future<R> thenApply(final Function<Future<T>, R> function) {
         final long futurePointer = this.qiFutureThen(this._fut, function);
         return new Future<R>(futurePointer);
     }
@@ -371,7 +371,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
      * @return Future for able to link to the end of the global execution (the
      *         task link to this future and given ) status
      */
-    public Future<Void> then(final Consumer<Future<T>> consumer) {
+    public Future<Void> thenConsume(final Consumer<Future<T>> consumer) {
         final long futurePointer = this.qiFutureThenVoid(this._fut, consumer);
         return new Future<Void>(futurePointer);
     }
@@ -390,7 +390,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
      * @return Future for able to link to the end of the global execution (the
      *         task link to this future and given ) status
      */
-    public <R> Future<R> flatMap(final Function<Future<T>, Future<R>> function) {
+    public <R> Future<R> thenCompose(final Function<Future<T>, Future<R>> function) {
         final long pointer = this.qiFutureThenUnwrap(this._fut, function);
         return new Future<R>(pointer);
     }
@@ -406,7 +406,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
      * @return Future for able to link to the end of the global execution (the
      *         task link to this future and given function) status
      */
-    public <R> Future<R> andMap(final Function<T, R> function) {
+    public <R> Future<R> andThenApply(final Function<T, R> function) {
         final long futurePointer = this.qiFutureAndThen(this._fut, function);
         return new Future<R>(futurePointer);
     }
@@ -420,7 +420,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
      * @return Future for able to link to the end of the global execution (the
      *         task link to this future and given ) status
      */
-    public Future<Void> andThen(final Consumer<T> consumer) {
+    public Future<Void> andThenConsume(final Consumer<T> consumer) {
         final long futurePointer = this.qiFutureAndThenVoid(this._fut, consumer);
         return new Future<Void>(futurePointer);
     }
@@ -438,7 +438,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
      * @return Future for able to link to the end of the global execution (the
      *         task link to this future and given ) status
      */
-    public <R> Future<R> andFlatMap(final Function<T, Future<R>> function) {
+    public <R> Future<R> andThenCompose(final Function<T, Future<R>> function) {
         final long pointer = this.qiFutureAndThenUnwrap(this._fut, function);
         return new Future<R>(pointer);
     }
@@ -524,10 +524,10 @@ public class Future<T> implements java.util.concurrent.Future<T> {
      *         finished successfully
      */
     public Future<T> waitFor(final Future<?>... futures) {
-        return this.andFlatMap(new Function<T, Future<T>>() {
+        return this.andThenCompose(new Function<T, Future<T>>() {
             @Override
             public Future<T> execute(final T value) throws Throwable {
-                return Future.waitAll(futures).andMap(new Function<Void, T>() {
+                return Future.waitAll(futures).andThenApply(new Function<Void, T>() {
                     @Override
                     public T execute(Void ignored) throws Throwable {
                         return value;

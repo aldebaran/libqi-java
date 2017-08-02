@@ -101,7 +101,7 @@ public class Promise<T> {
     }
 
     public void connectFromFuture(Future<T> future) {
-        future.then(new Consumer<Future<T>>() {
+        future.thenConsume(new Consumer<Future<T>>() {
             @Override
             public void consume(Future<T> future) throws Throwable {
                 if (future.isCancelled()) {
