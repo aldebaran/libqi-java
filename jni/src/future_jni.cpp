@@ -262,7 +262,7 @@ struct FunctionFunctorVoid
      * @brief FunctionFunctorVoid::operator () Called by andThenVoid
      * @param res Parent future result
      */
-    void operator()(const qi::AnyValue & res) const
+    qi::AnyValue operator()(const qi::AnyValue & res) const
     {
         // Call Java: Consumer.consume(P)->void
         jobject function = _function.get();
@@ -272,6 +272,7 @@ struct FunctionFunctorVoid
 
         jobject result = extractValue(env, res);
         callConsumerConsume(env, function, result);
+        return qi::AnyValue(qi::AnyReference(qi::typeOf<void>()));
     }
 };
 /**
@@ -345,7 +346,7 @@ struct FutureFunctionFunctorVoid
      * @param QI_UNUSED Future C++
      * @return Function result
      */
-    void operator()(const qi::Future<qi::AnyValue> &) const
+    qi::AnyValue operator()(const qi::Future<qi::AnyValue> &) const
     {
         // Call Java: Consumer.consume(Future<P>)
         // we stored the jobject future, so we ignore the parameter
@@ -356,6 +357,7 @@ struct FutureFunctionFunctorVoid
         JNIEnv *env = attach.get();
 
         callConsumerConsume(env, function, argFuture);
+        return qi::AnyValue(qi::AnyReference(qi::typeOf<void>()));
     }
 };
 /**
@@ -479,9 +481,9 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Future_qiFutureAndThenVoid(JNIEnv*
 {
     auto * future = futureFromPointer(pFuture);
     auto gFunction = qi::jni::makeSharedGlobalRef(env, function);
-    qi::Future<void> result = future->andThen(qi::FutureCallbackType_Async,
-                                              FunctionFunctorVoid{gFunction});
-    std::unique_ptr<qi::Future<void>> resultPointer(new auto(result));
+    qi::Future<qi::AnyValue> result = future->andThen(qi::FutureCallbackType_Async,
+                                                      FunctionFunctorVoid{gFunction});
+    std::unique_ptr<qi::Future<qi::AnyValue>> resultPointer(new auto(result));
     return reinterpret_cast<jlong>(resultPointer.release());
 }
 
@@ -536,9 +538,9 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Future_qiFutureThenVoid(JNIEnv* en
     auto * future = futureFromPointer(pFuture);
     auto gThisFuture = qi::jni::makeSharedGlobalRef(env, thisFuture);
     auto gFunction = qi::jni::makeSharedGlobalRef(env, futureFunction);
-    qi::Future<void> result = future->then(qi::FutureCallbackType_Async,
-                                           FutureFunctionFunctorVoid{gThisFuture, gFunction});
-    std::unique_ptr<qi::Future<void>> resultPointer(new auto(result));
+    qi::Future<qi::AnyValue> result = future->then(qi::FutureCallbackType_Async,
+                                                   FutureFunctionFunctorVoid{gThisFuture, gFunction});
+    std::unique_ptr<qi::Future<qi::AnyValue>> resultPointer(new auto(result));
     return reinterpret_cast<jlong>(resultPointer.release());
 }
 

@@ -137,15 +137,15 @@ public class FutureTest {
         }
     }
 
-    // @Test
-    public void testThenReturnNull() {
+    @Test
+    public void testThenReturnNotNull() {
         try {
             Void result = client.service("serviceTest").thenConsume(new Consumer<Future<AnyObject>>() {
                 @Override
                 public void consume(Future<AnyObject> arg) {
                 }
             }).get();
-            assertNull(result);
+            assertNotNull(result);
         }
         catch (Exception e) {
             fail("get() must not fail");
@@ -186,8 +186,8 @@ public class FutureTest {
         }
     }
 
-    // @Test
-    public void testAndThenReturnNull() {
+    @Test
+    public void testAndThenReturnNotNull() {
         try {
             Void result = client.service("serviceTest").andThenConsume(new Consumer<AnyObject>() {
                 @Override
@@ -195,7 +195,7 @@ public class FutureTest {
                 }
 
             }).get();
-            assertNull(result);
+            assertNotNull(result);
         }
         catch (Exception e) {
             fail("get() must not fail");
@@ -1071,5 +1071,135 @@ public class FutureTest {
             Assert.fail("Unexpected error: " + exception);
             exception.printStackTrace();
         }
+    }
+
+    @Test
+    public void testRequestCancellationThenConsume() {
+        final AtomicBoolean consumed = new AtomicBoolean(false);
+        System.out.println("testRequestCancellation");
+        SleepThread sleepThread = new SleepThread(1000, 42);
+        System.out.println("testRequestCancellation: sleepThread");
+        Future<Integer> f1 = sleepThread.future();
+        System.out.println("testRequestCancellation: f1");
+        Future<Void> f2 = f1.thenConsume(new Consumer<Future<Integer>>() {
+            @Override
+            public void consume(Future<Integer> aVoid) throws Throwable {
+                consumed.set(true);
+                System.out.println("f2");
+            }
+        });
+        System.out.println("before request");
+        f2.requestCancellation();
+        System.out.println("after request");
+        Assert.assertFalse("Shouldn't be consumed!", consumed.get());
+    }
+
+    @Test
+    public void testRequestCancellationAndThenConsume() {
+        final AtomicBoolean consumed = new AtomicBoolean(false);
+        System.out.println("testRequestCancellation");
+        SleepThread sleepThread = new SleepThread(1000, 42);
+        System.out.println("testRequestCancellation: sleepThread");
+        Future<Integer> f1 = sleepThread.future();
+        System.out.println("testRequestCancellation: f1");
+        Future<Void> f2 = f1.andThenConsume(new Consumer<Integer>() {
+            @Override
+            public void consume(Integer aVoid) throws Throwable {
+                consumed.set(true);
+                System.out.println("f2");
+            }
+        });
+        System.out.println("before request");
+        f2.requestCancellation();
+        System.out.println("after request");
+        Assert.assertFalse("Shouldn't be consumed!", consumed.get());
+    }
+
+    @Test
+    public void testRequestCancellationThenApply() {
+        final AtomicBoolean consumed = new AtomicBoolean(false);
+        System.out.println("testRequestCancellation");
+        SleepThread sleepThread = new SleepThread(1000, 42);
+        System.out.println("testRequestCancellation: sleepThread");
+        Future<Integer> f1 = sleepThread.future();
+        System.out.println("testRequestCancellation: f1");
+        Future<Void> f2 = f1.thenApply(new Function<Future<Integer>, Void>() {
+            @Override
+            public Void execute(Future<Integer> aVoid) throws Throwable {
+                consumed.set(true);
+                System.out.println("f2");
+                return null;
+            }
+        });
+        System.out.println("before request");
+        f2.requestCancellation();
+        System.out.println("after request");
+        Assert.assertFalse("Shouldn't be consumed!", consumed.get());
+    }
+
+    @Test
+    public void testRequestCancellationAndThenApply() {
+        final AtomicBoolean consumed = new AtomicBoolean(false);
+        System.out.println("testRequestCancellation");
+        SleepThread sleepThread = new SleepThread(1000, 42);
+        System.out.println("testRequestCancellation: sleepThread");
+        Future<Integer> f1 = sleepThread.future();
+        System.out.println("testRequestCancellation: f1");
+        Future<Void> f2 = f1.andThenApply(new Function<Integer, Void>() {
+            @Override
+            public Void execute(Integer aVoid) throws Throwable {
+                consumed.set(true);
+                System.out.println("f2");
+                return null;
+            }
+        });
+        System.out.println("before request");
+        f2.requestCancellation();
+        System.out.println("after request");
+        Assert.assertFalse("Shouldn't be consumed!", consumed.get());
+    }
+
+    @Test
+    public void testRequestCancellationThenCompose() {
+        final AtomicBoolean consumed = new AtomicBoolean(false);
+        System.out.println("testRequestCancellation");
+        SleepThread sleepThread = new SleepThread(1000, 42);
+        System.out.println("testRequestCancellation: sleepThread");
+        Future<Integer> f1 = sleepThread.future();
+        System.out.println("testRequestCancellation: f1");
+        Future<Integer> f2 = f1.thenCompose(new Function<Future<Integer>, Future<Integer>>() {
+            @Override
+            public Future<Integer> execute(Future<Integer> aVoid) throws Throwable {
+                consumed.set(true);
+                System.out.println("f2");
+                return Future.of(42);
+            }
+        });
+        System.out.println("before request");
+        f2.requestCancellation();
+        System.out.println("after request");
+        Assert.assertFalse("Shouldn't be consumed!", consumed.get());
+    }
+
+    @Test
+    public void testRequestCancellationAndThenCompose() {
+        final AtomicBoolean consumed = new AtomicBoolean(false);
+        System.out.println("testRequestCancellation");
+        SleepThread sleepThread = new SleepThread(1000, 42);
+        System.out.println("testRequestCancellation: sleepThread");
+        Future<Integer> f1 = sleepThread.future();
+        System.out.println("testRequestCancellation: f1");
+        Future<Integer> f2 = f1.andThenCompose(new Function<Integer, Future<Integer>>() {
+            @Override
+            public Future<Integer> execute(Integer aVoid) throws Throwable {
+                consumed.set(true);
+                System.out.println("f2");
+                return Future.of(42);
+            }
+        });
+        System.out.println("before request");
+        f2.requestCancellation();
+        System.out.println("after request");
+        Assert.assertFalse("Shouldn't be consumed!", consumed.get());
     }
 }
