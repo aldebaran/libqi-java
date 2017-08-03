@@ -138,14 +138,14 @@ public class FutureTest {
     }
 
     @Test
-    public void testThenReturnNotNull() {
+    public void testThenReturnNull() {
         try {
             Void result = client.service("serviceTest").thenConsume(new Consumer<Future<AnyObject>>() {
                 @Override
                 public void consume(Future<AnyObject> arg) {
                 }
             }).get();
-            assertNotNull(result);
+            assertNull(result);
         }
         catch (Exception e) {
             fail("get() must not fail");
@@ -187,7 +187,7 @@ public class FutureTest {
     }
 
     @Test
-    public void testAndThenReturnNotNull() {
+    public void testAndThenReturnNull() {
         try {
             Void result = client.service("serviceTest").andThenConsume(new Consumer<AnyObject>() {
                 @Override
@@ -195,7 +195,7 @@ public class FutureTest {
                 }
 
             }).get();
-            assertNotNull(result);
+            assertNull(result);
         }
         catch (Exception e) {
             fail("get() must not fail");
@@ -1201,5 +1201,152 @@ public class FutureTest {
         f2.requestCancellation();
         System.out.println("after request");
         Assert.assertFalse("Shouldn't be consumed!", consumed.get());
+    }
+
+    @Test
+    public void testThenComposeNull() {
+        Future<Integer> future = Future.of(42).thenCompose(new Function<Future<Integer>, Future<Integer>>() {
+            @Override
+            public Future<Integer> execute(Future<Integer> value) throws Throwable {
+                return null;
+            }
+        });
+
+        try {
+            System.out.println("value = " + future.get());
+            Assert.assertNull(future.get());
+        }
+        catch (ExecutionException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void testThenApplyNull() {
+        Future<Integer> future = Future.of(42).thenApply(new Function<Future<Integer>, Integer>() {
+            @Override
+            public Integer execute(Future<Integer> value) throws Throwable {
+                System.out.println("testThenApplyNull testThenApplyNull testThenApplyNull");
+                return null;
+            }
+        });
+
+        try {
+            System.out.println("value = " + future.get());
+            Assert.assertNull(future.get());
+        }
+        catch (ExecutionException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void testAndThenComposeNull() {
+        Future<Integer> future = Future.of(42).andThenCompose(new Function<Integer, Future<Integer>>() {
+            @Override
+            public Future<Integer> execute(Integer value) throws Throwable {
+                return null;
+            }
+        });
+
+        try {
+            System.out.println("value = " + future.get());
+            Assert.assertNull(future.get());
+        }
+        catch (ExecutionException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void testAndThenApplyNull() {
+        Future<Integer> future = Future.of(42).andThenApply(new Function<Integer, Integer>() {
+            @Override
+            public Integer execute(Integer value) throws Throwable {
+                return null;
+            }
+        });
+
+        try {
+            System.out.println("value = " + future.get());
+            Assert.assertNull(future.get());
+        }
+        catch (ExecutionException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void testThrowNull() {
+        Future<Integer> future = Future.of(42).andThenApply(new Function<Integer, Integer>() {
+            @Override
+            public Integer execute(Integer value) throws Throwable {
+                throw null;
+            }
+        });
+
+        try {
+            System.out.println("value = " + future.get());
+            Assert.fail("Should throw an exception");
+            Assert.assertNull(future.get());
+        }
+        catch (ExecutionException e) {
+            // Thats what we expect
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void testThenFirstError() {
+        final SleepThread sleepThread = new SleepThread(100, SleepThread.ERROR_VALUE);
+        final Future<Integer> first = sleepThread.future();
+        final AtomicBoolean consumed = new AtomicBoolean(false);
+        final AtomicBoolean insideError = new AtomicBoolean(false);
+        final AtomicBoolean insideCancel = new AtomicBoolean(false);
+        final AtomicBoolean insideSucceed = new AtomicBoolean(false);
+        final Future<Void> future = first.thenConsume(new Consumer<Future<Integer>>() {
+
+            @Override
+            public void consume(Future<Integer> future) throws Throwable {
+                consumed.set(true);
+                insideError.set(future.hasError());
+                insideCancel.set(future.isCancelled());
+                insideSucceed.set(future.isSuccess());
+            }
+        });
+
+        future.sync();
+        Assert.assertTrue("Souce future must be on error", first.hasError());
+        Assert.assertFalse("Result future must not on error", future.hasError());
+        Assert.assertTrue("Must be consumed", consumed.get());
+
+        if (consumed.get()) {
+            Assert.assertTrue("insideError", insideError.get());
+            Assert.assertFalse("insideCancel", insideCancel.get());
+            Assert.assertFalse("insideSucceed", insideSucceed.get());
+        }
+    }
+
+    @Test
+    public void testAndThenFirstError() {
+        final SleepThread sleepThread = new SleepThread(100, SleepThread.ERROR_VALUE);
+        final Future<Integer> first = sleepThread.future();
+        final AtomicBoolean consumed = new AtomicBoolean(false);
+        final Future<Void> future = first.andThenConsume(new Consumer<Integer>() {
+
+            @Override
+            public void consume(Integer future) throws Throwable {
+                consumed.set(true);
+            }
+        });
+
+        future.sync();
+        Assert.assertTrue("Souce future must be on error", first.hasError());
+        Assert.assertTrue("Result future must be on error", future.hasError());
+        Assert.assertFalse("Must be consumed", consumed.get());
     }
 }

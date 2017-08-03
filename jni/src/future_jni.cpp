@@ -162,6 +162,18 @@ static void callConsumerConsume(JNIEnv *env, jobject function, jobject argument)
 }
 
 /**
+ * @brief futureOfNull Future that carry a null value
+ * @return Future that carry a null value
+ */
+static jobject futureOfNull(JNIEnv *env)
+{
+    static const char *method = "of";
+    static const char *methodSig = "(Ljava/lang/Object;)Lcom/aldebaran/qi/Future;";
+    jmethodID methodOf = env->GetStaticMethodID(cls_future,method,methodSig);
+    return env->CallStaticObjectMethod(cls_future, methodOf, nullptr);
+}
+
+/**
  * @brief obtainFutureCfromFutureJava Obtain C++ future linked to given Java Future
  * @param env JNI environment
  * @param future Java Future
@@ -169,6 +181,11 @@ static void callConsumerConsume(JNIEnv *env, jobject function, jobject argument)
  */
 static qi::Future<qi::AnyValue> obtainFutureCfromFutureJava(JNIEnv *env, jobject future)
 {
+    if (env->IsSameObject(future, NULL))
+    {
+        future = futureOfNull(env);
+    }
+
     // Obtain the C++ pointer embed in Future Java
     jlong pointer = env->GetLongField(future, field_future_pointer);
 
@@ -242,12 +259,6 @@ struct FunctionFunctor
         jobject result = extractValue(env, res);
         jobject answer = callFunctionExecute(env, function, result);
 
-        //Treatment if answer is null
-        if (env->IsSameObject(answer, NULL))
-        {
-            return qi::AnyValue(qi::AnyReference(qi::typeOf<void>()));
-        }
-
         //Convert answer to AnyValue
         return qi::AnyValue::from<jobject>(answer);
     }
@@ -272,7 +283,7 @@ struct FunctionFunctorVoid
 
         jobject result = extractValue(env, res);
         callConsumerConsume(env, function, result);
-        return qi::AnyValue(qi::AnyReference(qi::typeOf<void>()));
+        return qi::AnyValue::from<jobject>(nullptr);
     }
 };
 /**
@@ -324,12 +335,6 @@ struct FutureFunctionFunctor
 
         jobject answer = callFunctionExecute(env, function, argFuture);
 
-        //Special treatement for null value
-        if (env->IsSameObject(answer, NULL))
-        {
-            return qi::AnyValue(qi::AnyReference(qi::typeOf<void>()));
-        }
-
         //Convert Java object to AnyValue
         return qi::AnyValue::from<jobject>(answer);
     }
@@ -357,7 +362,7 @@ struct FutureFunctionFunctorVoid
         JNIEnv *env = attach.get();
 
         callConsumerConsume(env, function, argFuture);
-        return qi::AnyValue(qi::AnyReference(qi::typeOf<void>()));
+        return qi::AnyValue::from<jobject>(nullptr);
     }
 };
 /**
