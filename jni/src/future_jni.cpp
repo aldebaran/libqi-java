@@ -33,6 +33,11 @@ static jobject extractValue(JNIEnv *env, const qi::AnyValue& value)
         qi::AnyReference arRes = value.asReference();
         qi::TypeInterface* typeInterface = arRes.type();
 
+        if(typeInterface == nullptr)
+        {
+            return nullptr;
+        }
+
         if(typeInterface->info() == qi::typeOf<qi::AnyValue>()->info())
         {
             //If the AnyReference contains an AnyValue,
