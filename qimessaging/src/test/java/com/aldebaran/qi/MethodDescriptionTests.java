@@ -1,9 +1,8 @@
 package com.aldebaran.qi;
 
+import com.aldebaran.qi.serialization.MethodDescription;
 import org.junit.Assert;
 import org.junit.Test;
-
-import com.aldebaran.qi.serialization.MethodDescription;
 
 public class MethodDescriptionTests {
     @Test

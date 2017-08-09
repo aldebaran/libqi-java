@@ -26,6 +26,7 @@ jclass cls_long;
 jclass cls_boolean;
 
 jclass cls_future;
+jfieldID field_future_pointer;
 jclass cls_anyobject;
 jclass cls_tuple;
 
@@ -72,6 +73,7 @@ static void init_classes(JNIEnv *env)
   cls_boolean = loadClass(env, "java/lang/Boolean");
 
   cls_future = loadClass(env, "com/aldebaran/qi/Future");
+  field_future_pointer = env->GetFieldID(cls_future, "_fut", "J");
   cls_anyobject = loadClass(env, "com/aldebaran/qi/AnyObject");
   cls_tuple = loadClass(env, "com/aldebaran/qi/Tuple");
 

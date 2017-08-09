@@ -101,23 +101,21 @@ public class Promise<T> {
     }
 
     public void connectFromFuture(Future<T> future) {
-        future.then(new QiCallback<T>() {
-
+        future.thenConsume(new Consumer<Future<T>>() {
             @Override
-            public void onResult(T result) throws Exception {
-                setValue(result);
-            }
-
-            @Override
-            public void onError(Throwable error) throws Exception {
-                setError(error.getMessage());
-            }
-
-            @Override
-            public void onCancel() throws Exception {
-                setCancelled();
+            public void consume(Future<T> future) throws Throwable {
+                if (future.isCancelled()) {
+                    setCancelled();
+                }
+                else if (future.hasError()) {
+                    setError(future.getError().getMessage());
+                }
+                else {
+                    setValue(future.get());
+                }
             }
         });
+
     }
 
     /**

@@ -1,15 +1,15 @@
 /*
-**  Copyright (C) 2015 Aldebaran Robotics
-**  See COPYING for the license
-*/
+ * * Copyright (C) 2015 Softbank Robotics
+ * * See COPYING for the license
+ */
 package com.aldebaran.qi;
-
-import com.aldebaran.qi.serialization.QiSerializer;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.Arrays;
+
+import com.aldebaran.qi.serialization.QiSerializer;
 
 /**
  * Class that provides type erasure on objects. It represents an object
@@ -36,7 +36,7 @@ public class AnyObject {
         }
     }
 
-    private long _p;
+    private final long _p;
 
     private native long property(long pObj, String property) throws DynamicCallException;
 
@@ -48,7 +48,8 @@ public class AnyObject {
 
     private native void destroy(long pObj);
 
-    private native long connect(long pObject, String method, Object instance, String className, String eventName) throws RuntimeException;
+    private native long connect(long pObject, String method, Object instance, String className, String eventName)
+            throws RuntimeException;
 
     private native long disconnect(long pObject, long subscriberId) throws RuntimeException;
 
@@ -63,13 +64,12 @@ public class AnyObject {
     public static native String encodeJSON(Object obj);
 
     /**
-     * AnyObject constructor is not public,
-     * user must use DynamicObjectBuilder.
+     * AnyObject constructor is not public, user must use DynamicObjectBuilder.
      *
      * @see DynamicObjectBuilder
      */
-    AnyObject(long p) {
-        this._p = p;
+    AnyObject(long _p) {
+        this._p = _p;
     }
 
     public Future<Void> setProperty(QiSerializer serializer, String property, Object o) {
@@ -77,7 +77,8 @@ public class AnyObject {
             // convert custom structs to tuples if necessary
             Object convertedProperty = serializer.serialize(o);
             return new Future<Void>(setProperty(_p, property, convertedProperty));
-        } catch (QiConversionException e) {
+        }
+        catch (QiConversionException e) {
             throw new QiRuntimeException(e);
         }
     }
@@ -94,17 +95,17 @@ public class AnyObject {
      * Retrieve the value of {@code property} asynchronously. Tuples will be
      * converted to structs in the result, according to the {@code targetType}.
      *
-     * @param targetType the target result type
-     * @param property   the property
+     * @param targetType
+     *            the target result type
+     * @param property
+     *            the property
      * @return a future to the converted result
      */
     public <T> Future<T> getProperty(final QiSerializer serializer, final Type targetType, String property) {
-        return property(property).andThen(new QiFunction<T, Object>() {
+        return property(property).andThenApply(new Function<Object, T>() {
             @Override
-            public Future<T> onResult(Object result) throws Exception {
-                @SuppressWarnings("unchecked")
-                T convertedResult = (T) serializer.deserialize(result, targetType);
-                return Future.of(convertedResult);
+            public T execute(Object value) throws Throwable {
+                return (T) serializer.deserialize(value, targetType);
             }
         });
     }
@@ -114,20 +115,24 @@ public class AnyObject {
     }
 
     public <T> Future<T> getProperty(QiSerializer serializer, Class<T> targetType, String property) {
-        // Specialization to benefit from type inference when targetType is a Class
+        // Specialization to benefit from type inference when targetType is a
+        // Class
         return getProperty(serializer, (Type) targetType, property);
     }
 
     public <T> Future<T> getProperty(Class<T> targetType, String property) {
-        // Specialization to benefit from type inference when targetType is a Class
+        // Specialization to benefit from type inference when targetType is a
+        // Class
         return getProperty((Type) targetType, property);
     }
 
     /**
      * Perform asynchronous call and return Future return value
      *
-     * @param method Method name to call
-     * @param args   Arguments to be forward to remote method
+     * @param method
+     *            Method name to call
+     * @param args
+     *            Arguments to be forward to remote method
      * @return Future method return value
      * @throws DynamicCallException
      */
@@ -140,23 +145,25 @@ public class AnyObject {
      * {@code method} asynchronously. Tuples will be converted to structs in the
      * result, according to the {@code targetType}.
      *
-     * @param targetType the target result type
-     * @param method     the method
-     * @param args       the method arguments
+     * @param targetType
+     *            the target result type
+     * @param method
+     *            the method
+     * @param args
+     *            the method arguments
      * @return a future to the converted result
      */
     public <T> Future<T> call(final QiSerializer serializer, final Type targetType, String method, Object... args) {
         try {
             Object[] convertedArgs = (Object[]) serializer.serialize(args);
-            return this.call(method, convertedArgs).andThen(new QiFunction<T, Object>() {
+            return this.call(method, convertedArgs).andThenApply(new Function<Object, T>() {
                 @Override
-                public Future<T> onResult(Object result) throws Exception {
-                    @SuppressWarnings("unchecked")
-                    T convertedResult = (T) serializer.deserialize(result, targetType);
-                    return Future.of(convertedResult);
+                public T execute(Object value) throws Throwable {
+                    return (T) serializer.deserialize(value, targetType);
                 }
             });
-        } catch (QiConversionException e) {
+        }
+        catch (QiConversionException e) {
             throw new QiRuntimeException(e);
         }
     }
@@ -166,21 +173,26 @@ public class AnyObject {
     }
 
     public <T> Future<T> call(QiSerializer serializer, Class<T> targetType, String method, Object... args) {
-        // Specialization to benefit from type inference when targetType is a Class
+        // Specialization to benefit from type inference when targetType is a
+        // Class
         return call(serializer, (Type) targetType, method, args);
     }
 
     public <T> Future<T> call(Class<T> targetType, String method, Object... args) {
-        // Specialization to benefit from type inference when targetType is a Class
+        // Specialization to benefit from type inference when targetType is a
+        // Class
         return call((Type) targetType, method, args);
     }
 
     /**
      * Connect a callback to a foreign event.
      *
-     * @param eventName Name of the event
-     * @param callback  Callback name
-     * @param object    Instance of class implementing callback
+     * @param eventName
+     *            Name of the event
+     * @param callback
+     *            Callback name
+     * @param object
+     *            Instance of class implementing callback
      * @return an unique subscriber id
      */
     @Deprecated
@@ -206,7 +218,8 @@ public class AnyObject {
         return new QiSignalConnection(this, new Future<Long>(futurePtr));
     }
 
-    public QiSignalConnection connect(final QiSerializer serializer, String signalName, final Object annotatedSlotContainer, String slotName) {
+    public QiSignalConnection connect(final QiSerializer serializer, String signalName, final Object annotatedSlotContainer,
+            String slotName) {
         final Method method = findSlot(annotatedSlotContainer, slotName);
 
         if (method == null)
@@ -222,14 +235,19 @@ public class AnyObject {
                     // convert tuples to custom structs if necessary
                     convertedArgs = serializer.deserialize(args, method.getGenericParameterTypes());
                     method.invoke(annotatedSlotContainer, convertedArgs);
-                } catch (IllegalAccessException e) {
+                }
+                catch (IllegalAccessException e) {
                     throw new QiSlotException(e);
-                } catch (IllegalArgumentException e) {
-                    String message = "Cannot call method " + method + " with parameter types " + Arrays.toString(getTypes(convertedArgs));
+                }
+                catch (IllegalArgumentException e) {
+                    String message = "Cannot call method " + method + " with parameter types "
+                            + Arrays.toString(getTypes(convertedArgs));
                     throw new QiSlotException(message, e);
-                } catch (InvocationTargetException e) {
+                }
+                catch (InvocationTargetException e) {
                     throw new QiSlotException(e);
-                } catch (QiConversionException e) {
+                }
+                catch (QiConversionException e) {
                     throw new QiSlotException(e);
                 }
             }
@@ -250,11 +268,10 @@ public class AnyObject {
     }
 
     Future<Void> disconnect(QiSignalConnection connection) {
-        return connection.getFuture().andThen(new QiFunction<Void, Long>() {
+        return connection.getFuture().andThenCompose(new Function<Long, Future<Void>>() {
             @Override
-            public Future<Void> onResult(Long subscriberId) {
-                long futurePtr = disconnectSignal(_p, subscriberId);
-                return new Future<Void>(futurePtr);
+            public Future<Void> execute(Long value) throws Throwable {
+                return new Future<Void>(disconnectSignal(_p, value));
             }
         });
     }
@@ -262,7 +279,8 @@ public class AnyObject {
     /**
      * Disconnect a previously registered callback.
      *
-     * @param subscriberId id returned by connect()
+     * @param subscriberId
+     *            id returned by connect()
      */
     @Deprecated
     public long disconnect(long subscriberId) {
@@ -272,8 +290,10 @@ public class AnyObject {
     /**
      * Post an event advertised with advertiseEvent method.
      *
-     * @param eventName Name of the event to trigger.
-     * @param args      Arguments sent to callback
+     * @param eventName
+     *            Name of the event to trigger.
+     * @param args
+     *            Arguments sent to callback
      * @see DynamicObjectBuilder#advertiseSignal(long, String)
      */
     public void post(String eventName, Object... args) {
@@ -286,8 +306,8 @@ public class AnyObject {
     }
 
     /**
-     * Called by garbage collector
-     * Finalize is overriden to manually delete C++ data
+     * Called by garbage collector Finalize is overriden to manually delete C++
+     * data
      */
     @Override
     protected void finalize() throws Throwable {

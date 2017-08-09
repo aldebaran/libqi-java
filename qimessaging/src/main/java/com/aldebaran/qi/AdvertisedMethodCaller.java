@@ -1,36 +1,39 @@
 package com.aldebaran.qi;
 
+import com.aldebaran.qi.serialization.SignatureUtilities;
+
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-
-import com.aldebaran.qi.serialization.SignatureUtilities;
 
 /**
  * Handle calls to advertised object. See
  * {@link DynamicObjectBuilder#advertiseMethods(Class, Object)}
  *
- * @param <INTERFACE>
- *            Interface type mapped
+ * @param <INTERFACE> Interface type mapped
  */
 class AdvertisedMethodCaller<INTERFACE> implements InvocationHandler {
-    /** Object builder parent */
+    /**
+     * Object builder parent
+     */
     private final DynamicObjectBuilder dynamicObjectBuilder;
-    /** Object managed by the builder */
+    /**
+     * Object managed by the builder
+     */
     private AnyObject anyObject;
-    /** Monitor manager to get last exception */
+    /**
+     * Monitor manager to get last exception
+     */
     private final AdvertisedMethodMonitor<INTERFACE> advertisedMethodMonitor;
 
     /**
      * Create the handler.
      *
-     * @param dynamicObjectBuilder
-     *            Object builder parent
-     * @param advertisedMethodMonitor
-     *            Monitor manager to get last exception
+     * @param dynamicObjectBuilder    Object builder parent
+     * @param advertisedMethodMonitor Monitor manager to get last exception
      */
     AdvertisedMethodCaller(final DynamicObjectBuilder dynamicObjectBuilder,
-            final AdvertisedMethodMonitor<INTERFACE> advertisedMethodMonitor) {
+                           final AdvertisedMethodMonitor<INTERFACE> advertisedMethodMonitor) {
         this.dynamicObjectBuilder = dynamicObjectBuilder;
         this.advertisedMethodMonitor = advertisedMethodMonitor;
     }
@@ -38,12 +41,9 @@ class AdvertisedMethodCaller<INTERFACE> implements InvocationHandler {
     /**
      * Called when a method is called.
      *
-     * @param object
-     *            Object instance
-     * @param method
-     *            Method called
-     * @param parameters
-     *            Method parameters
+     * @param object     Object instance
+     * @param method     Method called
+     * @param parameters Method parameters
      * @return Method result
      */
     @Override
@@ -70,8 +70,7 @@ class AdvertisedMethodCaller<INTERFACE> implements InvocationHandler {
         synchronized (this.anyObject) {
             try {
                 return this.anyObject.call(returnType, methodName, values).get();
-            }
-            catch (Exception exception) {
+            } catch (Exception exception) {
                 // Get the last exception
                 Exception exception2 = this.advertisedMethodMonitor.getException();
 

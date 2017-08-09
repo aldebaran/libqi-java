@@ -44,7 +44,16 @@ qi::Future<qi::AnyValue>* call_from_java(JNIEnv *env, qi::AnyObject object, cons
   {
     jobject current = env->GetObjectArrayElement(listParams, i);
     objs[i] = current;
-    params.push_back(qi::AnyReference::from(objs[i]));
+
+    //null java is not well interpreted by C++, so we convert it to void
+    if (env->IsSameObject(objs[i], NULL)) {
+        //Convert null java object to void C++
+        params.push_back(qi::AnyReference(qi::typeOf<void>()));
+    } else {
+        //For non null just wrap the value
+        params.push_back(qi::AnyReference::from(objs[i]));
+    }
+
     ++i;
   }
   // Create future and start metacall
@@ -227,4 +236,39 @@ qi::AnyReference event_callback_to_java(void *vinfo, const std::vector<qi::AnyRe
   qiLogVerbose("qimessaging.jni") << "Java event callback called (sig=" << info->sig << ")";
 
   return call_to_java(info->sig, info, params);
+}
+
+/**
+ * @brief checkJavaExceptionAndReport Check if last call to java has an error.
+ * If error just happened, report it properly
+ * @param env JNI environment
+ */
+void checkJavaExceptionAndReport(JNIEnv *env)
+{
+    if (env->ExceptionCheck() == JNI_TRUE)
+    {
+        // Obtain exception message and throw an exception
+        jthrowable exception = env->ExceptionOccurred();
+        // the callback threw an exception, it must have no impact on the caller
+        env->ExceptionClear();
+        jclass throwable_class = env->FindClass("java/lang/Throwable");
+        jmethodID getMessage = env->GetMethodID(throwable_class,
+                                                "getMessage",
+                                                "()Ljava/lang/String;");
+        jstring message = (jstring)env->CallObjectMethod(exception, getMessage);
+
+        if (env->IsSameObject(message, NULL))
+        {
+            //toString never return null
+            jmethodID toString = env->GetMethodID(cls_object,
+                                                  "toString",
+                                                  "()Ljava/lang/String;");
+            message = (jstring)env->CallObjectMethod(exception, toString);
+        }
+
+        const char* data = env->GetStringUTFChars(message, 0);
+        std::string errorMessage = std::string(data);
+        env->ReleaseStringUTFChars(message, data);
+        throw std::runtime_error(errorMessage);
+    }
 }

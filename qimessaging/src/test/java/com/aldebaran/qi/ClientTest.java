@@ -4,88 +4,78 @@
 */
 package com.aldebaran.qi;
 
-import com.aldebaran.qi.ServiceDirectory;
-import com.aldebaran.qi.Session;
-
-import static org.junit.Assert.*;
-
 import org.junit.Test;
+
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Integration test for QiMessaging java bindings.
  */
-public class ClientTest
-{
+public class ClientTest {
 
-  /**
-   * Create a QiMessaging session,
-   * Connect to Service Directory,
-   */
-  @Test
-  public void testConnection()
-  {
-    System.out.println("testConnection");
-    ServiceDirectory sd = new ServiceDirectory();
-    Session s = new Session();
+    /**
+     * Create a QiMessaging session,
+     * Connect to Service Directory,
+     */
+    @Test
+    public void testConnection() {
+        System.out.println("testConnection");
+        ServiceDirectory sd = new ServiceDirectory();
+        Session s = new Session();
 
-    // Get Service directory listening url.
-    String url = sd.listenUrl();
+        // Get Service directory listening url.
+        String url = sd.listenUrl();
 
-    // Try to connect session to service directory.
-    try {
-      s.connect(url).sync();
-    } catch (Exception e)
-    {
-      fail("Connection to service directory must succeed : "+e.getMessage());
-    }
-  }
-
-  /**
-   * Create a QiMessaging session,
-   * Connect to Service Directory,
-   * Close session,
-   * Close service directory.
-   */
-  @Test
-  public void testDisconnection()
-  {
-    System.out.println("testDisconnection");
-    ServiceDirectory sd = new ServiceDirectory();
-    Session s = new Session();
-
-    // Get Service directory listening url.
-    String url = sd.listenUrl();
-
-    // Try to connect session to service directory.
-    try {
-      s.connect(url).sync();
-    } catch (Exception e)
-    {
-      System.out.printf("Cannot connect to service directory (%s) : %s", url, e.getMessage());
-      assert(false);
+        // Try to connect session to service directory.
+        try {
+            s.connect(url).sync();
+        } catch (Exception e) {
+            fail("Connection to service directory must succeed : " + e.getMessage());
+        }
     }
 
-    s.close();
-  }
+    /**
+     * Create a QiMessaging session,
+     * Connect to Service Directory,
+     * Close session,
+     * Close service directory.
+     */
+    @Test
+    public void testDisconnection() {
+        System.out.println("testDisconnection");
+        ServiceDirectory sd = new ServiceDirectory();
+        Session s = new Session();
 
-  /**
-   * Test Session constructor
-   */
-  @Test
-  public void testSessionConstructor()
-  {
-    System.out.println("testSessionConstructor");
-    ServiceDirectory sd = new ServiceDirectory();
-    Session session = new Session();
+        // Get Service directory listening url.
+        String url = sd.listenUrl();
 
-    try {
-      session.connect(sd.listenUrl()).get();
+        // Try to connect session to service directory.
+        try {
+            s.connect(url).sync();
+        } catch (Exception e) {
+            System.out.printf("Cannot connect to service directory (%s) : %s", url, e.getMessage());
+            assert (false);
+        }
+
+        s.close();
     }
-    catch (Exception e)
-    {
-      fail("Session must be connected to ServiceDirectory");
-    }
 
-    assertTrue("Session must be connected to ServiceDirectory", session.isConnected());
-  }
+    /**
+     * Test Session constructor
+     */
+    @Test
+    public void testSessionConstructor() {
+        System.out.println("testSessionConstructor");
+        ServiceDirectory sd = new ServiceDirectory();
+        Session session = new Session();
+
+        try {
+            session.connect(sd.listenUrl()).get();
+        } catch (Exception e) {
+            fail("Session must be connected to ServiceDirectory");
+        }
+
+        assertTrue("Session must be connected to ServiceDirectory", session.isConnected());
+    }
 }
