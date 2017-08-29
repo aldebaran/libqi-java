@@ -15,7 +15,7 @@
 
 JNITuple::JNITuple(jobject obj)
 {
-  JVM()->GetEnv((void**) &_env, QI_JNI_MIN_VERSION);
+  javaVirtualMachine->GetEnv((void**) &_env, QI_JNI_MIN_VERSION);
   _obj = obj;
 }
 
