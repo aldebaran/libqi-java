@@ -52,19 +52,20 @@ public class EmbeddedTools {
             // but the name of the SSL dlls are different
             if (osName.contains("Windows")) {
                 // Load vcredist libs
-                SharedLibrary.loadLib("msvcr120");
-                SharedLibrary.loadLib("msvcp120");
-                SharedLibrary.loadLib("libeay32");
-                SharedLibrary.loadLib("ssleay32");
-
-                SharedLibrary.loadLib("boost_date_time");
-                SharedLibrary.loadLib("boost_program_options");
-                SharedLibrary.loadLib("boost_system");
-                SharedLibrary.loadLib("boost_regex");
-                SharedLibrary.loadLib("boost_locale");
-                SharedLibrary.loadLib("boost_filesystem");
-                SharedLibrary.loadLib("boost_chrono");
-                SharedLibrary.loadLib("boost_thread");
+                String[] libs = new String[]{
+                        "msvcr120",
+                        "msvcp120",
+                        "libeay32",
+                        "ssleay32",
+                        "boost_date_time",
+                        "boost_program_options",
+                        "boost_system",
+                        "boost_regex",
+                        "boost_locale",
+                        "boost_filesystem",
+                        "boost_chrono",
+                        "boost_thread"};
+                SharedLibrary.loadLibs(libs);
 
             } else {
                 SharedLibrary.loadLib("crypto");
