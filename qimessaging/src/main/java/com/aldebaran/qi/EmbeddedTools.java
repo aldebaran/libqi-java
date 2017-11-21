@@ -56,6 +56,16 @@ public class EmbeddedTools {
                 SharedLibrary.loadLib("msvcp120");
                 SharedLibrary.loadLib("libeay32");
                 SharedLibrary.loadLib("ssleay32");
+
+                SharedLibrary.loadLib("boost_date_time");
+                SharedLibrary.loadLib("boost_program_options");
+                SharedLibrary.loadLib("boost_system");
+                SharedLibrary.loadLib("boost_regex");
+                SharedLibrary.loadLib("boost_locale");
+                SharedLibrary.loadLib("boost_filesystem");
+                SharedLibrary.loadLib("boost_chrono");
+                SharedLibrary.loadLib("boost_thread");
+
             } else {
                 SharedLibrary.loadLib("crypto");
                 SharedLibrary.loadLib("ssl");
