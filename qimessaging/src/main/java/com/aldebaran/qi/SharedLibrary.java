@@ -1,15 +1,20 @@
 /*
-**  Copyright (C) 2015 Aldebaran Robotics
-**  See COPYING for the license
-*/
+ * * Copyright (C) 2015 Aldebaran Robotics* See COPYING for the license
+ */
 package com.aldebaran.qi;
+
+import com.aldebaran.qi.util.resources.ResourceDirectory;
+import com.aldebaran.qi.util.resources.ResourceElement;
+import com.aldebaran.qi.util.resources.Resources;
+import com.aldebaran.qi.util.resources.ResourcesSystem;
 
 import java.io.*;
 import java.net.URL;
+import java.util.List;
 
 /**
- * Class responsible for managing the dynamic libraries used by the qi
- * Framework according to the system.
+ * Class responsible for managing the dynamic libraries used by the qi Framework
+ * according to the system.
  */
 public class SharedLibrary {
     private static String osName = System.getProperty("os.name");
@@ -32,11 +37,59 @@ public class SharedLibrary {
         }
         // Try in debug too on windows:
         if (!osName.startsWith("Windows")) {
-            return firstTry;
+            return false;
         }
         String debugLibName = getLibraryName(name + "_d");
-        boolean secondTry = loadLibHelper(debugLibName);
-        return secondTry;
+        return loadLibHelper(debugLibName);
+    }
+
+    public static boolean loadLibs(String... names) {
+
+        boolean allLoaded = true;
+
+        try {
+            Resources resources = new Resources(SharedLibrary.class);
+            ResourcesSystem resourcesSystem = resources.obtainResourcesSystem();
+            ResourceDirectory directory = (ResourceDirectory) resourcesSystem.obtainElement(getSubDir());
+            List<ResourceElement> elements = resourcesSystem.obtainList(directory);
+            boolean found;
+            String resourceName;
+
+            for (String name : names) {
+                found = false;
+
+                for (ResourceElement resourceElement : elements) {
+                    resourceName = resourceElement.getName();
+
+                    if (resourceName.contains(name) && !resourceName.contains("_d.")) {
+                        allLoaded &= loadLibHelper(resourceName);
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    for (ResourceElement resourceElement : elements) {
+                        resourceName = resourceElement.getName();
+
+                        if (resourceName.contains(name)) {
+                            allLoaded &= loadLibHelper(resourceName);
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!found) {
+                    allLoaded = false;
+                    System.out.println("WARNING not found : " + name);
+                }
+            }
+        } catch (IOException e) {
+            return false;
+        }
+
+        return allLoaded;
     }
 
     private static boolean loadLibHelper(String libraryName) {
@@ -94,15 +147,13 @@ public class SharedLibrary {
         try {
             in = libraryUrl.openStream();
         } catch (IOException e) {
-            System.out.format("Could not open %s for reading. Error was: %s\n",
-                    libraryUrl, e.getMessage());
+            System.out.format("Could not open %s for reading. Error was: %s\n", libraryUrl, e.getMessage());
             return false;
         }
         try {
             out = new BufferedOutputStream(new FileOutputStream(libraryFile));
         } catch (IOException e) {
-            System.out.format("Could not open %s for writing. Error was: %s\n",
-                    libraryFile, e.getMessage());
+            System.out.format("Could not open %s for writing. Error was: %s\n", libraryFile, e.getMessage());
             return false;
         }
 
@@ -118,8 +169,7 @@ public class SharedLibrary {
             out.close();
             in.close();
         } catch (IOException e) {
-            System.out.format("Could not copy from %s to %s: %s\n", libraryUrl,
-                    tmpLibraryPath, e.getMessage());
+            System.out.format("Could not copy from %s to %s: %s\n", libraryUrl, tmpLibraryPath, e.getMessage());
             return false;
         }
 
