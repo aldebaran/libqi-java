@@ -326,6 +326,31 @@ jint throwNewAdvertisementException(JNIEnv *env, const char *message)
   return throwNew(env, "com/aldebaran/qi/AdvertisementException", message);
 }
 
+jint throwNewApplicationException(JNIEnv *env, const char *message)
+{
+  return throwNew(env, "com/aldebaran/qi/ApplicationException", message);
+}
+
+jint throwNewConnectionException(JNIEnv *env, const char *message)
+{
+  return throwNew(env, "com/aldebaran/qi/ConnectionException", message);
+}
+
+jint throwNewPostException(JNIEnv *env, const char *message)
+{
+  return throwNew(env, "com/aldebaran/qi/PostException", message);
+}
+
+jint throwNewSessionException(JNIEnv *env, const char *message)
+{
+  return throwNew(env, "com/aldebaran/qi/SessionException", message);
+}
+
+jint throwNewIllegalStateException(JNIEnv *env, const char *message)
+{
+  return throwNew(env, "java/lang/IllegalStateException", message);
+}
+
 /**
  * @brief propertyBaseSignature Get the qitype signature of a Java class template (jclass)
  * @param env JNI environment
