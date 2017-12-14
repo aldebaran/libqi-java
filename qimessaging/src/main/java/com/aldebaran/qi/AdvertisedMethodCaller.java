@@ -1,10 +1,11 @@
 package com.aldebaran.qi;
 
-import com.aldebaran.qi.serialization.SignatureUtilities;
-
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+
+import com.aldebaran.qi.serialization.SignatureUtilities;
 
 /**
  * Handle calls to advertised object. See
@@ -69,8 +70,19 @@ class AdvertisedMethodCaller<INTERFACE> implements InvocationHandler {
 
         synchronized (this.anyObject) {
             try {
-                return this.anyObject.call(returnType, methodName, values).get();
-            } catch (Exception exception) {
+                final Object returnValue = this.anyObject.call(returnType, methodName, values).get();
+
+                if (returnValue == null || returnType instanceof ParameterizedType) {
+                    final ParameterizedType parameterizedType = (ParameterizedType) returnType;
+
+                    if (Future.class.equals(parameterizedType.getRawType())) {
+                        return Future.of(returnValue);
+                    }
+                }
+
+                return returnValue;
+            }
+            catch (Exception exception) {
                 // Get the last exception
                 Exception exception2 = this.advertisedMethodMonitor.getException();
 

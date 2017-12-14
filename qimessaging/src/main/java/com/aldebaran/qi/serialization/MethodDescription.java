@@ -5,6 +5,8 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.aldebaran.qi.Future;
+
 /**
  * Describe a method.<br>
  * It contains the method name, return type and parameters type.
@@ -54,6 +56,10 @@ public class MethodDescription {
      * conversion
      */
     private static final int DISTANCE_NUMBERS = 1000;
+    /**
+     * "Distance" between Future and real type
+     */
+    private static final int DISTANCE_FUTURE = 100;
 
     /**
      * Read the next class described by characters array at given offset.<br>
@@ -274,11 +280,11 @@ public class MethodDescription {
             return Integer.MAX_VALUE;
         }
 
-        int distance = MethodDescription.distance(this.returnType, method.getReturnType());
+        int distance = MethodDescription.distance(this.returnType, method.getReturnType(), true);
 
         for (int index = 0; index < length; index++) {
             distance = MethodDescription.addLimited(distance,
-                    MethodDescription.distance(this.parametersType[index], parameters[index]));
+                    MethodDescription.distance(this.parametersType[index], parameters[index], false));
         }
 
         return distance;
@@ -312,11 +318,15 @@ public class MethodDescription {
      * For other values of "distance" it means the given the classes are
      * compatible. More the value is near 0, more the compatibility is easy.
      *
-     * @param class1 First class.
-     * @param class2 Second class.
+     * @param class1
+     *            First class.
+     * @param class2
+     *            Second class.
+     * @param acceptFuture
+     *            Indicates if future is accepted for compute distance
      * @return Computed "distance".
      */
-    private static int distance(final Class<?> class1, final Class<?> class2) {
+    private static int distance(final Class<?> class1, final Class<?> class2, boolean acceptFuture) {
         if (class1.equals(class2)) {
             return 0;
         }
@@ -359,6 +369,10 @@ public class MethodDescription {
 
         if (SignatureUtilities.isNumber(class1) && SignatureUtilities.isNumber(class2)) {
             return MethodDescription.DISTANCE_NUMBERS;
+        }
+
+        if (acceptFuture && (Future.class.isAssignableFrom(class1) || Future.class.isAssignableFrom(class2))) {
+            return MethodDescription.DISTANCE_FUTURE;
         }
 
         return Integer.MAX_VALUE;
