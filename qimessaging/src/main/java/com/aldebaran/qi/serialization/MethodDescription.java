@@ -9,7 +9,16 @@ import com.aldebaran.qi.Future;
 
 /**
  * Describe a method.<br>
- * It contains the method name, return type and parameters type.
+ * It contains the method name, return type and parameters type.<br>
+ * For choose the best method that corresponds to a search one, we compute a "distance" between methods:
+ * <ul>
+ *  <li>This "distance" is build for when match exactly, the distance is 0.</li>
+ *  <li>If the two methods have different name or different number of parameters the distance is {@link Integer#MAX_VALUE "infinite"}.</li>
+ *  <li>The distance between primitive and their associated Object (For example int &lt;-&gt; java.lang.Integer, boolean &lt;-&gt; java.lang.Boolean, ...) is {@link #DISTANCE_PRIMITIVE_OBJECT}.</li>
+ *  <li>The distance between two numbers (double, float, ...) is {@link #DISTANCE_NUMBERS}.</li>
+ *  <li>The distance (for returned value only) between a type and a Future that embed this type is {@link #DISTANCE_FUTURE}.</li>
+ *  <li>For others case the distance becomes {@link Integer#MAX_VALUE "infinite"}</li>
+ * </ul>
  */
 public class MethodDescription {
     /**
@@ -57,7 +66,7 @@ public class MethodDescription {
      */
     private static final int DISTANCE_NUMBERS = 1000;
     /**
-     * "Distance" between Future and real type
+     * "Distance" between Future and real type (For returned value only)
      */
     private static final int DISTANCE_FUTURE = 100;
 
@@ -319,9 +328,9 @@ public class MethodDescription {
      * compatible. More the value is near 0, more the compatibility is easy.
      *
      * @param class1
-     *            First class.
+     *            One class.
      * @param class2
-     *            Second class.
+     *            Other class.
      * @param acceptFuture
      *            Indicates if future is accepted for compute distance
      * @return Computed "distance".

@@ -227,7 +227,9 @@ public class SignatureUtilities {
                 clazz = (Class) type;
             }
             else {
-                System.err.println("WARNING! ISSUE TO CONVERT " + type + ":" + type.getClass().getName() + " TO Class");
+                //Just a warning for a not managed type.
+                //Print in error stream to attract attention
+                System.err.println("Warning! While computing signature for return type " + type + ":" + type.getClass().getName() + " TO Class");
             }
         }
 
