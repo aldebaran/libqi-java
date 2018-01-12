@@ -33,7 +33,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
         @Override
         public void consume(Future<T1> future) throws Throwable {
             if (future.hasError() && !future.continuationSpecified.get()) {
-                System.err.println("Issue on Future: " + future.getErrorMessage());
+                System.err.println("Uncaught exception on Future: " + future.getErrorMessage());
                 future.getError().printStackTrace();
             }
         }
