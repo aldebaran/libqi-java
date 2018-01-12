@@ -1,10 +1,10 @@
 package com.aldebaran.qi;
 
-import com.aldebaran.qi.serialization.SignatureUtilities;
-
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+
+import com.aldebaran.qi.serialization.SignatureUtilities;
 
 /**
  * Handle calls to advertised object. See
@@ -72,7 +72,7 @@ class AdvertisedMethodCaller<INTERFACE> implements InvocationHandler {
                 Object value = this.anyObject.call(returnType, methodName, values).get();
 
                 if (value != null && !method.getReturnType().equals(value.getClass())) {
-                    System.err.println("Issue on libqi side that not wrap the good class ... method.getReturnType()="
+                    System.err.println("Different type between expected result type and value type. Libqi does not wrap the good class ... method.getReturnType()="
                             + method.getReturnType().getName() + " | value.getClass()=" + value.getClass().getName());
 
                     if (Double.class.equals(method.getReturnType()) && Number.class.isAssignableFrom(value.getClass())) {
