@@ -50,6 +50,7 @@ extern jclass cls_hashmap;
 extern jclass cls_object;
 extern jclass cls_nativeTools;
 extern jmethodID method_NativeTools_callJava;
+extern JavaVM* javaVirtualMachine;
 
 // JNI utils
 extern "C"
@@ -245,9 +246,6 @@ namespace qi {
     }
   }// !jni
 }// !qi
-
-
-JavaVM*       JVM(JNIEnv* env = 0);
 
 // Signature conversion
 std::string   toJavaSignature(const std::string &signature);
