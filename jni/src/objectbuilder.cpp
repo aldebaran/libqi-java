@@ -31,7 +31,6 @@ JNIEXPORT jobject JNICALL Java_com_aldebaran_qi_DynamicObjectBuilder_object(JNIE
   qi::AnyObject *obj = new qi::AnyObject();
   qi::AnyObject &o = *(reinterpret_cast<qi::AnyObject *>(obj));
 
-  JVM(env);
   o = ob->object();
 
   JNIObject jobj(obj);

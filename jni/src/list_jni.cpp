@@ -14,7 +14,7 @@
 
 JNIList::JNIList()
 {
-  JVM()->GetEnv((void**) &_env, QI_JNI_MIN_VERSION);
+  javaVirtualMachine->GetEnv((void**) &_env, QI_JNI_MIN_VERSION);
 
   jmethodID mid = _env->GetMethodID(cls_arraylist, "<init>", "()V");
   if (!mid)
@@ -28,7 +28,7 @@ JNIList::JNIList()
 
 JNIList::JNIList(jobject obj)
 {
-  JVM()->GetEnv((void**) &_env, QI_JNI_MIN_VERSION);
+  javaVirtualMachine->GetEnv((void**) &_env, QI_JNI_MIN_VERSION);
   _obj = obj;
 }
 
