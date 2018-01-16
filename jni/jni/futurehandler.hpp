@@ -33,7 +33,7 @@ namespace qi
     CallbackInfo(jobject instance, jobjectArray args, jclass clazz, const std::string& interfaceName = "com/aldebaran/qi/Callback")
     {
       JNIEnv* env = 0;
-      JVM()->GetEnv((void**) &env, QI_JNI_MIN_VERSION);
+      javaVirtualMachine->GetEnv((void**) &env, QI_JNI_MIN_VERSION);
 
       // We need to get global reference on each object of array to use them in callback thread.
       jint size = env->GetArrayLength(args);
@@ -55,7 +55,7 @@ namespace qi
     ~CallbackInfo()
     {
       JNIEnv* env = 0;
-      JVM()->GetEnv((void**) &env, QI_JNI_MIN_VERSION);
+      javaVirtualMachine->GetEnv((void**) &env, QI_JNI_MIN_VERSION);
 
       // Destroy all global reference on arguments array
       jint size = env->GetArrayLength(this->args);

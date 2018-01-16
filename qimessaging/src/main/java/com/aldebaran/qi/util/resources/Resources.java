@@ -1,14 +1,11 @@
 package com.aldebaran.qi.util.resources;
 
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.StringTokenizer;
 import java.util.jar.JarFile;
-
-import javax.imageio.ImageIO;
 
 /**
  * Access to internal resources
@@ -89,19 +86,6 @@ public class Resources {
         }
 
         this.relativePathFormClass = stringBuilder.toString();
-    }
-
-    /**
-     * Obtain a buffered image
-     *
-     * @param path
-     *            Relative path of the image (Separator is "/")
-     * @return The buffered image
-     * @throws IOException
-     *             On reading resource failure
-     */
-    public BufferedImage obtainBufferedImage(final String path) throws IOException {
-        return ImageIO.read(this.obtainResourceStream(path));
     }
 
     /**

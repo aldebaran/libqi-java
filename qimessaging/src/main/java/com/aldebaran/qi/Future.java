@@ -7,6 +7,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Future extends the standard Java {@link java.util.concurrent.Future} and
@@ -22,6 +23,21 @@ import java.util.concurrent.TimeoutException;
  *            The type of the result
  */
 public class Future<T> implements java.util.concurrent.Future<T> {
+    /**
+     * Consumer caller to report an error
+     */
+    static class ReportBugConsumer<T1> implements Consumer<Future<T1>> {
+        /**
+         * Called when future is finished
+         */
+        @Override
+        public void consume(Future<T1> future) throws Throwable {
+            if (future.hasError() && !future.continuationSpecified.get()) {
+                System.err.println("Uncaught exception on Future: " + future.getErrorMessage());
+                future.getError().printStackTrace();
+            }
+        }
+    }
 
     // Loading QiMessaging JNI layer
     static {
@@ -130,8 +146,19 @@ public class Future<T> implements java.util.concurrent.Future<T> {
      */
     private FutureCallbackType defaultFutureCallbackType = FutureCallbackType.Async;
 
+    /**
+     * Indicates if at least one continuation is specified, that is to say that
+     * {@link #thenApply(Function)}, {@link #thenCompose(Function)},
+     * {@link #thenConsume(Consumer)}, {@link #andThenApply(Function)},
+     * {@link #andThenCompose(Function)} or {@link #andThenConsume(Consumer)}
+     * was called
+     */
+    final AtomicBoolean continuationSpecified;
+
     Future(final long pFuture) {
         this._fut = pFuture;
+        this.continuationSpecified = new AtomicBoolean(false);
+        this.qiFutureThenVoid(this._fut, new ReportBugConsumer<T>());
     }
 
     /**
@@ -361,6 +388,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
             throw new NullPointerException("function must not be null!");
         }
 
+        this.continuationSpecified.set(true);
         final long futurePointer = this.qiFutureThen(this._fut, function);
         return new Future<R>(futurePointer);
     }
@@ -380,6 +408,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
             throw new NullPointerException("consumer must not be null!");
         }
 
+        this.continuationSpecified.set(true);
         final long futurePointer = this.qiFutureThenVoid(this._fut, consumer);
         return new Future<Void>(futurePointer);
     }
@@ -403,6 +432,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
             throw new NullPointerException("function must not be null!");
         }
 
+        this.continuationSpecified.set(true);
         final long pointer = this.qiFutureThenUnwrap(this._fut, function);
         return new Future<R>(pointer);
     }
@@ -423,6 +453,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
             throw new NullPointerException("function must not be null!");
         }
 
+        this.continuationSpecified.set(true);
         final long futurePointer = this.qiFutureAndThen(this._fut, function);
         return new Future<R>(futurePointer);
     }
@@ -441,6 +472,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
             throw new NullPointerException("consumer must not be null!");
         }
 
+        this.continuationSpecified.set(true);
         final long futurePointer = this.qiFutureAndThenVoid(this._fut, consumer);
         return new Future<Void>(futurePointer);
     }
@@ -463,6 +495,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
             throw new NullPointerException("function must not be null!");
         }
 
+        this.continuationSpecified.set(true);
         final long pointer = this.qiFutureAndThenUnwrap(this._fut, function);
         return new Future<R>(pointer);
     }

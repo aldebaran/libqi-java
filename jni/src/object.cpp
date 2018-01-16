@@ -118,9 +118,6 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_connect(JNIEnv *env, job
   qi_method_info*            data;
   std::vector<std::string>  sigInfo;
 
-  // Keep a pointer on JavaVM singleton if not already set.
-  JVM(env);
-
   // Create a new global reference on object instance.
   // jobject structure are local reference and are destroyed when returning to JVM
   instance = env->NewGlobalRef(instance);

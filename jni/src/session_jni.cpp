@@ -63,7 +63,6 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Session_qiSessionConnect(JNIEnv *e
 
   // After this function return, callbacks are going to be set on new created Future.
   // Save the JVM pointer here to avoid big issues when callbacks will be called.
-  JVM(env);
   qi::Future<qi::AnyValue> *fref = new qi::Future<qi::AnyValue>();
   qi::Promise<qi::AnyValue> promise;
   *fref = promise.future();
@@ -187,7 +186,6 @@ class Java_ClientAuthenticator : public qi::ClientAuthenticator
 public:
   Java_ClientAuthenticator(JNIEnv* env, jobject object)
   {
-    env->GetJavaVM(&_jvm);
     _jobjectRef = qi::jni::makeSharedGlobalRef(env, object);
   }
 
@@ -195,14 +193,15 @@ public:
   {
     JNIEnv* env = nullptr;
 #ifndef ANDROID
-    _jvm->AttachCurrentThread(reinterpret_cast<void**>(&env), nullptr);
+    javaVirtualMachine->AttachCurrentThread(reinterpret_cast<void**>(&env), nullptr);
 #else
-    _jvm->AttachCurrentThread(&env, nullptr);
+    javaVirtualMachine->AttachCurrentThread(&env, nullptr);
 #endif
     jobject _jobject = _jobjectRef.get();
     jobject ca = qi::jni::Call<jobject>::invoke(env, _jobject, "initialAuthData", "()Ljava/util/Map;");
     auto result = JNI_JavaMaptoMap(env, ca);
     env->DeleteLocalRef(ca);
+    javaVirtualMachine->DetachCurrentThread();
     return result;
   }
 
@@ -210,9 +209,9 @@ public:
   {
     JNIEnv* env = nullptr;
 #ifndef ANDROID
-    _jvm->AttachCurrentThread(reinterpret_cast<void**>(&env), nullptr);
+    javaVirtualMachine->AttachCurrentThread(reinterpret_cast<void**>(&env), nullptr);
 #else
-    _jvm->AttachCurrentThread(&env, nullptr);
+    javaVirtualMachine->AttachCurrentThread(&env, nullptr);
 #endif
     jobject _jobject = _jobjectRef.get();
     jobject jmap = JNI_MapToJavaMap(env, authData);
@@ -220,11 +219,11 @@ public:
     env->DeleteLocalRef(jmap);
     auto result = JNI_JavaMaptoMap(env, ca);
     env->DeleteLocalRef(ca);
+    javaVirtualMachine->DetachCurrentThread();
     return result;
   }
 
 private:
-  JavaVM* _jvm;
   qi::jni::SharedGlobalRef _jobjectRef;
 
   static qi::CapabilityMap JNI_JavaMaptoMap(JNIEnv* env, jobject jmap)
@@ -238,11 +237,11 @@ private:
     while (qi::jni::Call<jboolean>::invoke(env, it, "hasNext", "()Z"))
     {
       jobject entry = qi::jni::Call<jobject>::invoke(env, it, "next", "()Ljava/lang/Object;");
+
+      // FIXME: should implement the fact key can be something else than a jstring
       jstring key = (jstring) qi::jni::Call<jobject>::invoke(env, entry, "getKey", "()Ljava/lang/Object;");
       std::string k = env->GetStringUTFChars(key, nullptr);
 
-      // FIXME: should implement this for jobject and not only jstring
-      qiLogWarning() << "FIXME: only jstring are supported";
       jobject value = qi::jni::Call<jobject>::invoke(env, entry, "getValue", "()Ljava/lang/Object;");
       std::string v2 = env->GetStringUTFChars((jstring) value, nullptr);
 
@@ -310,7 +309,6 @@ class Java_ClientAuthenticatorFactory : public qi::ClientAuthenticatorFactory
 public:
   Java_ClientAuthenticatorFactory(JNIEnv* env, jobject object)
   {
-    env->GetJavaVM(&_jvm);
     _jobject = env->NewGlobalRef(object);
   }
 
@@ -318,18 +316,18 @@ public:
   {
     JNIEnv* env = nullptr;
 #ifndef ANDROID
-    _jvm->AttachCurrentThread(reinterpret_cast<void**>(&env), nullptr);
+    javaVirtualMachine->AttachCurrentThread(reinterpret_cast<void**>(&env), nullptr);
 #else
-    _jvm->AttachCurrentThread(&env, nullptr);
+    javaVirtualMachine->AttachCurrentThread(&env, nullptr);
 #endif
     jobject ca = qi::jni::Call<jobject>::invoke(env, _jobject, "newAuthenticator", "()Lcom/aldebaran/qi/ClientAuthenticator;");
     auto result = boost::make_shared<Java_ClientAuthenticator>(env, ca);
     env->DeleteLocalRef(ca);
+    javaVirtualMachine->DetachCurrentThread();
     return result;
   }
 
 private:
-  JavaVM* _jvm;
   jobject _jobject;
 };
 
