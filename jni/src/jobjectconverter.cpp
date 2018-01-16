@@ -382,7 +382,7 @@ qi::AnyReference _AnyValue_from_JObject(jobject val)
   if (env->IsInstanceOf(val, cls_double)) // If double, convert to float
   {
     jmethodID mid = env->GetMethodID(cls_double, "doubleValue", "()D");
-    jfloat v = static_cast<jfloat>(env->CallDoubleMethod(val, mid));
+    jdouble v = env->CallDoubleMethod(val, mid);
     return qi::AnyReference::from(v).clone();
   }
 
