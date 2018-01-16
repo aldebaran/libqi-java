@@ -237,11 +237,11 @@ private:
     while (qi::jni::Call<jboolean>::invoke(env, it, "hasNext", "()Z"))
     {
       jobject entry = qi::jni::Call<jobject>::invoke(env, it, "next", "()Ljava/lang/Object;");
+
+      // FIXME: should implement the fact key can be something else than a jstring
       jstring key = (jstring) qi::jni::Call<jobject>::invoke(env, entry, "getKey", "()Ljava/lang/Object;");
       std::string k = env->GetStringUTFChars(key, nullptr);
 
-      // FIXME: should implement this for jobject and not only jstring
-      qiLogWarning() << "FIXME: only jstring are supported";
       jobject value = qi::jni::Call<jobject>::invoke(env, entry, "getValue", "()Ljava/lang/Object;");
       std::string v2 = env->GetStringUTFChars((jstring) value, nullptr);
 
