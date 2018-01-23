@@ -75,7 +75,7 @@ class AdvertisedMethodCaller<INTERFACE> implements InvocationHandler {
                     System.err.println("Different type between expected result type and value type. Libqi does not wrap the good class ... method.getReturnType()="
                             + method.getReturnType().getName() + " | value.getClass()=" + value.getClass().getName());
 
-                    if (Double.class.equals(method.getReturnType()) && Number.class.isAssignableFrom(value.getClass())) {
+                    if (SignatureUtilities.isDouble(method.getReturnType()) && SignatureUtilities.isNumber(value.getClass())) {
                         value = new Double(((Number) value).doubleValue());
                     }
                 }
