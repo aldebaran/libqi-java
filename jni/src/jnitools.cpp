@@ -40,6 +40,8 @@ jclass cls_object;
 jclass cls_nativeTools;
 jmethodID method_NativeTools_callJava;
 
+JavaVM* javaVirtualMachine;
+
 static void emergency()
 {
   qiLogFatal() << "Emergency, aborting";
@@ -50,8 +52,9 @@ static void emergency()
 #endif
 }
 
-JNIEXPORT jint JNICALL JNI_OnLoad (JavaVM* QI_UNUSED(vm), void* QI_UNUSED(reserved))
+JNIEXPORT jint JNICALL JNI_OnLoad (JavaVM* virtualMachine, void* QI_UNUSED(reserved))
 {
+  javaVirtualMachine = virtualMachine;
   // seems like a good number
   qi::getEventLoop()->setMaxThreads(8);
   qi::getEventLoop()->setEmergencyCallback(emergency);
@@ -93,23 +96,7 @@ static void init_classes(JNIEnv *env)
 
 JNIEXPORT void JNICALL Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(JNIEnv* env, jclass QI_UNUSED(cls))
 {
-  JVM(env);
   init_classes(env);
-}
-
-/*
- * JNIEnv structure is thread dependent.
- * To use a JNIEnv* pointer in another thread (such as QiMessaging callback)
- * it must be attach to current thread (via JavaVM->AttachCurrentThread())
- * Therefore we keep a pointer to the JavaVM, which is thread safe.
- */
-JavaVM* JVM(JNIEnv* env)
-{
-  static JavaVM* gJVM = nullptr;
-  if (env && !gJVM)
-    env->GetJavaVM(&gJVM);
-  QI_ASSERT(gJVM && "no JavaVM associated to provided JNIEnv");
-  return gJVM;
 }
 
 /**
@@ -326,6 +313,31 @@ jint throwNewAdvertisementException(JNIEnv *env, const char *message)
   return throwNew(env, "com/aldebaran/qi/AdvertisementException", message);
 }
 
+jint throwNewApplicationException(JNIEnv *env, const char *message)
+{
+  return throwNew(env, "com/aldebaran/qi/ApplicationException", message);
+}
+
+jint throwNewConnectionException(JNIEnv *env, const char *message)
+{
+  return throwNew(env, "com/aldebaran/qi/ConnectionException", message);
+}
+
+jint throwNewPostException(JNIEnv *env, const char *message)
+{
+  return throwNew(env, "com/aldebaran/qi/PostException", message);
+}
+
+jint throwNewSessionException(JNIEnv *env, const char *message)
+{
+  return throwNew(env, "com/aldebaran/qi/SessionException", message);
+}
+
+jint throwNewIllegalStateException(JNIEnv *env, const char *message)
+{
+  return throwNew(env, "java/lang/IllegalStateException", message);
+}
+
 /**
  * @brief propertyBaseSignature Get the qitype signature of a Java class template (jclass)
  * @param env JNI environment
@@ -400,19 +412,16 @@ namespace qi {
       if (env)
       {
         assert(!ThreadJNI->env || env == ThreadJNI->env);
-        JVM(env);
         ThreadJNI->env = env;
       }
       else if (!ThreadJNI->env)
       {
-        JavaVM* jvm = JVM();
-        assert(jvm);
-        if (jvm->GetEnv((void**)&ThreadJNI->env, QI_JNI_MIN_VERSION) != JNI_OK ||
+        if (javaVirtualMachine->GetEnv((void**)&ThreadJNI->env, QI_JNI_MIN_VERSION) != JNI_OK ||
             ThreadJNI->env == 0)
         {
           char threadName[] = "qimessaging-thread";
           JavaVMAttachArgs args = { JNI_VERSION_1_6, threadName, 0 };
-          if (JVM()->AttachCurrentThread((envPtr)&ThreadJNI->env, &args) != JNI_OK ||
+          if (javaVirtualMachine->AttachCurrentThread((envPtr)&ThreadJNI->env, &args) != JNI_OK ||
               ThreadJNI->env == 0)
           {
             qiLogError() << "Cannot attach callback thread to Java VM";
@@ -433,7 +442,7 @@ namespace qi {
       {
         if (ThreadJNI->attached)
         {
-          if (JVM()->DetachCurrentThread() != JNI_OK)
+          if (javaVirtualMachine->DetachCurrentThread() != JNI_OK)
           {
             qiLogError() << "Cannot detach from current thread";
           }
@@ -455,14 +464,14 @@ namespace qi {
     {
       JNIEnv* env = 0;
 
-      JVM()->GetEnv(reinterpret_cast<void**>(&env), QI_JNI_MIN_VERSION);
+      javaVirtualMachine->GetEnv(reinterpret_cast<void**>(&env), QI_JNI_MIN_VERSION);
       if (!env)
       {
         qiLogError() << "Cannot get JNI environment from JVM";
         return 0;
       }
 
-      if (JVM()->AttachCurrentThread(reinterpret_cast<envPtr>(&env), (void*)0) != JNI_OK)
+      if (javaVirtualMachine->AttachCurrentThread(reinterpret_cast<envPtr>(&env), (void*)0) != JNI_OK)
       {
         qiLogError() << "Cannot attach current thread to JVM";
         return 0;

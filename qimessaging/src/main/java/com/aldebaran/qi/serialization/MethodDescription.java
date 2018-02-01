@@ -386,4 +386,40 @@ public class MethodDescription {
 
         return Integer.MAX_VALUE;
     }
+
+    /**
+     * String description for debug purpose
+     *
+     * @return String description for debug purpose
+     */
+    @Override
+    public String toString() {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append(this.methodName);
+        stringBuilder.append('(');
+
+        if (this.parametersType != null) {
+            boolean first = true;
+
+            for (Class<?> clazz : this.parametersType) {
+                if (!first) {
+                    stringBuilder.append(", ");
+                }
+
+                first = false;
+                stringBuilder.append(clazz.getName());
+            }
+        }
+
+        stringBuilder.append("):");
+
+        if (SignatureUtilities.isVoid(this.returnType)) {
+            stringBuilder.append("void");
+        }
+        else {
+            stringBuilder.append(this.returnType.getName());
+        }
+
+        return stringBuilder.toString();
+    }
 }

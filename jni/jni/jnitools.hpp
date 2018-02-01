@@ -50,6 +50,7 @@ extern jclass cls_hashmap;
 extern jclass cls_object;
 extern jclass cls_nativeTools;
 extern jmethodID method_NativeTools_callJava;
+extern JavaVM* javaVirtualMachine;
 
 // JNI utils
 extern "C"
@@ -246,9 +247,6 @@ namespace qi {
   }// !jni
 }// !qi
 
-
-JavaVM*       JVM(JNIEnv* env = 0);
-
 // Signature conversion
 std::string   toJavaSignature(const std::string &signature);
 std::string toJavaSignatureWithFuture(const std::string &signature);
@@ -271,5 +269,9 @@ jint throwNewTimeoutException(JNIEnv *env, const char *message = "");
 
 jint throwNewDynamicCallException(JNIEnv *env, const char *message = "");
 jint throwNewAdvertisementException(JNIEnv *env, const char *message = "");
-
+jint throwNewApplicationException(JNIEnv *env, const char *message = "");
+jint throwNewConnectionException(JNIEnv *env, const char *message = "");
+jint throwNewPostException(JNIEnv *env, const char *message = "");
+jint throwNewSessionException(JNIEnv *env, const char *message = "");
+jint throwNewIllegalStateException(JNIEnv *env, const char *message = "");
 #endif // !_JAVA_JNI_JNITOOLS_HPP_

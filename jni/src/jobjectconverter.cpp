@@ -267,7 +267,7 @@ qi::AnyReference AnyValue_from_JObject_List(jobject val)
   std::vector<qi::AnyValue>& res = *new std::vector<qi::AnyValue>();
   int size = 0;
 
-  JVM()->GetEnv((void **) &env, QI_JNI_MIN_VERSION);
+  javaVirtualMachine->GetEnv((void **) &env, QI_JNI_MIN_VERSION);
 
   size = list.size();
   res.reserve(size);
@@ -287,7 +287,7 @@ qi::AnyReference AnyValue_from_JObject_Map(jobject hashmap)
   std::map<qi::AnyValue, qi::AnyValue>& res = *new std::map<qi::AnyValue, qi::AnyValue>();
   JNIMap map(hashmap);
 
-  JVM()->GetEnv((void **) &env, QI_JNI_MIN_VERSION);
+  javaVirtualMachine->GetEnv((void **) &env, QI_JNI_MIN_VERSION);
 
   jobjectArray keys = map.keys();
   int size = env->GetArrayLength(keys);
@@ -382,7 +382,7 @@ qi::AnyReference _AnyValue_from_JObject(jobject val)
   if (env->IsInstanceOf(val, cls_double)) // If double, convert to float
   {
     jmethodID mid = env->GetMethodID(cls_double, "doubleValue", "()D");
-    jfloat v = static_cast<jfloat>(env->CallDoubleMethod(val, mid));
+    jdouble v = env->CallDoubleMethod(val, mid);
     return qi::AnyReference::from(v).clone();
   }
 

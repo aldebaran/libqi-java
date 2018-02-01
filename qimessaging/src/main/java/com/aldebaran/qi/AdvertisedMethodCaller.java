@@ -70,17 +70,18 @@ class AdvertisedMethodCaller<INTERFACE> implements InvocationHandler {
 
         synchronized (this.anyObject) {
             try {
-                final Object returnValue = this.anyObject.call(returnType, methodName, values).get();
+                Object value = this.anyObject.call(returnType, methodName, values).get();
 
-                if (returnValue == null || returnType instanceof ParameterizedType) {
-                    final ParameterizedType parameterizedType = (ParameterizedType) returnType;
+                if (value != null && !method.getReturnType().equals(value.getClass())) {
+                    System.err.println("Different type between expected result type and value type. Libqi does not wrap the good class ... method.getReturnType()="
+                            + method.getReturnType().getName() + " | value.getClass()=" + value.getClass().getName());
 
-                    if (Future.class.equals(parameterizedType.getRawType())) {
-                        return Future.of(returnValue);
+                    if (SignatureUtilities.isDouble(method.getReturnType()) && SignatureUtilities.isNumber(value.getClass())) {
+                        value = new Double(((Number) value).doubleValue());
                     }
                 }
 
-                return returnValue;
+                return value;
             }
             catch (Exception exception) {
                 // Get the last exception
