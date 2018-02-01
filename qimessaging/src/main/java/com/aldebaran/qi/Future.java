@@ -384,6 +384,10 @@ public class Future<T> implements java.util.concurrent.Future<T> {
      *         task link to this future and given function) status
      */
     public <R> Future<R> thenApply(final Function<Future<T>, R> function) {
+        if (function == null) {
+            throw new NullPointerException("function must not be null!");
+        }
+
         this.continuationSpecified.set(true);
         final long futurePointer = this.qiFutureThen(this._fut, function);
         return new Future<R>(futurePointer);
@@ -400,6 +404,10 @@ public class Future<T> implements java.util.concurrent.Future<T> {
      *         task link to this future and given ) status
      */
     public Future<Void> thenConsume(final Consumer<Future<T>> consumer) {
+        if (consumer == null) {
+            throw new NullPointerException("consumer must not be null!");
+        }
+
         this.continuationSpecified.set(true);
         final long futurePointer = this.qiFutureThenVoid(this._fut, consumer);
         return new Future<Void>(futurePointer);
@@ -420,6 +428,10 @@ public class Future<T> implements java.util.concurrent.Future<T> {
      *         task link to this future and given ) status
      */
     public <R> Future<R> thenCompose(final Function<Future<T>, Future<R>> function) {
+        if (function == null) {
+            throw new NullPointerException("function must not be null!");
+        }
+
         this.continuationSpecified.set(true);
         final long pointer = this.qiFutureThenUnwrap(this._fut, function);
         return new Future<R>(pointer);
@@ -437,6 +449,10 @@ public class Future<T> implements java.util.concurrent.Future<T> {
      *         task link to this future and given function) status
      */
     public <R> Future<R> andThenApply(final Function<T, R> function) {
+        if (function == null) {
+            throw new NullPointerException("function must not be null!");
+        }
+
         this.continuationSpecified.set(true);
         final long futurePointer = this.qiFutureAndThen(this._fut, function);
         return new Future<R>(futurePointer);
@@ -452,6 +468,10 @@ public class Future<T> implements java.util.concurrent.Future<T> {
      *         task link to this future and given ) status
      */
     public Future<Void> andThenConsume(final Consumer<T> consumer) {
+        if (consumer == null) {
+            throw new NullPointerException("consumer must not be null!");
+        }
+
         this.continuationSpecified.set(true);
         final long futurePointer = this.qiFutureAndThenVoid(this._fut, consumer);
         return new Future<Void>(futurePointer);
@@ -471,6 +491,10 @@ public class Future<T> implements java.util.concurrent.Future<T> {
      *         task link to this future and given ) status
      */
     public <R> Future<R> andThenCompose(final Function<T, Future<R>> function) {
+        if (function == null) {
+            throw new NullPointerException("function must not be null!");
+        }
+
         this.continuationSpecified.set(true);
         final long pointer = this.qiFutureAndThenUnwrap(this._fut, function);
         return new Future<R>(pointer);
@@ -490,6 +514,10 @@ public class Future<T> implements java.util.concurrent.Future<T> {
      * @return a future waiting for all the others
      */
     public static Future<Void> waitAll(final Future<?>... futures) {
+        if (futures == null) {
+            throw new NullPointerException("futures must not be null!");
+        }
+
         if (futures.length == 0)
             return Future.of(null);
 
