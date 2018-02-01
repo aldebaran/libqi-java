@@ -5,9 +5,28 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.aldebaran.qi.Future;
+
 /**
  * Describe a method.<br>
- * It contains the method name, return type and parameters type.
+ * It contains the method name, return type and parameters type.<br>
+ * For choose the best method that corresponds to a search one, we compute a "distance" between methods:
+ * <ul>
+ *  <li>This "distance" is build for when match exactly, the distance is 0.</li>
+ *  <li>If the two methods have different name or different number of parameters the distance is {@link Integer#MAX_VALUE "infinite"}.</li>
+ *  <li>The distance between primitive and their associated Object (For example int &lt;-&gt; java.lang.Integer, boolean &lt;-&gt; java.lang.Boolean, ...) is {@link #DISTANCE_PRIMITIVE_OBJECT}.</li>
+ *  <li>The distance between two numbers (double, float, ...) is {@link #DISTANCE_NUMBERS}.</li>
+ *  <li>The distance (for returned value only) between a type and a Future that embed this type is {@link #DISTANCE_FUTURE}.</li>
+ *  <li>For others case the distance becomes {@link Integer#MAX_VALUE "infinite"}</li>
+ * </ul>
+ * By example for libqi signature "call::s(i)":
+ * <table border="1">
+ *  <tr><th>Method Java</th><th>Distance</th></tr>
+ *  <tr><td>String call(int i)</td><td>0 = 0 (Distance String and 's') + 0 (Distance int and 'i')</td></tr>
+ *  <tr><td>String call(Integer i)</td><td>1 = 0 (Distance String and 's') + 1 (Distance Integer and 'i')</td></tr>
+ *  <tr><td>Future&lt;String&gt; call(int i)</td><td>100 = 100 (Distance Future&lt;String&gt; and 's') + 0 (Distance int and 'i')</td></tr>
+ *  <tr><td>Future&lt;String&gt; call(Integer i)</td><td>101 = 100 (Distance Future&lt;String&gt; and 's') + 1 (Distance Integer and 'i')</td></tr>
+ * </table>
  */
 public class MethodDescription {
     /**
@@ -54,6 +73,10 @@ public class MethodDescription {
      * conversion
      */
     private static final int DISTANCE_NUMBERS = 1000;
+    /**
+     * "Distance" between Future and real type (For returned value only)
+     */
+    private static final int DISTANCE_FUTURE = 100;
 
     /**
      * Read the next class described by characters array at given offset.<br>
@@ -274,11 +297,11 @@ public class MethodDescription {
             return Integer.MAX_VALUE;
         }
 
-        int distance = MethodDescription.distance(this.returnType, method.getReturnType());
+        int distance = MethodDescription.distance(this.returnType, method.getReturnType(), true);
 
         for (int index = 0; index < length; index++) {
             distance = MethodDescription.addLimited(distance,
-                    MethodDescription.distance(this.parametersType[index], parameters[index]));
+                    MethodDescription.distance(this.parametersType[index], parameters[index], false));
         }
 
         return distance;
@@ -312,11 +335,15 @@ public class MethodDescription {
      * For other values of "distance" it means the given the classes are
      * compatible. More the value is near 0, more the compatibility is easy.
      *
-     * @param class1 First class.
-     * @param class2 Second class.
+     * @param class1
+     *            One class.
+     * @param class2
+     *            Other class.
+     * @param acceptFuture
+     *            Indicates if future is accepted for compute distance
      * @return Computed "distance".
      */
-    private static int distance(final Class<?> class1, final Class<?> class2) {
+    private static int distance(final Class<?> class1, final Class<?> class2, boolean acceptFuture) {
         if (class1.equals(class2)) {
             return 0;
         }
@@ -359,6 +386,10 @@ public class MethodDescription {
 
         if (SignatureUtilities.isNumber(class1) && SignatureUtilities.isNumber(class2)) {
             return MethodDescription.DISTANCE_NUMBERS;
+        }
+
+        if (acceptFuture && (Future.class.isAssignableFrom(class1) || Future.class.isAssignableFrom(class2))) {
+            return MethodDescription.DISTANCE_FUTURE;
         }
 
         return Integer.MAX_VALUE;

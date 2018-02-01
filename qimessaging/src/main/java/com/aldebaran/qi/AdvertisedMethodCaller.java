@@ -2,6 +2,7 @@ package com.aldebaran.qi;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
 import com.aldebaran.qi.serialization.SignatureUtilities;

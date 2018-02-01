@@ -1,8 +1,5 @@
 package com.aldebaran.qi.serialization;
 
-import com.aldebaran.qi.QiStruct;
-import com.aldebaran.qi.Tuple;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -11,6 +8,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import com.aldebaran.qi.Future;
+import com.aldebaran.qi.QiStruct;
+import com.aldebaran.qi.Tuple;
 
 /**
  * Utilities for manipulates signatures
@@ -67,7 +68,7 @@ public class SignatureUtilities {
         stringBuilder.append("::");
 
         // Return type signature
-        SignatureUtilities.computeSignature(method.getReturnType(), method.getGenericReturnType(), stringBuilder);
+        SignatureUtilities.computeSignatureForReturnType(method.getReturnType(), method.getGenericReturnType(), stringBuilder);
 
         // Parameters signature
         stringBuilder.append("(");
@@ -205,6 +206,34 @@ public class SignatureUtilities {
     public static boolean isNumber(Class<?> clazz) {
         return SignatureUtilities.isByte(clazz) || SignatureUtilities.isShort(clazz) || SignatureUtilities.isInteger(clazz)
                 || SignatureUtilities.isLong(clazz) || SignatureUtilities.isFloat(clazz) || SignatureUtilities.isDouble(clazz);
+    }
+
+    /**
+     * Compute and append signature for given class and corresponding type specialized on return type
+     *
+     * @param clazz         Class to get signature
+     * @param type          Type corresponds to given class
+     * @param stringBuilder String builder where append signature
+     */
+    private static void computeSignatureForReturnType(Class<?> clazz, Type type, final StringBuilder stringBuilder) {
+        if (Future.class.isAssignableFrom(clazz)) {
+            final ParameterizedType parameterizedType = (ParameterizedType) type;
+            type = parameterizedType.getActualTypeArguments()[0];
+
+            if (type instanceof ParameterizedType) {
+                clazz = (Class) ((ParameterizedType) type).getRawType();
+            }
+            else if (type instanceof Class) {
+                clazz = (Class) type;
+            }
+            else {
+                //Just a warning for a not managed type.
+                //Print in error stream to attract attention
+                System.err.println("Warning! While computing signature for return type " + type + ":" + type.getClass().getName() + " TO Class");
+            }
+        }
+
+        SignatureUtilities.computeSignature(clazz, type, stringBuilder);
     }
 
     /**
