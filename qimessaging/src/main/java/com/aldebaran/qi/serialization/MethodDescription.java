@@ -19,6 +19,14 @@ import com.aldebaran.qi.Future;
  *  <li>The distance (for returned value only) between a type and a Future that embed this type is {@link #DISTANCE_FUTURE}.</li>
  *  <li>For others case the distance becomes {@link Integer#MAX_VALUE "infinite"}</li>
  * </ul>
+ * By example for libqi signature "call::s(i)":
+ * <table border="1">
+ *  <tr><th>Method Java</th><th>Distance</th></tr>
+ *  <tr><td>String call(int i)</td><td>0 = 0 (Distance String and 's') + 0 (Distance int and 'i')</td></tr>
+ *  <tr><td>String call(Integer i)</td><td>1 = 0 (Distance String and 's') + 1 (Distance Integer and 'i')</td></tr>
+ *  <tr><td>Future&lt;String&gt; call(int i)</td><td>100 = 100 (Distance Future&lt;String&gt; and 's') + 0 (Distance int and 'i')</td></tr>
+ *  <tr><td>Future&lt;String&gt; call(Integer i)</td><td>101 = 100 (Distance Future&lt;String&gt; and 's') + 1 (Distance Integer and 'i')</td></tr>
+ * </table>
  */
 public class MethodDescription {
     /**
