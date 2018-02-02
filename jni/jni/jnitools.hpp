@@ -269,5 +269,9 @@ jint throwNewTimeoutException(JNIEnv *env, const char *message = "");
 
 jint throwNewDynamicCallException(JNIEnv *env, const char *message = "");
 jint throwNewAdvertisementException(JNIEnv *env, const char *message = "");
-
+jint throwNewApplicationException(JNIEnv *env, const char *message = "");
+jint throwNewConnectionException(JNIEnv *env, const char *message = "");
+jint throwNewPostException(JNIEnv *env, const char *message = "");
+jint throwNewSessionException(JNIEnv *env, const char *message = "");
+jint throwNewIllegalStateException(JNIEnv *env, const char *message = "");
 #endif // !_JAVA_JNI_JNITOOLS_HPP_

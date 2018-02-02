@@ -1347,6 +1347,6 @@ public class FutureTest {
         future.sync();
         Assert.assertTrue("Souce future must be on error", first.hasError());
         Assert.assertTrue("Result future must be on error", future.hasError());
-        Assert.assertFalse("Must be consumed", consumed.get());
+        Assert.assertFalse("Must not be consumed", consumed.get());
     }
 }
