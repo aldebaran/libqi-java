@@ -13,6 +13,7 @@
 #include <qi/signature.hpp>
 #include <qi/session.hpp>
 #include "jnitools.hpp"
+#include <cstring>
 
 #include <boost/thread/tss.hpp>
 
@@ -51,6 +52,52 @@ static void emergency()
   abort();
 #endif
 }
+static inline jclass loadClass(JNIEnv *env, const char *className)
+{
+  return reinterpret_cast<jclass>(env->NewGlobalRef(env->FindClass(className)));
+}
+class JNIlogHandler
+{
+public:
+    JNIlogHandler()
+    {
+    }
+
+    ~JNIlogHandler()
+    {
+    }
+
+    /**
+     * \brief Prints a log message on the console.
+     * \param verb verbosity of the log message.
+     * \param date qi::Clock date at which the log message was issued.
+     * \param date qi::SystemClock date at which the log message was issued.
+     * \param category will be used in future for filtering
+     * \param msg actual message to log.
+     * \param file filename from which this log message was issued.
+     * \param fct function name from which this log message was issued.
+     * \param line line number in the issuer file.
+     */
+    void log(const qi::LogLevel verb,
+             const qi::Clock::time_point date,
+             const qi::SystemClock::time_point systemDate,
+             const char* category,
+             const char* msg,
+             const char* file,
+             const char* fct,
+             const int line)
+    {
+        JNIEnv*   env = qi::jni::env();
+//        static jclass LogReportClass =loadClass(env, "com/aldebaran/qi/log/LogReport");
+//        static jmethodID jniLog = env->GetStaticMethodID(LogReportClass, "jniLog", "(ILjava.lang.String;)V");
+//        jint logLevel = (jint)verb;
+//        jstring message = env->NewStringUTF(msg);
+//        env->CallStaticVoidMethod(LogReportClass, jniLog, logLevel, message);
+//        env->ReleaseStringUTFChars(message, msg);
+    }
+};
+
+static JNIlogHandler* jniLogHandler;
 
 JNIEXPORT jint JNICALL JNI_OnLoad (JavaVM* virtualMachine, void* QI_UNUSED(reserved))
 {
@@ -61,10 +108,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad (JavaVM* virtualMachine, void* QI_UNUSED(reser
   return QI_JNI_MIN_VERSION;
 }
 
-static inline jclass loadClass(JNIEnv *env, const char *className)
-{
-  return reinterpret_cast<jclass>(env->NewGlobalRef(env->FindClass(className)));
-}
+
 
 static void init_classes(JNIEnv *env)
 {
@@ -97,6 +141,12 @@ static void init_classes(JNIEnv *env)
 JNIEXPORT void JNICALL Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(JNIEnv* env, jclass QI_UNUSED(cls))
 {
   init_classes(env);
+  jniLogHandler = new JNIlogHandler();
+  qi::log::addHandler("jniLogHandler",
+                      boost::bind(&JNIlogHandler::log,
+                                  jniLogHandler,
+                                  _1, _2, _3, _4, _5, _6, _7, _8),
+                      qi::LogLevel_Debug);
 }
 
 /**
