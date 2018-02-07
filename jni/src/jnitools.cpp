@@ -87,7 +87,7 @@ public:
              const char* fct,
              const int line)
     {
-        JNIEnv*   env = qi::jni::env();
+//        JNIEnv*   env = qi::jni::env();
 //        static jclass LogReportClass =loadClass(env, "com/aldebaran/qi/log/LogReport");
 //        static jmethodID jniLog = env->GetStaticMethodID(LogReportClass, "jniLog", "(ILjava.lang.String;)V");
 //        jint logLevel = (jint)verb;
