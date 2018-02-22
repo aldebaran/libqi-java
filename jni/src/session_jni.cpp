@@ -188,45 +188,36 @@ class Java_ClientAuthenticator : public qi::ClientAuthenticator
 public:
   Java_ClientAuthenticator(JNIEnv*   env, jobject object)
   {
-      qiLogError("NONO") << "Java_ClientAuthenticator";
     _jobjectRef = qi::jni::makeSharedGlobalRef(env, object);
   }
 
   qi::CapabilityMap initialAuthData()
   {
-      qiLogError("NONO") << "initialAuthData";
-//    JNIEnv*   env = qi::jni::env();
       JNIEnv* env = nullptr;
    #ifndef ANDROID
        javaVirtualMachine->AttachCurrentThread(reinterpret_cast<void**>(&env), nullptr);
    #else
        javaVirtualMachine->AttachCurrentThread(&env, nullptr);
    #endif
-    qiLogError("NONO") << "initialAuthData : qi::jni::env()";
     jobject _jobject = _jobjectRef.get();
+
     jobject ca = qi::jni::Call<jobject>::invoke(env, _jobject, "initialAuthData", "()Ljava/util/Map;");
     auto result = JNI_JavaMaptoMap(env, ca);
     env->DeleteLocalRef(ca);
-    qiLogError("NONO") << "initialAuthData : map computed";
     javaVirtualMachine->DetachCurrentThread();
-    qiLogError("NONO") << "initialAuthData : detached";
     return result;
   }
 
   qi::CapabilityMap _processAuth(const qi::CapabilityMap &authData)
   {
-    qiLogError("NONO") << "_processAuth";
     JNIEnv*   env = qi::jni::env();
-    qiLogError("NONO") << "_processAuth : qi::jni::env()";
     jobject _jobject = _jobjectRef.get();
     jobject jmap = JNI_MapToJavaMap(env, authData);
     jobject ca = qi::jni::Call<jobject>::invoke(env, _jobject, "_processAuth", "(Ljava/util/Map;)Ljava/util/Map;", jmap);
     env->DeleteLocalRef(jmap);
     auto result = JNI_JavaMaptoMap(env, ca);
-    qiLogError("NONO") << "_processAuth : result computed";
     env->DeleteLocalRef(ca);
     javaVirtualMachine->DetachCurrentThread();
-    qiLogError("NONO") << "_processAuth : detached";
     return result;
   }
 
@@ -235,7 +226,6 @@ private:
 
   static qi::CapabilityMap JNI_JavaMaptoMap(JNIEnv* env, jobject jmap)
   {
-    qiLogError("NONO") << "JNI_JavaMaptoMap START";
     qi::CapabilityMap result;
 
     jobject set = qi::jni::Call<jobject>::invoke(env, jmap, "entrySet", "()Ljava/util/Set;");
@@ -263,7 +253,6 @@ private:
     }
 
     env->DeleteLocalRef(it);
-    qiLogError("NONO") << "JNI_JavaMaptoMap END";
 
     return result;
   }
@@ -318,14 +307,11 @@ class Java_ClientAuthenticatorFactory : public qi::ClientAuthenticatorFactory
 public:
   Java_ClientAuthenticatorFactory(JNIEnv* env, jobject object)
   {
-      qiLogError("NONO") << "Java_ClientAuthenticatorFactory";
     _jobject = env->NewGlobalRef(object);
   }
 
   qi::ClientAuthenticatorPtr newAuthenticator()
   {
-    qiLogError("NONO") << "newAuthenticator";
-    //JNIEnv*   env = qi::jni::env();
    JNIEnv* env = nullptr;
 #ifndef ANDROID
     javaVirtualMachine->AttachCurrentThread(reinterpret_cast<void**>(&env), nullptr);
@@ -333,13 +319,10 @@ public:
     javaVirtualMachine->AttachCurrentThread(&env, nullptr);
 #endif
 
-    qiLogError("NONO") << "newAuthenticator : qi::jni::env()";
     jobject ca = qi::jni::Call<jobject>::invoke(env, _jobject, "newAuthenticator", "()Lcom/aldebaran/qi/ClientAuthenticator;");
     auto result = boost::make_shared<Java_ClientAuthenticator>(env, ca);
     env->DeleteLocalRef(ca);
-    qiLogError("NONO") << "newAuthenticator : result computed";
     javaVirtualMachine->DetachCurrentThread();
-    qiLogError("NONO") << "newAuthenticator : DetachCurrentThread";
     return result;
   }
 
@@ -349,7 +332,6 @@ private:
 
 JNIEXPORT void JNICALL Java_com_aldebaran_qi_Session_setClientAuthenticatorFactory(JNIEnv* env, jobject QI_UNUSED(obj), jlong pSession, jobject object)
 {
-  qiLogError("NONO") << "Java_com_aldebaran_qi_Session_setClientAuthenticatorFactory";
   qi::Session* session = reinterpret_cast<qi::Session*>(pSession);
   session->setClientAuthenticatorFactory(boost::make_shared<Java_ClientAuthenticatorFactory>(env, object));
 }
