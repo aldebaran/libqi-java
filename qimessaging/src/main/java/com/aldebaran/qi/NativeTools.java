@@ -112,6 +112,7 @@ public class NativeTools {
                         arguments[index] = SignatureUtilities.convert(arguments[index], parametersTarget[index]);
                     }
 
+                    method.setAccessible(true);
                     Object result = method.invoke(instance, arguments);
                     Class<?> returnType = methodDescription.getReturnType();
 
