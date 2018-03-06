@@ -13,10 +13,6 @@
 #include <iostream>
 #include <jni.h>
 
-#ifdef ANDROID
-# include <android/log.h>
-#endif
-
 // Define a portable JNIEnv* pointer (API between arm and intel differs)
 #ifdef ANDROID
   typedef JNIEnv** envPtr;
@@ -52,6 +48,15 @@ extern jclass cls_nativeTools;
 extern jmethodID method_NativeTools_callJava;
 extern JavaVM* javaVirtualMachine;
 
+/**
+ * @brief Reference of Java class to report log
+ */
+extern jclass LogReportClass;
+/**
+ * @brief Method to call for report captured logs
+ */
+extern jmethodID jniLog;
+
 // JNI utils
 extern "C"
 {
@@ -59,6 +64,41 @@ extern "C"
   JNIEXPORT void JNICALL Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(JNIEnv* env, jclass cls);
 } // !extern C
 
+/**
+ * @brief Log handler that capture logs and send them to Java side
+ */
+class JNIlogHandler
+{
+public:
+    JNIlogHandler();
+    ~JNIlogHandler();
+
+    /**
+     * \brief Prints a log message on the console.
+     * \param verb verbosity of the log message.
+     * \param date qi::Clock date at which the log message was issued.
+     * \param date qi::SystemClock date at which the log message was issued.
+     * \param category will be used in future for filtering
+     * \param msg actual message to log.
+     * \param file filename from which this log message was issued.
+     * \param fct function name from which this log message was issued.
+     * \param line line number in the issuer file.
+     */
+    void log(const qi::LogLevel verb,
+             const qi::Clock::time_point date,
+             const qi::SystemClock::time_point systemDate,
+             const char* category,
+             const char* msg,
+             const char* file,
+             const char* fct,
+             const int line);
+};
+
+/**
+ * @brief Instance of registered JNI log capture handler.
+ * Global to maintain it alive durring all the application life
+ */
+extern JNIlogHandler* jniLogHandler;
 
 namespace qi {
   class AnyReference;

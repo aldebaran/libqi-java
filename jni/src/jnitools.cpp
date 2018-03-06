@@ -13,7 +13,6 @@
 #include <qi/signature.hpp>
 #include <qi/session.hpp>
 #include "jnitools.hpp"
-#include <cstring>
 
 #include <boost/thread/tss.hpp>
 
@@ -41,7 +40,22 @@ jclass cls_object;
 jclass cls_nativeTools;
 jmethodID method_NativeTools_callJava;
 
+/**
+ * @brief Reference of Java class to report log
+ */
+jclass LogReportClass;
+/**
+ * @brief Method to call for report captured logs
+ */
+jmethodID jniLog;
+
 JavaVM* javaVirtualMachine;
+
+/**
+ * @brief Instance of registered JNI log capture handler.
+ * Global to maintain it alive durring all the application life
+ */
+JNIlogHandler* jniLogHandler;
 
 static void emergency()
 {
@@ -52,52 +66,85 @@ static void emergency()
   abort();
 #endif
 }
-static inline jclass loadClass(JNIEnv *env, const char *className)
+
+JNIlogHandler::JNIlogHandler()
 {
-  return reinterpret_cast<jclass>(env->NewGlobalRef(env->FindClass(className)));
 }
-class JNIlogHandler
+
+JNIlogHandler::~JNIlogHandler()
 {
-public:
-    JNIlogHandler()
+}
+
+/**
+ * \brief Capture a log message and send it to Java side
+ * \param verb verbosity of the log message.
+ * \param date qi::Clock date at which the log message was issued.
+ * \param date qi::SystemClock date at which the log message was issued.
+ * \param category will be used in future for filtering
+ * \param msg actual message to log.
+ * \param file filename from which this log message was issued.
+ * \param fct function name from which this log message was issued.
+ * \param line line number in the issuer file.
+ */
+void JNIlogHandler::log(const qi::LogLevel verb,
+                        const qi::Clock::time_point date,
+                        const qi::SystemClock::time_point systemDate,
+                        const char* category,
+                        const char* msg,
+                        const char* file,
+                        const char* fct,
+                        const int line)
+{
+    if(!msg)
     {
+        //No message, nothing to log
+       return;
     }
 
-    ~JNIlogHandler()
+    jint logLevel = (jint)verb;
+    JNIEnv* env = nullptr;
+    jint succeed = -1;
+    bool attached = false;
+
+    //Get environement directly. Succeed if called from JNI method
+    succeed = javaVirtualMachine->GetEnv((void**)&env, JNI_VERSION_1_6);
+
+    if(succeed != JNI_OK || !env)
     {
+        //The environment is not get, it is maybe because we are not inside a JNI thread
+        //So we try to attach JNI environment to current thread. Have to detach it in success
+        char threadName[] = "qimessaging-reportLog-thread";
+        JavaVMAttachArgs args = { JNI_VERSION_1_6, threadName, nullptr };
+        succeed = javaVirtualMachine->AttachCurrentThread(&env, &args);
+
+        if(succeed != JNI_OK || !env)
+        {
+            //Issue to get the environemnt, can't continue
+            return;
+        }
+
+        //Attach succeed, we remeber it is attached to detach it later
+        attached = true;
     }
 
-    /**
-     * \brief Prints a log message on the console.
-     * \param verb verbosity of the log message.
-     * \param date qi::Clock date at which the log message was issued.
-     * \param date qi::SystemClock date at which the log message was issued.
-     * \param category will be used in future for filtering
-     * \param msg actual message to log.
-     * \param file filename from which this log message was issued.
-     * \param fct function name from which this log message was issued.
-     * \param line line number in the issuer file.
-     */
-    void log(const qi::LogLevel verb,
-             const qi::Clock::time_point date,
-             const qi::SystemClock::time_point systemDate,
-             const char* category,
-             const char* msg,
-             const char* file,
-             const char* fct,
-             const int line)
+    try
     {
-//        JNIEnv*   env = qi::jni::env();
-//        static jclass LogReportClass =loadClass(env, "com/aldebaran/qi/log/LogReport");
-//        static jmethodID jniLog = env->GetStaticMethodID(LogReportClass, "jniLog", "(ILjava.lang.String;)V");
-//        jint logLevel = (jint)verb;
-//        jstring message = env->NewStringUTF(msg);
-//        env->CallStaticVoidMethod(LogReportClass, jniLog, logLevel, message);
-//        env->ReleaseStringUTFChars(message, msg);
+        //Send the message to Java side
+        jstring message = env->NewStringUTF(msg);
+        env->CallStaticVoidMethod(LogReportClass, jniLog, logLevel, message);
     }
-};
+    catch (...)
+    {
+        // Exception while report log
+    }
 
-static JNIlogHandler* jniLogHandler;
+
+    if(attached)
+    {
+        //Detach from current thread if need
+        javaVirtualMachine->DetachCurrentThread();
+    }
+}
 
 JNIEXPORT jint JNICALL JNI_OnLoad (JavaVM* virtualMachine, void* QI_UNUSED(reserved))
 {
@@ -108,7 +155,10 @@ JNIEXPORT jint JNICALL JNI_OnLoad (JavaVM* virtualMachine, void* QI_UNUSED(reser
   return QI_JNI_MIN_VERSION;
 }
 
-
+static inline jclass loadClass(JNIEnv *env, const char *className)
+{
+  return reinterpret_cast<jclass>(env->NewGlobalRef(env->FindClass(className)));
+}
 
 static void init_classes(JNIEnv *env)
 {
@@ -136,11 +186,16 @@ static void init_classes(JNIEnv *env)
   method_NativeTools_callJava = env->GetStaticMethodID(cls_nativeTools,
                                                        "callJava",
                                                        "(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;");
+
+  LogReportClass = loadClass(env, "com/aldebaran/qi/log/LogReport");
+  jniLog = env->GetStaticMethodID(LogReportClass, "jniLog", "(ILjava/lang/String;)V");
 }
 
 JNIEXPORT void JNICALL Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(JNIEnv* env, jclass QI_UNUSED(cls))
 {
   init_classes(env);
+
+  //Register log handler that capture logs
   jniLogHandler = new JNIlogHandler();
   qi::log::addHandler("jniLogHandler",
                       boost::bind(&JNIlogHandler::log,
