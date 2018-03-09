@@ -186,20 +186,21 @@ JNIEXPORT void JNICALL Java_com_aldebaran_qi_Session_addConnectionListener(JNIEn
 class Java_ClientAuthenticator : public qi::ClientAuthenticator
 {
 public:
-  Java_ClientAuthenticator(JNIEnv* env, jobject object)
+  Java_ClientAuthenticator(JNIEnv*   env, jobject object)
   {
     _jobjectRef = qi::jni::makeSharedGlobalRef(env, object);
   }
 
   qi::CapabilityMap initialAuthData()
   {
-    JNIEnv* env = nullptr;
-#ifndef ANDROID
-    javaVirtualMachine->AttachCurrentThread(reinterpret_cast<void**>(&env), nullptr);
-#else
-    javaVirtualMachine->AttachCurrentThread(&env, nullptr);
-#endif
+      JNIEnv* env = nullptr;
+   #ifndef ANDROID
+       javaVirtualMachine->AttachCurrentThread(reinterpret_cast<void**>(&env), nullptr);
+   #else
+       javaVirtualMachine->AttachCurrentThread(&env, nullptr);
+   #endif
     jobject _jobject = _jobjectRef.get();
+
     jobject ca = qi::jni::Call<jobject>::invoke(env, _jobject, "initialAuthData", "()Ljava/util/Map;");
     auto result = JNI_JavaMaptoMap(env, ca);
     env->DeleteLocalRef(ca);
@@ -209,12 +210,7 @@ public:
 
   qi::CapabilityMap _processAuth(const qi::CapabilityMap &authData)
   {
-    JNIEnv* env = nullptr;
-#ifndef ANDROID
-    javaVirtualMachine->AttachCurrentThread(reinterpret_cast<void**>(&env), nullptr);
-#else
-    javaVirtualMachine->AttachCurrentThread(&env, nullptr);
-#endif
+    JNIEnv*   env = qi::jni::env();
     jobject _jobject = _jobjectRef.get();
     jobject jmap = JNI_MapToJavaMap(env, authData);
     jobject ca = qi::jni::Call<jobject>::invoke(env, _jobject, "_processAuth", "(Ljava/util/Map;)Ljava/util/Map;", jmap);
@@ -316,12 +312,13 @@ public:
 
   qi::ClientAuthenticatorPtr newAuthenticator()
   {
-    JNIEnv* env = nullptr;
+   JNIEnv* env = nullptr;
 #ifndef ANDROID
     javaVirtualMachine->AttachCurrentThread(reinterpret_cast<void**>(&env), nullptr);
 #else
     javaVirtualMachine->AttachCurrentThread(&env, nullptr);
 #endif
+
     jobject ca = qi::jni::Call<jobject>::invoke(env, _jobject, "newAuthenticator", "()Lcom/aldebaran/qi/ClientAuthenticator;");
     auto result = boost::make_shared<Java_ClientAuthenticator>(env, ca);
     env->DeleteLocalRef(ca);
