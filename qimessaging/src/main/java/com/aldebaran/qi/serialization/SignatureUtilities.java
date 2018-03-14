@@ -244,13 +244,15 @@ public class SignatureUtilities {
      * @param stringBuilder String builder where append signature
      */
     private static void computeSignature(final Class<?> clazz, final Type type, final StringBuilder stringBuilder) {
+        final QiStruct struct = clazz.getAnnotation(QiStruct.class);
+
         if (SignatureUtilities.isVoid(clazz)) {
             stringBuilder.append(SignatureUtilities.VOID);
         } else if (SignatureUtilities.isBoolean(clazz)) {
             stringBuilder.append(SignatureUtilities.BOOLEAN);
         } else if (SignatureUtilities.isCharacter(clazz)) {
             stringBuilder.append(SignatureUtilities.CHARACTER);
-        } else if (SignatureUtilities.isInteger(clazz)) {
+        } else if (SignatureUtilities.isInteger(clazz) || clazz.isEnum()) {
             stringBuilder.append(SignatureUtilities.INTEGER);
         } else if (SignatureUtilities.isLong(clazz)) {
             stringBuilder.append(SignatureUtilities.LONG);
@@ -269,9 +271,7 @@ public class SignatureUtilities {
             SignatureUtilities.computeSignature(0, (ParameterizedType) type, stringBuilder);
             SignatureUtilities.computeSignature(1, (ParameterizedType) type, stringBuilder);
             stringBuilder.append("}");
-        } else if (Tuple.class.isAssignableFrom(clazz)) {
-            final QiStruct struct = clazz.getAnnotation(QiStruct.class);
-
+        } else if (Tuple.class.isAssignableFrom(clazz) || struct!=null) {
             if (struct == null) {
                 throw new IllegalArgumentException(clazz.getName() + " not annotated as " + QiStruct.class.getName());
             }
