@@ -2,9 +2,9 @@ package com.aldebaran.qi;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
+import com.aldebaran.qi.serialization.QiSerializer;
 import com.aldebaran.qi.serialization.SignatureUtilities;
 
 /**
@@ -26,15 +26,24 @@ class AdvertisedMethodCaller<INTERFACE> implements InvocationHandler {
      * Monitor manager to get last exception
      */
     private final AdvertisedMethodMonitor<INTERFACE> advertisedMethodMonitor;
+    /**
+     * Serializer to use
+     */
+    private final QiSerializer serializer;
 
     /**
      * Create the handler.
      *
-     * @param dynamicObjectBuilder    Object builder parent
-     * @param advertisedMethodMonitor Monitor manager to get last exception
+     * @param serializer
+     *            Serializer to use
+     * @param dynamicObjectBuilder
+     *            Object builder parent
+     * @param advertisedMethodMonitor
+     *            Monitor manager to get last exception
      */
-    AdvertisedMethodCaller(final DynamicObjectBuilder dynamicObjectBuilder,
-                           final AdvertisedMethodMonitor<INTERFACE> advertisedMethodMonitor) {
+    AdvertisedMethodCaller(final QiSerializer serializer, final DynamicObjectBuilder dynamicObjectBuilder,
+            final AdvertisedMethodMonitor<INTERFACE> advertisedMethodMonitor) {
+        this.serializer = serializer;
         this.dynamicObjectBuilder = dynamicObjectBuilder;
         this.advertisedMethodMonitor = advertisedMethodMonitor;
     }
@@ -70,7 +79,7 @@ class AdvertisedMethodCaller<INTERFACE> implements InvocationHandler {
 
         synchronized (this.anyObject) {
             try {
-                Object value = this.anyObject.call(returnType, methodName, values).get();
+                Object value = this.anyObject.call(this.serializer, returnType, methodName, values).get();
 
                 if (value != null && !method.getReturnType().equals(value.getClass())) {
                     System.err.println("Different type between expected result type and value type. Libqi does not wrap the good class ... method.getReturnType()="

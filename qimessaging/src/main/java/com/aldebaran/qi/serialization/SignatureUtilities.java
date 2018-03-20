@@ -1,5 +1,7 @@
 package com.aldebaran.qi.serialization;
 
+import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -10,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.aldebaran.qi.Future;
+import com.aldebaran.qi.QiField;
 import com.aldebaran.qi.QiStruct;
 import com.aldebaran.qi.Tuple;
 
@@ -244,8 +247,6 @@ public class SignatureUtilities {
      * @param stringBuilder String builder where append signature
      */
     private static void computeSignature(final Class<?> clazz, final Type type, final StringBuilder stringBuilder) {
-        final QiStruct struct = clazz.getAnnotation(QiStruct.class);
-
         if (SignatureUtilities.isVoid(clazz)) {
             stringBuilder.append(SignatureUtilities.VOID);
         } else if (SignatureUtilities.isBoolean(clazz)) {
@@ -271,33 +272,59 @@ public class SignatureUtilities {
             SignatureUtilities.computeSignature(0, (ParameterizedType) type, stringBuilder);
             SignatureUtilities.computeSignature(1, (ParameterizedType) type, stringBuilder);
             stringBuilder.append("}");
-        } else if (Tuple.class.isAssignableFrom(clazz) || struct!=null) {
-            if (struct == null) {
+        }
+        else {
+            final QiStruct struct = clazz.getAnnotation(QiStruct.class);
+
+            if (struct != null) {
+                final List<QiFieldInformation> qiFieldInformations = SignatureUtilities.collectSortedQiFieldInformation(clazz);
+                stringBuilder.append("(");
+
+                for (final QiFieldInformation information : qiFieldInformations) {
+                    SignatureUtilities.computeSignature(information.clazz, information.type, stringBuilder);
+                }
+
+                stringBuilder.append(")");
+            }
+            else if (Tuple.class.isAssignableFrom(clazz)) {
                 throw new IllegalArgumentException(clazz.getName() + " not annotated as " + QiStruct.class.getName());
             }
-
-            final List<QiFieldInformation> qiFieldInformations = new ArrayList<QiFieldInformation>();
-            QiFieldInformation qiFieldInformation;
-
-            for (final Field field : clazz.getDeclaredFields()) {
-                qiFieldInformation = QiFieldInformation.createInformation(field);
-
-                if (qiFieldInformation != null) {
-                    qiFieldInformations.add(qiFieldInformation);
-                }
+            else {
+                stringBuilder.append(SignatureUtilities.OBJECT);
             }
-
-            Collections.sort(qiFieldInformations);
-            stringBuilder.append("(");
-
-            for (final QiFieldInformation information : qiFieldInformations) {
-                SignatureUtilities.computeSignature(information.clazz, information.type, stringBuilder);
-            }
-
-            stringBuilder.append(")");
-        } else {
-            stringBuilder.append(SignatureUtilities.OBJECT);
         }
+    }
+
+    /**
+     * Collect all QiFieldInformation from {@link QiField QiField(s)} in a
+     * {@link QiStruct}.<br>
+     * The list is sorted by {@link QiField} order. <br>
+     * The returned list is empty if given class is not a {@link QiStruct}
+     *
+     * @param clazz
+     *            {@link QiStruct} to collect its {@link QiField QiField(s)}
+     * @return Collected {@link QiField QiField(s)} information
+     */
+    public static List<QiFieldInformation> collectSortedQiFieldInformation(Class<?> clazz) {
+        final List<QiFieldInformation> qiFieldInformations = new ArrayList<QiFieldInformation>();
+        final QiStruct struct = clazz.getAnnotation(QiStruct.class);
+
+        if (struct == null) {
+            return qiFieldInformations;
+        }
+
+        QiFieldInformation qiFieldInformation;
+
+        for (final Field field : clazz.getDeclaredFields()) {
+            qiFieldInformation = QiFieldInformation.createInformation(field);
+
+            if (qiFieldInformation != null) {
+                qiFieldInformations.add(qiFieldInformation);
+            }
+        }
+
+        Collections.sort(qiFieldInformations);
+        return qiFieldInformations;
     }
 
     /**
@@ -483,6 +510,66 @@ public class SignatureUtilities {
 
             if (Double.class.equals(to)) {
                 return new Double(number.doubleValue());
+            }
+        }
+
+        //Convert Tuple to QiStruct
+        if ((value instanceof Tuple) && to.isAnnotationPresent(QiStruct.class)) {
+            final Tuple tuple = (Tuple) value;
+            final int size = tuple.size();
+            final List<QiFieldInformation> qiFieldInformations = SignatureUtilities.collectSortedQiFieldInformation(to);
+
+            // Only match for same size
+            if (size == qiFieldInformations.size()) {
+                QiFieldInformation qiFieldInformation;
+                Object valuetoSet;
+                Field field;
+
+                try {
+                    //Create the QiStruct instance to fill
+                    final Constructor constructor = to.getDeclaredConstructor();
+                    constructor.setAccessible(true);
+                    final Object instance = constructor.newInstance();
+
+                    //Fill each QiStruct field
+                    for (int index = 0; index < size; index++) {
+                        qiFieldInformation = qiFieldInformations.get(index);
+                        valuetoSet = SignatureUtilities.convert(tuple.get(index), qiFieldInformation.clazz);
+                        field = to.getDeclaredField(qiFieldInformation.name);
+                        field.setAccessible(true);
+                        field.set(instance, valuetoSet);
+                    }
+
+                    return instance;
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                    return value;
+                }
+            }
+        }
+
+        //Convert integer to enumeration
+        if ((int.class.equals(from) || Integer.class.equals(from)) && to.isEnum()) {
+            try {
+                final Method getQiValue = to.getDeclaredMethod("getQiValue");
+                getQiValue.setAccessible(true);
+                final Method valuesMethod = to.getDeclaredMethod("values");
+                final Object values = valuesMethod.invoke(null);
+                final int size = Array.getLength(values);
+                Object object;
+
+                for (int index = 0; index < size; index++) {
+                    object = Array.get(values, index);
+
+                    if (getQiValue.invoke(object).equals(value)) {
+                        return object;
+                    }
+                }
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+                return value;
             }
         }
 
