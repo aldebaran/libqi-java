@@ -26,7 +26,7 @@ import com.aldebaran.qi.serialization.QiSerializer;
  *
  * @see DynamicObjectBuilder
  */
-public class AnyObject {
+public class AnyObject implements Comparable<AnyObject> {
 
     static {
         // Loading native C++ libraries.
@@ -35,6 +35,36 @@ public class AnyObject {
             loader.loadEmbeddedLibraries();
         }
     }
+
+    /**
+     * _obj->ptrUid; Compare 2 {@link AnyObject}. <br>
+     * The return value is: <br>
+     * <table border=1>
+     * <tr>
+     * <th>comparison</th>
+     * <th>result</th>
+     * </tr>
+     * <tr>
+     * <td>object1 &lt; object2</td>
+     * <th>-1</th>
+     * </tr>
+     * <tr>
+     * <td>object1 == object2</td>
+     * <th>0</th>
+     * </tr>
+     * <tr>
+     * <td>object1 &gt; object2</td>
+     * <th>1</th>
+     * </tr>
+     * </table>
+     *
+     * @param object1
+     *            Any object reference 1
+     * @param object2
+     *            Any object reference 2
+     * @return Comparison value
+     */
+    private static native int compare(long object1, long object2);
 
     private final long _p;
 
@@ -339,5 +369,40 @@ public class AnyObject {
             }
         }
         return slot;
+    }
+
+    /**
+     * Indicates if given object is equals to this AnyObject
+     * @param object Object to compare with
+     * @return {@code true} if given object is equals
+     */
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+
+        if (null == object || !AnyObject.class.equals(object.getClass())) {
+            return false;
+        }
+
+        return AnyObject.compare(this._p, ((AnyObject) object)._p) == 0;
+    }
+
+    /**
+     * Compare this AnyObject with a given one.<br>
+     * Comparison result is :
+     * <table border=1>
+     *  <tr><th>Comparison</th><th>Result</th></tr>
+     *  <tr><td><center><b>this</b> &lt; anyObject</center></td><th>-1</th></tr>
+     *  <tr><td><center><b>this</b> == anyObject</center></td><th>0</th></tr>
+     *  <tr><td><center><b>this</b> &gt; anyObject</center></td><th>1</th></tr>
+     * </table>
+     * @param anyObject AnyObject to compare with
+     * @return Comparison result
+     */
+    @Override
+    public int compareTo(AnyObject anyObject) {
+        return AnyObject.compare(this._p, anyObject._p);
     }
 }
