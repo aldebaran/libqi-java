@@ -35,7 +35,7 @@ jclass cls_arraylist;
 
 jclass cls_map;
 jclass cls_hashmap;
-
+jclass cls_enum;
 jclass cls_object;
 jclass cls_nativeTools;
 jmethodID method_NativeTools_callJava;
@@ -88,6 +88,7 @@ static void init_classes(JNIEnv *env)
 
   cls_object =loadClass(env, "java/lang/Object");
   cls_nativeTools = loadClass(env, "com/aldebaran/qi/NativeTools");
+  cls_enum = loadClass(env, "java/lang/Enum");
 
   method_NativeTools_callJava = env->GetStaticMethodID(cls_nativeTools,
                                                        "callJava",
@@ -350,7 +351,7 @@ std::string propertyBaseSignature(JNIEnv* env, jclass propertyBase)
 
   if (env->IsAssignableFrom(propertyBase, cls_string))
     sig = static_cast<char>(qi::Signature::Type_String);
-  if (env->IsAssignableFrom(propertyBase, cls_integer))
+  if (env->IsAssignableFrom(propertyBase, cls_integer) || env->IsAssignableFrom(propertyBase, cls_enum))
     sig = static_cast<char>(qi::Signature::Type_Int32);
   if (env->IsAssignableFrom(propertyBase, cls_float))
     sig = static_cast<char>(qi::Signature::Type_Float);
