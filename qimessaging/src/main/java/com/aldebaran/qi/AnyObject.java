@@ -1,6 +1,5 @@
 /*
- * * Copyright (C) 2015 Softbank Robotics
- * * See COPYING for the license
+ * * Copyright (C) 2015 Softbank Robotics * See COPYING for the license
  */
 package com.aldebaran.qi;
 
@@ -297,7 +296,25 @@ public class AnyObject {
      * @see DynamicObjectBuilder#advertiseSignal(long, String)
      */
     public void post(String eventName, Object... args) {
-        post(_p, eventName, args);
+        final Object[] transformed;
+
+        if (args == null) {
+            transformed = null;
+        }
+        else {
+            final QiSerializer qiSerializer = QiSerializer.getDefault();
+            transformed = new Object[args.length];
+
+            for (int index = args.length - 1; index >= 0; index--) {
+                try {
+                    transformed[index] = qiSerializer.serialize(args[index]);
+                } catch(Exception exception) {
+                    transformed[index] = args[index];
+                }
+            }
+        }
+
+        post(_p, eventName, transformed);
     }
 
     @Override
