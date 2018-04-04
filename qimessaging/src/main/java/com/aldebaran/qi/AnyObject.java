@@ -56,7 +56,7 @@ public class AnyObject {
 
     private native long disconnectSignal(long pObject, long subscriberId);
 
-    private native long post(long pObject, String name, Object[] args);
+    private native void post(long pObject, String name, Object[] args);
 
     public static native Object decodeJSON(String str);
 
@@ -122,7 +122,7 @@ public class AnyObject {
     public <T> Future<T> getProperty(Class<T> targetType, String property) {
         // Specialization to benefit from type inference when targetType is a
         // Class
-        return getProperty((Type) targetType, property);
+        return getProperty(QiSerializer.getDefault(), (Type) targetType, property);
     }
 
     /**
@@ -296,19 +296,34 @@ public class AnyObject {
      * @see DynamicObjectBuilder#advertiseSignal(long, String)
      */
     public void post(String eventName, Object... args) {
+        this.post(QiSerializer.getDefault(), eventName, args);
+    }
+
+    /**
+     * Post an event advertised with advertiseEvent method.
+     *
+     * @param qiSerializer
+     *            Serializer to use
+     * @param eventName
+     *            Name of the event to trigger.
+     * @param args
+     *            Arguments sent to callback
+     * @see DynamicObjectBuilder#advertiseSignal(long, String)
+     */
+    public void post(QiSerializer qiSerializer, String eventName, Object... args) {
         final Object[] transformed;
 
         if (args == null) {
             transformed = null;
         }
         else {
-            final QiSerializer qiSerializer = QiSerializer.getDefault();
             transformed = new Object[args.length];
 
             for (int index = args.length - 1; index >= 0; index--) {
                 try {
                     transformed[index] = qiSerializer.serialize(args[index]);
-                } catch(Exception exception) {
+                }
+                catch (Exception exception) {
                     transformed[index] = args[index];
                 }
             }
