@@ -3,10 +3,10 @@
  */
 package com.aldebaran.qi;
 
-import com.aldebaran.qi.serialization.SignatureUtilities;
-
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+
+import com.aldebaran.qi.serialization.SignatureUtilities;
 
 /**
  * Class that exposes directly an {@link AnyObject} that can be manipulated.
@@ -37,7 +37,7 @@ public class DynamicObjectBuilder {
     private native AnyObject object(long pObjectBuilder);
 
     private native void advertiseMethod(long pObjectBuilder, String method, Object instance, String className,
-                                        String description) throws AdvertisementException;
+            String description) throws AdvertisementException;
 
     private native void advertiseSignal(long pObjectBuilder, String eventSignature) throws AdvertisementException;
 
@@ -45,6 +45,21 @@ public class DynamicObjectBuilder {
             throws AdvertisementException;
 
     private native void setThreadSafeness(long pObjectBuilder, boolean isThreadSafe);
+
+    /**
+     * Advertise a property link to the future AnyObject
+     *
+     * @param dynamicObjectBuilderPointer
+     *            Dynamic object builder to link with
+     * @param propertyName
+     *            Property name
+     * @param propertyPointer
+     *            Property pointer
+     * @throws AdvertisementException
+     *             If advertising failed
+     */
+    private static native void advertisePropertyObject(long dynamicObjectBuilderPointer, String propertyName,
+            long propertyPointer) throws AdvertisementException;
 
     // / Possible thread models for an object
 
@@ -150,12 +165,17 @@ public class DynamicObjectBuilder {
      * will crash later (when call)</li>
      * </ul>
      *
-     * @param methodSignature Signature of method to bind. It must be a valid libqi type
-     *                        signature
-     * @param service         Service implementing method.
-     * @param description     Method description
-     * @throws AdvertisementException If signature is not a valid libqi signature type.
-     * @throws SecurityException      If given service instance of a class protect from reflection
+     * @param methodSignature
+     *            Signature of method to bind. It must be a valid libqi type
+     *            signature
+     * @param service
+     *            Service implementing method.
+     * @param description
+     *            Method description
+     * @throws AdvertisementException
+     *             If signature is not a valid libqi signature type.
+     * @throws SecurityException
+     *             If given service instance of a class protect from reflection
      */
     public void advertiseMethod(String methodSignature, QiService service, String description) {
         final Class<?> serviceClass = service.getClass();
@@ -176,32 +196,62 @@ public class DynamicObjectBuilder {
      * Advertise a signal with its callback signature.<br>
      * The given signature <b>MUST</b> be a libqi type signature
      *
-     * @param signalSignature Signature of available callback.
-     * @throws AdvertisementException If signature not a valid libqi signature type.
-     * @throws Exception              If GenericObject is not initialized internally.
+     * @param signalSignature
+     *            Signature of available callback.
+     * @throws AdvertisementException
+     *             If signature not a valid libqi signature type.
+     * @throws Exception
+     *             If GenericObject is not initialized internally.
      */
     public void advertiseSignal(String signalSignature) throws Exception {
         advertiseSignal(_p, signalSignature);
     }
 
     /**
-     * Advertise a property
+     * @deprecated Advertise a property
      *
-     * @param name         Property name
-     * @param propertyBase Class warp the property
+     * @param name
+     *            Property name
+     * @param propertyBase
+     *            Class warp the property
      */
+    @Deprecated
     public void advertiseProperty(String name, Class<?> propertyBase) {
         advertiseProperty(_p, name, propertyBase);
     }
 
     /**
+     * Advertise a property<br>
+     * Must be called before {@link #object()}
+     *
+     * @param <T>
+     *            Property type
+     * @param name
+     *            Property name. Must not be null
+     * @param property
+     *            Property to share. Must not be null
+     */
+    public <T> void advertiseProperty(String name, Property<T> property) {
+        if (name == null) {
+            throw new NullPointerException("name must not be null!");
+        }
+
+        if (property == null) {
+            throw new NullPointerException("property must not be null!");
+        }
+
+        DynamicObjectBuilder.advertisePropertyObject(this._p, name, property.pointer);
+    }
+
+    /**
      * Declare the thread-safeness state of an instance
      *
-     * @param threadModel if set to ObjectThreadingModel.MultiThread, your object is
-     *                    expected to be thread safe, and calls to its method will
-     *                    potentially occur in parallel in multiple threads. If false,
-     *                    qimessaging will use a per-instance mutex to prevent multiple
-     *                    calls at the same time.
+     * @param threadModel
+     *            if set to ObjectThreadingModel.MultiThread, your object is
+     *            expected to be thread safe, and calls to its method will
+     *            potentially occur in parallel in multiple threads. If false,
+     *            qimessaging will use a per-instance mutex to prevent multiple
+     *            calls at the same time.
      */
     public void setThreadingModel(ObjectThreadingModel threadModel) {
         setThreadSafeness(_p, threadModel == ObjectThreadingModel.MultiThread);
@@ -233,15 +283,19 @@ public class DynamicObjectBuilder {
      * To specify a description on method add
      * {@link AdvertisedMethodDescription} annotation on the method.
      *
-     * @param <INTERFACE>    Interface type that specifies the list of methods to expose.
-     * @param <INSTANCE>     Instance type of interface.
-     * @param interfaceClass Interface that specifies the list of methods to expose.
-     * @param instance       Instance of interface implementation.
+     * @param <INTERFACE>
+     *            Interface type that specifies the list of methods to expose.
+     * @param <INSTANCE>
+     *            Instance type of interface.
+     * @param interfaceClass
+     *            Interface that specifies the list of methods to expose.
+     * @param instance
+     *            Instance of interface implementation.
      * @return Interface implementation to use for call methods.
      */
     @SuppressWarnings("unchecked")
     public <INTERFACE, INSTANCE extends INTERFACE> INTERFACE advertiseMethods(final Class<INTERFACE> interfaceClass,
-                                                                              final INSTANCE instance) {
+            final INSTANCE instance) {
         if (!interfaceClass.isInterface()) {
             throw new IllegalArgumentException(interfaceClass.getName() + " is not an interface!");
         }
@@ -252,7 +306,7 @@ public class DynamicObjectBuilder {
 
         // Create the monitor of instance to collect exceptions
         final AdvertisedMethodMonitor<INTERFACE> advertisedMethodMonitor = new AdvertisedMethodMonitor<INTERFACE>(instance);
-        final Object monitor = Proxy.newProxyInstance(interfaceClass.getClassLoader(), new Class<?>[]{interfaceClass},
+        final Object monitor = Proxy.newProxyInstance(interfaceClass.getClassLoader(), new Class<?>[] { interfaceClass },
                 advertisedMethodMonitor);
 
         String description;
@@ -270,7 +324,7 @@ public class DynamicObjectBuilder {
                     interfaceClass.getName(), description);
         }
 
-        return (INTERFACE) Proxy.newProxyInstance(interfaceClass.getClassLoader(), new Class<?>[]{interfaceClass},
+        return (INTERFACE) Proxy.newProxyInstance(interfaceClass.getClassLoader(), new Class<?>[] { interfaceClass },
                 new AdvertisedMethodCaller<INTERFACE>(this, advertisedMethodMonitor));
     }
 }
