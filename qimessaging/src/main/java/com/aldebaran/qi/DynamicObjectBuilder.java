@@ -3,11 +3,11 @@
  */
 package com.aldebaran.qi;
 
+import com.aldebaran.qi.serialization.SignatureUtilities;
+import com.aldebaran.qi.serialization.QiSerializer;
+
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-
-import com.aldebaran.qi.serialization.QiSerializer;
-import com.aldebaran.qi.serialization.SignatureUtilities;
 
 /**
  * Class that exposes directly an {@link AnyObject} that can be manipulated.
@@ -38,7 +38,7 @@ public class DynamicObjectBuilder {
     private native AnyObject object(long pObjectBuilder);
 
     private native void advertiseMethod(long pObjectBuilder, String method, Object instance, String className,
-            String description) throws AdvertisementException;
+                                        String description) throws AdvertisementException;
 
     private native void advertiseSignal(long pObjectBuilder, String eventSignature) throws AdvertisementException;
 
@@ -166,17 +166,12 @@ public class DynamicObjectBuilder {
      * will crash later (when call)</li>
      * </ul>
      *
-     * @param methodSignature
-     *            Signature of method to bind. It must be a valid libqi type
-     *            signature
-     * @param service
-     *            Service implementing method.
-     * @param description
-     *            Method description
-     * @throws AdvertisementException
-     *             If signature is not a valid libqi signature type.
-     * @throws SecurityException
-     *             If given service instance of a class protect from reflection
+     * @param methodSignature Signature of method to bind. It must be a valid libqi type
+     *                        signature
+     * @param service         Service implementing method.
+     * @param description     Method description
+     * @throws AdvertisementException If signature is not a valid libqi signature type.
+     * @throws SecurityException      If given service instance of a class protect from reflection
      */
     public void advertiseMethod(String methodSignature, QiService service, String description) {
         final Class<?> serviceClass = service.getClass();
@@ -197,12 +192,9 @@ public class DynamicObjectBuilder {
      * Advertise a signal with its callback signature.<br>
      * The given signature <b>MUST</b> be a libqi type signature
      *
-     * @param signalSignature
-     *            Signature of available callback.
-     * @throws AdvertisementException
-     *             If signature not a valid libqi signature type.
-     * @throws Exception
-     *             If GenericObject is not initialized internally.
+     * @param signalSignature Signature of available callback.
+     * @throws AdvertisementException If signature not a valid libqi signature type.
+     * @throws Exception              If GenericObject is not initialized internally.
      */
     public void advertiseSignal(String signalSignature) throws Exception {
         advertiseSignal(_p, signalSignature);
@@ -211,10 +203,8 @@ public class DynamicObjectBuilder {
     /**
      * @deprecated Advertise a property
      *
-     * @param name
-     *            Property name
-     * @param propertyBase
-     *            Class warp the property
+     * @param name         Property name
+     * @param propertyBase Class warp the property
      */
     @Deprecated
     public void advertiseProperty(String name, Class<?> propertyBase) {
@@ -247,12 +237,11 @@ public class DynamicObjectBuilder {
     /**
      * Declare the thread-safeness state of an instance
      *
-     * @param threadModel
-     *            if set to ObjectThreadingModel.MultiThread, your object is
-     *            expected to be thread safe, and calls to its method will
-     *            potentially occur in parallel in multiple threads. If false,
-     *            qimessaging will use a per-instance mutex to prevent multiple
-     *            calls at the same time.
+     * @param threadModel if set to ObjectThreadingModel.MultiThread, your object is
+     *                    expected to be thread safe, and calls to its method will
+     *                    potentially occur in parallel in multiple threads. If false,
+     *                    qimessaging will use a per-instance mutex to prevent multiple
+     *                    calls at the same time.
      */
     public void setThreadingModel(ObjectThreadingModel threadModel) {
         setThreadSafeness(_p, threadModel == ObjectThreadingModel.MultiThread);
@@ -286,14 +275,10 @@ public class DynamicObjectBuilder {
      * To specify a description on method add
      * {@link AdvertisedMethodDescription} annotation on the method.
      *
-     * @param <INTERFACE>
-     *            Interface type that specifies the list of methods to expose.
-     * @param <INSTANCE>
-     *            Instance type of interface.
-     * @param interfaceClass
-     *            Interface that specifies the list of methods to expose.
-     * @param instance
-     *            Instance of interface implementation.
+     * @param <INTERFACE>    Interface type that specifies the list of methods to expose.
+     * @param <INSTANCE>     Instance type of interface.
+     * @param interfaceClass Interface that specifies the list of methods to expose.
+     * @param instance       Instance of interface implementation.
      * @return Interface implementation to use for call methods.
      */
     @Deprecated
@@ -334,7 +319,7 @@ public class DynamicObjectBuilder {
 
         // Create the monitor of instance to collect exceptions
         final AdvertisedMethodMonitor<INTERFACE> advertisedMethodMonitor = new AdvertisedMethodMonitor<INTERFACE>(instance);
-        final Object monitor = Proxy.newProxyInstance(interfaceClass.getClassLoader(), new Class<?>[] { interfaceClass },
+        final Object monitor = Proxy.newProxyInstance(interfaceClass.getClassLoader(), new Class<?>[]{interfaceClass},
                 advertisedMethodMonitor);
 
         String description;
