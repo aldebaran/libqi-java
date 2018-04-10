@@ -69,7 +69,6 @@ public final class Property<T> {
 
         this.propertyValueClass = propertyValueClass;
         this.pointer = this.createProperty();
-        System.out.println("NONO -> Property <- CREATE : this.pointer=" + this.pointer);
     }
 
     /**
@@ -150,7 +149,6 @@ public final class Property<T> {
      */
     @Override
     protected void finalize() throws Throwable {
-        System.out.println("NONO -> Property <- DESTROY : this.pointer=" + this.pointer);
         this.destroy(this.pointer);
         super.finalize();
     }

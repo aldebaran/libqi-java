@@ -5,7 +5,10 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.aldebaran.qi.AnyObject;
 import com.aldebaran.qi.Future;
+import com.aldebaran.qi.QiStruct;
+import com.aldebaran.qi.Tuple;
 
 /**
  * Describe a method.<br>
@@ -72,11 +75,20 @@ public class MethodDescription {
      * "Distance" between numbers: need expand or truncate the value to do the
      * conversion
      */
-    private static final int DISTANCE_NUMBERS = 1000;
+    private static final int DISTANCE_NUMBERS = 10;
     /**
      * "Distance" between Future and real type (For returned value only)
      */
     private static final int DISTANCE_FUTURE = 100;
+    /**
+     * "Distance" between Tuple and associated QIStruct
+     */
+    private static final int DISTANCE_TUPLE_STRUCT = 1000;
+    /**
+     * "Distance" between any object and something else : WARNING dangerous, but
+     * not have the choice for now
+     */
+    private static final int DISTANCE_ANY_OBJECT = 100000;
 
     /**
      * Read the next class described by characters array at given offset.<br>
@@ -390,6 +402,15 @@ public class MethodDescription {
 
         if (acceptFuture && (Future.class.isAssignableFrom(class1) || Future.class.isAssignableFrom(class2))) {
             return MethodDescription.DISTANCE_FUTURE;
+        }
+
+        if ((Tuple.class.isAssignableFrom(class1) && class2.isAnnotationPresent(QiStruct.class))
+                || (class1.isAnnotationPresent(QiStruct.class) && Tuple.class.isAssignableFrom(class2))) {
+            return MethodDescription.DISTANCE_TUPLE_STRUCT;
+        }
+
+        if (AnyObject.class.isAssignableFrom(class1) || AnyObject.class.isAssignableFrom(class2)) {
+            return MethodDescription.DISTANCE_ANY_OBJECT;
         }
 
         return Integer.MAX_VALUE;
