@@ -23,9 +23,13 @@ class QiFieldInformation implements Comparable<QiFieldInformation> {
             return null;
         }
 
-        return new QiFieldInformation(field.getType(), field.getGenericType(), qiField.value());
+        return new QiFieldInformation(field.getName(), field.getType(), field.getGenericType(), qiField.value());
     }
 
+    /**
+     * Field name
+     */
+    public final String name;
     /**
      * Field class
      */
@@ -46,7 +50,8 @@ class QiFieldInformation implements Comparable<QiFieldInformation> {
      * @param type  Field type
      * @param index Index of field in structure
      */
-    private QiFieldInformation(final Class<?> clazz, final Type type, final int index) {
+    private QiFieldInformation(final String name, final Class<?> clazz, final Type type, final int index) {
+        this.name = name;
         this.clazz = clazz;
         this.type = type;
         this.index = index;

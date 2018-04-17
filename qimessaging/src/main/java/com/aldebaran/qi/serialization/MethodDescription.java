@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.aldebaran.qi.Future;
+import com.aldebaran.qi.QiStruct;
+import com.aldebaran.qi.Tuple;
 
 /**
  * Describe a method.<br>
@@ -17,6 +19,7 @@ import com.aldebaran.qi.Future;
  *  <li>The distance between primitive and their associated Object (For example int &lt;-&gt; java.lang.Integer, boolean &lt;-&gt; java.lang.Boolean, ...) is {@link #DISTANCE_PRIMITIVE_OBJECT}.</li>
  *  <li>The distance between two numbers (double, float, ...) is {@link #DISTANCE_NUMBERS}.</li>
  *  <li>The distance (for returned value only) between a type and a Future that embed this type is {@link #DISTANCE_FUTURE}.</li>
+ *  <li>The distance with a {@link Tuple} and {@link QiStruct} is {@link #DISTANCE_TUPLE_STRUCT}</li>
  *  <li>For others case the distance becomes {@link Integer#MAX_VALUE "infinite"}</li>
  * </ul>
  * By example for libqi signature "call::s(i)":
@@ -77,6 +80,10 @@ public class MethodDescription {
      * "Distance" between Future and real type (For returned value only)
      */
     private static final int DISTANCE_FUTURE = 100;
+    /**
+     * "Distance" between Tuple and associated QIStruct
+     */
+    private static final int DISTANCE_TUPLE_STRUCT = 100;
 
     /**
      * Read the next class described by characters array at given offset.<br>
@@ -390,6 +397,11 @@ public class MethodDescription {
 
         if (acceptFuture && (Future.class.isAssignableFrom(class1) || Future.class.isAssignableFrom(class2))) {
             return MethodDescription.DISTANCE_FUTURE;
+        }
+
+        if ((Tuple.class.isAssignableFrom(class1) && class2.isAnnotationPresent(QiStruct.class))
+                || (class1.isAnnotationPresent(QiStruct.class) && Tuple.class.isAssignableFrom(class2))) {
+            return MethodDescription.DISTANCE_TUPLE_STRUCT;
         }
 
         return Integer.MAX_VALUE;
