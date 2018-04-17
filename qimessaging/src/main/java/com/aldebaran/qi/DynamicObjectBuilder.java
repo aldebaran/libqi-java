@@ -3,6 +3,9 @@
  */
 package com.aldebaran.qi;
 
+import com.aldebaran.qi.serialization.SignatureUtilities;
+import com.aldebaran.qi.serialization.QiSerializer;
+
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
@@ -268,7 +271,8 @@ public class DynamicObjectBuilder {
      */
     @SuppressWarnings("unchecked")
     public <INTERFACE, INSTANCE extends INTERFACE> INTERFACE advertiseMethods(final QiSerializer serializer,
-            final Class<INTERFACE> interfaceClass, final INSTANCE instance) {
+                                                                              final Class<INTERFACE> interfaceClass,
+                                                                              final INSTANCE instance) {
         if (!interfaceClass.isInterface()) {
             throw new IllegalArgumentException(interfaceClass.getName() + " is not an interface!");
         }

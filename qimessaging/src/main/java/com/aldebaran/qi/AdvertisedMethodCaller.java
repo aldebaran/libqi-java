@@ -34,15 +34,13 @@ class AdvertisedMethodCaller<INTERFACE> implements InvocationHandler {
     /**
      * Create the handler.
      *
-     * @param serializer
-     *            Serializer to use
-     * @param dynamicObjectBuilder
-     *            Object builder parent
-     * @param advertisedMethodMonitor
-     *            Monitor manager to get last exception
+     * @param serializer Serializer to use
+     * @param dynamicObjectBuilder    Object builder parent
+     * @param advertisedMethodMonitor Monitor manager to get last exception
      */
-    AdvertisedMethodCaller(final QiSerializer serializer, final DynamicObjectBuilder dynamicObjectBuilder,
-            final AdvertisedMethodMonitor<INTERFACE> advertisedMethodMonitor) {
+    AdvertisedMethodCaller(final QiSerializer serializer, 
+                           final DynamicObjectBuilder dynamicObjectBuilder,
+                           final AdvertisedMethodMonitor<INTERFACE> advertisedMethodMonitor) {
         this.serializer = serializer;
         this.dynamicObjectBuilder = dynamicObjectBuilder;
         this.advertisedMethodMonitor = advertisedMethodMonitor;
@@ -81,12 +79,20 @@ class AdvertisedMethodCaller<INTERFACE> implements InvocationHandler {
             try {
                 Object value = this.anyObject.call(this.serializer, returnType, methodName, values).get();
 
+                if(value!=null) {
+                   value =  this.serializer.serialize(value);
+                }
+
                 if (value != null && !method.getReturnType().equals(value.getClass())) {
                     System.err.println("Different type between expected result type and value type. Libqi does not wrap the good class ... method.getReturnType()="
                             + method.getReturnType().getName() + " | value.getClass()=" + value.getClass().getName());
 
                     if (SignatureUtilities.isDouble(method.getReturnType()) && SignatureUtilities.isNumber(value.getClass())) {
                         value = new Double(((Number) value).doubleValue());
+                    }
+
+                    if(Future.class.isAssignableFrom(method.getReturnType())) {
+                        value = Future.of(value);
                     }
                 }
 

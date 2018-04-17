@@ -11,7 +11,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import com.aldebaran.qi.AnyObject;
 import com.aldebaran.qi.Future;
+import com.aldebaran.qi.QiConversionException;
 import com.aldebaran.qi.QiField;
 import com.aldebaran.qi.QiStruct;
 import com.aldebaran.qi.Tuple;
@@ -278,8 +280,7 @@ public class SignatureUtilities {
         }
         else if (SignatureUtilities.isCharacter(clazz)) {
             stringBuilder.append(SignatureUtilities.CHARACTER);
-        }
-        else if (SignatureUtilities.isInteger(clazz) || clazz.isEnum()) {
+        } else if (SignatureUtilities.isInteger(clazz) || clazz.isEnum()) {
             stringBuilder.append(SignatureUtilities.INTEGER);
         }
         else if (SignatureUtilities.isLong(clazz)) {
@@ -304,10 +305,8 @@ public class SignatureUtilities {
             SignatureUtilities.computeSignature(0, (ParameterizedType) type, stringBuilder);
             SignatureUtilities.computeSignature(1, (ParameterizedType) type, stringBuilder);
             stringBuilder.append("}");
-        }
-        else {
+        } else {
             final QiStruct struct = clazz.getAnnotation(QiStruct.class);
-
             if (struct != null) {
                 final List<QiFieldInformation> qiFieldInformations = SignatureUtilities.collectSortedQiFieldInformation(clazz);
                 stringBuilder.append("(");
@@ -549,7 +548,7 @@ public class SignatureUtilities {
             }
         }
 
-        //Convert Tuple to QiStruct
+        // Convert Tuple to QiStruct
         if ((value instanceof Tuple) && to.isAnnotationPresent(QiStruct.class)) {
             final Tuple tuple = (Tuple) value;
             final int size = tuple.size();
@@ -562,12 +561,12 @@ public class SignatureUtilities {
                 Field field;
 
                 try {
-                    //Create the QiStruct instance to fill
+                    // Create the QiStruct instance to fill
                     final Constructor constructor = to.getDeclaredConstructor();
                     constructor.setAccessible(true);
                     final Object instance = constructor.newInstance();
 
-                    //Fill each QiStruct field
+                    // Fill each QiStruct field
                     for (int index = 0; index < size; index++) {
                         qiFieldInformation = qiFieldInformations.get(index);
                         valuetoSet = SignatureUtilities.convert(tuple.get(index), qiFieldInformation.clazz);
@@ -585,7 +584,7 @@ public class SignatureUtilities {
             }
         }
 
-        //Convert integer to enumeration
+        // Convert integer to enumeration
         if ((int.class.equals(from) || Integer.class.equals(from)) && to.isEnum()) {
             try {
                 final Method getQiValue = to.getDeclaredMethod("getQiValue");
@@ -609,6 +608,16 @@ public class SignatureUtilities {
             }
         }
 
+        if (AnyObject.class.equals(from)) {
+            try {
+                return QiSerializer.getDefault().deserialize(value, to);
+            }
+            catch (QiConversionException e) {
+                System.err.println("Issue while embed any object");
+                e.printStackTrace();
+            }
+        }
+
         return value;
     }
 
@@ -621,7 +630,7 @@ public class SignatureUtilities {
      *            Destination type.
      * @return Converted value.
      */
-    public static Object convertValueJavaToLibQI(final Object object, final Type desiredType) {
+    public static Object convertValueJavaToLibQI(Object object, final Type desiredType) {
         if (object == null) {
             return null;
         }
@@ -662,6 +671,14 @@ public class SignatureUtilities {
                     return new Double(number.doubleValue());
                 }
             }
+        }
+
+        try {
+            object = QiSerializer.getDefault().serialize(object);
+        }
+        catch (QiConversionException conversionException) {
+            System.err.println("Issue while serialization!");
+            conversionException.printStackTrace();
         }
 
         return object;

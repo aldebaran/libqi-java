@@ -52,6 +52,8 @@ extern jclass cls_nativeTools;
 extern jmethodID method_NativeTools_callJava;
 extern JavaVM* javaVirtualMachine;
 
+extern jclass cls_enum;
+
 // JNI utils
 extern "C"
 {
