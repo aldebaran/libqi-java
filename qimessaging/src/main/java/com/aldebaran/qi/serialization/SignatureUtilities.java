@@ -315,14 +315,6 @@ public class SignatureUtilities {
                     SignatureUtilities.computeSignature(information.clazz, information.type, stringBuilder);
                 }
 
-            if (struct != null) {
-                final List<QiFieldInformation> qiFieldInformations = SignatureUtilities.collectSortedQiFieldInformation(clazz);
-                stringBuilder.append("(");
-
-                for (final QiFieldInformation information : qiFieldInformations) {
-                    SignatureUtilities.computeSignature(information.clazz, information.type, stringBuilder);
-                }
-
                 stringBuilder.append(")");
             }
             else if (Tuple.class.isAssignableFrom(clazz)) {
@@ -685,7 +677,7 @@ public class SignatureUtilities {
             object = QiSerializer.getDefault().serialize(object);
         }
         catch (QiConversionException conversionException) {
-            System.err.println("Issue whille serialization!");
+            System.err.println("Issue while serialization!");
             conversionException.printStackTrace();
         }
 
