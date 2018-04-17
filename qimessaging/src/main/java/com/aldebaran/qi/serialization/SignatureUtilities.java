@@ -62,7 +62,8 @@ public class SignatureUtilities {
     /**
      * Compute libqi signature for given method
      *
-     * @param method Method to get the signature from
+     * @param method
+     *            Method to get the signature from
      * @return Libqi signature for given method
      */
     public static String computeSignatureForMethod(final Method method) {
@@ -96,18 +97,22 @@ public class SignatureUtilities {
      * Compute and append signature for argument of parameterized type
      * (List&lt;String&gt;, Map&lt;Integer, String&gt;, ...)
      *
-     * @param index             Index of argument in parameterized type
-     * @param parameterizedType Parameterized type to extract the argument
-     * @param stringBuilder     String builder where append signature
+     * @param index
+     *            Index of argument in parameterized type
+     * @param parameterizedType
+     *            Parameterized type to extract the argument
+     * @param stringBuilder
+     *            String builder where append signature
      */
     private static void computeSignature(final int index, final ParameterizedType parameterizedType,
-                                         final StringBuilder stringBuilder) {
+            final StringBuilder stringBuilder) {
         final Type argument = parameterizedType.getActualTypeArguments()[index];
 
         if (argument instanceof ParameterizedType) {
-            SignatureUtilities
-                    .computeSignature((Class<?>) ((ParameterizedType) argument).getRawType(), argument, stringBuilder);
-        } else if (argument instanceof Class) {
+            SignatureUtilities.computeSignature((Class<?>) ((ParameterizedType) argument).getRawType(), argument,
+                    stringBuilder);
+        }
+        else if (argument instanceof Class) {
             SignatureUtilities.computeSignature((Class<?>) argument, argument, stringBuilder);
         }
     }
@@ -115,7 +120,8 @@ public class SignatureUtilities {
     /**
      * Indicates if given class can be considered as Void or void
      *
-     * @param clazz Class to test
+     * @param clazz
+     *            Class to test
      * @return {@code true} if given class can be considered as Void or void
      */
     public static boolean isVoid(Class<?> clazz) {
@@ -125,7 +131,8 @@ public class SignatureUtilities {
     /**
      * Indicates if given class is Boolean or boolean
      *
-     * @param clazz Class to test
+     * @param clazz
+     *            Class to test
      * @return {@code true} if given class is Boolean or boolean
      */
     public static boolean isBoolean(Class<?> clazz) {
@@ -135,7 +142,8 @@ public class SignatureUtilities {
     /**
      * Indicates if given class is Character or char
      *
-     * @param clazz Class to test
+     * @param clazz
+     *            Class to test
      * @return {@code true} if given class is Character or char
      */
     public static boolean isCharacter(Class<?> clazz) {
@@ -145,7 +153,8 @@ public class SignatureUtilities {
     /**
      * Indicates if given class is Byte or byte
      *
-     * @param clazz Class to test
+     * @param clazz
+     *            Class to test
      * @return {@code true} if given class is Byte or byte
      */
     public static boolean isByte(Class<?> clazz) {
@@ -155,7 +164,8 @@ public class SignatureUtilities {
     /**
      * Indicates if given class is Short or short
      *
-     * @param clazz Class to test
+     * @param clazz
+     *            Class to test
      * @return {@code true} if given class is Short or short
      */
     public static boolean isShort(Class<?> clazz) {
@@ -165,7 +175,8 @@ public class SignatureUtilities {
     /**
      * Indicates if given class is Integer or int
      *
-     * @param clazz Class to test
+     * @param clazz
+     *            Class to test
      * @return {@code true} if given class is Integer or int
      */
     public static boolean isInteger(Class<?> clazz) {
@@ -175,7 +186,8 @@ public class SignatureUtilities {
     /**
      * Indicates if given class is Long or long
      *
-     * @param clazz Class to test
+     * @param clazz
+     *            Class to test
      * @return {@code true} if given class is Long or long
      */
     public static boolean isLong(Class<?> clazz) {
@@ -185,7 +197,8 @@ public class SignatureUtilities {
     /**
      * Indicates if given class is Float or float
      *
-     * @param clazz Class to test
+     * @param clazz
+     *            Class to test
      * @return {@code true} if given class is Float or float
      */
     public static boolean isFloat(Class<?> clazz) {
@@ -195,7 +208,8 @@ public class SignatureUtilities {
     /**
      * Indicates if given class is Double or double
      *
-     * @param clazz Class to test
+     * @param clazz
+     *            Class to test
      * @return {@code true} if given class is Double or double
      */
     public static boolean isDouble(Class<?> clazz) {
@@ -205,7 +219,8 @@ public class SignatureUtilities {
     /**
      * Indicates if given class is a Number
      *
-     * @param clazz Class to test
+     * @param clazz
+     *            Class to test
      * @return {@code true} if given class is a Number
      */
     public static boolean isNumber(Class<?> clazz) {
@@ -214,11 +229,15 @@ public class SignatureUtilities {
     }
 
     /**
-     * Compute and append signature for given class and corresponding type specialized on return type
+     * Compute and append signature for given class and corresponding type
+     * specialized on return type
      *
-     * @param clazz         Class to get signature
-     * @param type          Type corresponds to given class
-     * @param stringBuilder String builder where append signature
+     * @param clazz
+     *            Class to get signature
+     * @param type
+     *            Type corresponds to given class
+     * @param stringBuilder
+     *            String builder where append signature
      */
     private static void computeSignatureForReturnType(Class<?> clazz, Type type, final StringBuilder stringBuilder) {
         if (Future.class.isAssignableFrom(clazz)) {
@@ -232,9 +251,10 @@ public class SignatureUtilities {
                 clazz = (Class) type;
             }
             else {
-                //Just a warning for a not managed type.
-                //Print in error stream to attract attention
-                System.err.println("Warning! While computing signature for return type " + type + ":" + type.getClass().getName() + " TO Class");
+                // Just a warning for a not managed type.
+                // Print in error stream to attract attention
+                System.err.println("Warning! While computing signature for return type " + type + ":"
+                        + type.getClass().getName() + " TO Class");
             }
         }
 
@@ -244,38 +264,57 @@ public class SignatureUtilities {
     /**
      * Compute and append signature for given class and corresponding type
      *
-     * @param clazz         Class to get signature
-     * @param type          Type corresponds to given class
-     * @param stringBuilder String builder where append signature
+     * @param clazz
+     *            Class to get signature
+     * @param type
+     *            Type corresponds to given class
+     * @param stringBuilder
+     *            String builder where append signature
      */
     private static void computeSignature(final Class<?> clazz, final Type type, final StringBuilder stringBuilder) {
         if (SignatureUtilities.isVoid(clazz)) {
             stringBuilder.append(SignatureUtilities.VOID);
-        } else if (SignatureUtilities.isBoolean(clazz)) {
+        }
+        else if (SignatureUtilities.isBoolean(clazz)) {
             stringBuilder.append(SignatureUtilities.BOOLEAN);
-        } else if (SignatureUtilities.isCharacter(clazz)) {
+        }
+        else if (SignatureUtilities.isCharacter(clazz)) {
             stringBuilder.append(SignatureUtilities.CHARACTER);
         } else if (SignatureUtilities.isInteger(clazz) || clazz.isEnum()) {
             stringBuilder.append(SignatureUtilities.INTEGER);
-        } else if (SignatureUtilities.isLong(clazz)) {
+        }
+        else if (SignatureUtilities.isLong(clazz)) {
             stringBuilder.append(SignatureUtilities.LONG);
-        } else if (SignatureUtilities.isFloat(clazz)) {
+        }
+        else if (SignatureUtilities.isFloat(clazz)) {
             stringBuilder.append(SignatureUtilities.FLOAT);
-        } else if (SignatureUtilities.isDouble(clazz)) {
+        }
+        else if (SignatureUtilities.isDouble(clazz)) {
             stringBuilder.append(SignatureUtilities.DOUBLE);
-        } else if (String.class.equals(clazz)) {
+        }
+        else if (String.class.equals(clazz)) {
             stringBuilder.append(SignatureUtilities.STRING);
-        } else if (List.class.isAssignableFrom(clazz)) {
+        }
+        else if (List.class.isAssignableFrom(clazz)) {
             stringBuilder.append("[");
             SignatureUtilities.computeSignature(0, (ParameterizedType) type, stringBuilder);
             stringBuilder.append("]");
-        } else if (Map.class.isAssignableFrom(clazz)) {
+        }
+        else if (Map.class.isAssignableFrom(clazz)) {
             stringBuilder.append("{");
             SignatureUtilities.computeSignature(0, (ParameterizedType) type, stringBuilder);
             SignatureUtilities.computeSignature(1, (ParameterizedType) type, stringBuilder);
             stringBuilder.append("}");
         } else {
             final QiStruct struct = clazz.getAnnotation(QiStruct.class);
+            if (struct != null) {
+                final List<QiFieldInformation> qiFieldInformations = SignatureUtilities.collectSortedQiFieldInformation(clazz);
+                stringBuilder.append("(");
+
+                for (final QiFieldInformation information : qiFieldInformations) {
+                    SignatureUtilities.computeSignature(information.clazz, information.type, stringBuilder);
+                }
+
             if (struct != null) {
                 final List<QiFieldInformation> qiFieldInformations = SignatureUtilities.collectSortedQiFieldInformation(clazz);
                 stringBuilder.append("(");
@@ -330,7 +369,8 @@ public class SignatureUtilities {
     /**
      * Convert a primitive type to its Object type.
      *
-     * @param type Native type.
+     * @param type
+     *            Native type.
      * @return Object type.
      */
     public static Type convertNativeTypeToObjectType(final Type type) {
@@ -369,7 +409,8 @@ public class SignatureUtilities {
      * Convert an array of types, if the array contains primitive types they are
      * convert to their corresponding Object type.
      *
-     * @param types Array to convert
+     * @param types
+     *            Array to convert
      * @return Converted array
      */
     public static Type[] convertNativeTypeToObjectType(final Type... types) {
@@ -390,8 +431,10 @@ public class SignatureUtilities {
     /**
      * Try to convert a value to a desired type
      *
-     * @param value Value to convert
-     * @param to    Destination type
+     * @param value
+     *            Value to convert
+     * @param to
+     *            Destination type
      * @return Converted value
      */
     public static Object convert(Object value, final Class<?> to) {
@@ -589,8 +632,10 @@ public class SignatureUtilities {
     /**
      * Convert a value from Java to value that can be sent to libqi.
      *
-     * @param object      Object to convert.
-     * @param desiredType Destination type.
+     * @param object
+     *            Object to convert.
+     * @param desiredType
+     *            Destination type.
      * @return Converted value.
      */
     public static Object convertValueJavaToLibQI(Object object, final Type desiredType) {
