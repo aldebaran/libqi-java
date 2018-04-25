@@ -7,6 +7,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Stack;
 
 import com.aldebaran.qi.serialization.QiSerializer;
 
@@ -136,6 +140,54 @@ public class AnyObject {
      * @throws DynamicCallException
      */
     public <T> Future<T> call(String method, Object... args) {
+        // Nulls checks
+        // Recursive search, the "null" can hide at any deep
+        final Stack stack = new Stack();
+
+        if (args != null) {
+            for (final Object object : args) {
+                stack.push(object);
+            }
+        }
+
+        while (!stack.isEmpty()) {
+            final Object object = stack.pop();
+
+            if (object != null) {
+                if (object instanceof Tuple) {
+                    final Tuple tuple = (Tuple) object;
+                    final int size = tuple.size();
+
+                    for (int index = 0; index < size; index++) {
+                        final Object element = tuple.get(index);
+
+                        if (element == null) {
+                            throw new NullPointerException("One field of a tuple is null!");
+                        }
+
+                        stack.push(element);
+                    }
+                }
+                else if (object instanceof Map) {
+                    final Map map = (Map) object;
+
+                    for (final Object element : map.entrySet()) {
+                        final Entry entry = (Entry) element;
+                        stack.push(entry.getKey());
+                        stack.push(entry.getValue());
+                    }
+                }
+                else if (object instanceof List) {
+                    final List list = (List) object;
+
+                    for (final Object element : list) {
+                        stack.push(element);
+                    }
+                }
+            }
+        }
+
+        // Do the call
         return new Future<T>(asyncCall(_p, method, args));
     }
 
