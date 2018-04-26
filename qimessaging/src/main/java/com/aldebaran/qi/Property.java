@@ -75,12 +75,12 @@ public final class Property<T> {
      * Current property value.<br>
      * Here it used the default serializer, so it suppose that the property type
      * is managed by it.<br>
-     * For custom type use {@link #value(QiSerializer)}
+     * For custom type use {@link #getValue(QiSerializer)}
      *
      * @return Future to get the value
      */
-    public Future<T> value() {
-        return this.value(QiSerializer.getDefault());
+    public Future<T> getValue() {
+        return this.getValue(QiSerializer.getDefault());
     }
 
     /**
@@ -90,7 +90,7 @@ public final class Property<T> {
      *            Serializer to use for deserialize the value. Must not be null
      * @return Future to get the value
      */
-    public Future<T> value(final QiSerializer qiSerializer) {
+    public Future<T> getValue(final QiSerializer qiSerializer) {
         if (qiSerializer == null) {
             throw new NullPointerException("qiSerializer must not be null");
         }
@@ -108,14 +108,14 @@ public final class Property<T> {
      * Change property value<br>
      * Here it used the default serializer, so it suppose that the property type
      * is managed by it.<br>
-     * For custom type use {@link #value(QiSerializer, Object)}
+     * For custom type use {@link #setValue(QiSerializer, Object)}
      *
      * @param value
      *            New value. Warning may have strange result with {@code null}
      * @return Future to know when value effectively set
      */
-    public Future<Void> value(final T value) {
-        return this.value(QiSerializer.getDefault(), value);
+    public Future<Void> setValue(final T value) {
+        return this.setValue(QiSerializer.getDefault(), value);
     }
 
     /**
@@ -127,7 +127,7 @@ public final class Property<T> {
      *            New value. Warning may have strange result with {@code null}
      * @return Future to know when value effectively set
      */
-    public Future<Void> value(final QiSerializer qiSerializer, final T value) {
+    public Future<Void> setValue(final QiSerializer qiSerializer, final T value) {
         if (qiSerializer == null) {
             throw new NullPointerException("qiSerializer must not be null");
         }
