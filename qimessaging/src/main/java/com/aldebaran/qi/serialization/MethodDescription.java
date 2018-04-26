@@ -20,6 +20,7 @@ import com.aldebaran.qi.Tuple;
  *  <li>The distance between primitive and their associated Object (For example int &lt;-&gt; java.lang.Integer, boolean &lt;-&gt; java.lang.Boolean, ...) is {@link #DISTANCE_PRIMITIVE_OBJECT}.</li>
  *  <li>The distance between two numbers (double, float, ...) is {@link #DISTANCE_NUMBERS}.</li>
  *  <li>The distance (for returned value only) between a type and a Future that embed this type is {@link #DISTANCE_FUTURE}.</li>
+ *  <li>The distance with a {@link Tuple} and {@link QiStruct} is {@link #DISTANCE_TUPLE_STRUCT}</li>
  *  <li>For others case the distance becomes {@link Integer#MAX_VALUE "infinite"}</li>
  * </ul>
  * By example for libqi signature "call::s(i)":

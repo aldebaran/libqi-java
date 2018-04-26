@@ -9,6 +9,9 @@ import com.aldebaran.qi.serialization.QiSerializer;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
+import com.aldebaran.qi.serialization.QiSerializer;
+import com.aldebaran.qi.serialization.SignatureUtilities;
+
 /**
  * Class that exposes directly an {@link AnyObject} that can be manipulated.
  * <p>
