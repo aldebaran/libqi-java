@@ -11,7 +11,7 @@
  */
 JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Property_createProperty(JNIEnv * obj, jobject clazz)
 {
-    auto propertyPointer = new qi::Property<qi::AnyValue>();
+    auto propertyPointer = new PropertyManager();
     return reinterpret_cast<jlong>(propertyPointer);
 }
 
@@ -24,7 +24,9 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Property_createProperty(JNIEnv * o
  */
 JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Property_get(JNIEnv * env, jobject obj, jlong pointer)
 {
-    auto propertyPointer = reinterpret_cast<qi::Property<qi::AnyValue> *>(pointer);
+    auto propertyManager = reinterpret_cast<PropertyManager *>(pointer);
+    auto propertyPointer = propertyManager->property;
+    // Potential global reference issue here, due multithread, Garbage collector and other fun.
     auto futurePointer = new qi::Future<qi::AnyValue> { propertyPointer->value().async() };
     return reinterpret_cast<jlong>(futurePointer);
 }
@@ -39,9 +41,14 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Property_get(JNIEnv * env, jobject
  */
 JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Property_set(JNIEnv * env, jobject obj, jlong pointer, jobject value)
 {
-    auto propertyPointer = reinterpret_cast<qi::Property<qi::AnyValue> *>(pointer);
-    auto futurePointer = new qi::Future<void> { propertyPointer->setValue(qi::AnyValue::from<jobject>(value)) };
-    return reinterpret_cast<jlong>(futurePointer);
+    auto propertyManager = reinterpret_cast<PropertyManager *>(pointer);
+    propertyManager->setValue(env, value);
+    auto propertyPointer = propertyManager->property;
+    // Have wait the result here.
+    // When embed inside a future, it happen time to time some crash.
+    propertyPointer->setValue(qi::AnyValue::from<jobject>(propertyManager->goblaReference)).wait();
+    //Keep to keep Java signaute, must be change later.
+    return 0;
 }
 
 /**
@@ -52,6 +59,7 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Property_set(JNIEnv * env, jobject
  */
 JNIEXPORT void JNICALL Java_com_aldebaran_qi_Property_destroy(JNIEnv * env, jobject obj, jlong pointer)
 {
-    auto propertyPointer = reinterpret_cast<qi::Property<qi::AnyValue> *>(pointer);
-    delete propertyPointer;
+    auto propertyManager = reinterpret_cast<PropertyManager *>(pointer);
+    propertyManager->destroy(env);
+    delete propertyManager;
 }

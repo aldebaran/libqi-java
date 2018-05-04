@@ -131,7 +131,7 @@ JNIEXPORT void JNICALL Java_com_aldebaran_qi_DynamicObjectBuilder_setThreadSafen
 JNIEXPORT void JNICALL Java_com_aldebaran_qi_DynamicObjectBuilder_advertisePropertyObject(JNIEnv * env, jclass clazz, jlong pObjectBuilder, jstring name, jlong pointerProperty)
 {
   qi::DynamicObjectBuilder  *dynamicObjectBuilder = reinterpret_cast<qi::DynamicObjectBuilder *>(pObjectBuilder);
-  qi::Property<qi::AnyValue> *property = reinterpret_cast<qi::Property<qi::AnyValue> *>(pointerProperty);
+  auto propertyManager = reinterpret_cast<PropertyManager *>(pointerProperty);
   std::string propertyName = qi::jni::toString(name);
-  dynamicObjectBuilder -> advertiseProperty(propertyName, property);
+  dynamicObjectBuilder -> advertiseProperty(propertyName, propertyManager->property);
 }

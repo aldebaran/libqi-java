@@ -571,17 +571,49 @@ namespace qi {
       if (!env)
         return nullptr;
 
+      qiLogError("NONO") << "- toJobjectArray - SIZE=" << values.size();
+
       jclass objectClass = env->FindClass("java/lang/Object");
       jobjectArray array = env->NewObjectArray(values.size(), objectClass, nullptr);
       qi::jni::releaseClazz(objectClass);
       int i = 0;
       for (const AnyReference &ref : values)
       {
+        qiLogError("NONO") << "- toJobjectArray - 1 : kind=" << ref.kind();
+
+        /*
+    TypeKind_Unknown  = 0,
+    TypeKind_Void     = 1,
+    TypeKind_Int      = 2,
+    TypeKind_Float    = 3,
+    TypeKind_String   = 4,
+    TypeKind_List     = 5,
+    TypeKind_Map      = 6,
+    TypeKind_Object   = 7,
+    TypeKind_Pointer  = 8,
+    TypeKind_Tuple    = 9,
+    TypeKind_Dynamic  = 10,
+    TypeKind_Raw      = 11,
+    TypeKind_Iterator = 13,
+    TypeKind_Function = 14,
+    TypeKind_Signal   = 15,
+    TypeKind_Property = 16,
+    TypeKind_VarArgs  = 17,
+         */
+
         std::pair<AnyReference, bool> converted = ref.convert(qi::typeOf<jobject>());
+        qiLogError("NONO") << "- toJobjectArray - 2 - converted.first.kind()=" << converted.first.kind();
+
+        if(converted.first.rawValue()==nullptr)  qiLogError("NONO") << "- toJobjectArray - converted.first.rawValue() null";
+        else qiLogError("NONO") << "- toJobjectArray - converted.first.rawValue() not null";
+
         jobject value = *reinterpret_cast<jobject *>(converted.first.rawValue());
+        qiLogError("NONO") << "- toJobjectArray - 3";
         env->SetObjectArrayElement(array, i++, value);
+        qiLogError("NONO") << "- toJobjectArray - 4";
         if (converted.second)
           converted.first.destroy();
+        qiLogError("NONO") << "- toJobjectArray - 5";
       }
       return array;
     }

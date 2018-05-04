@@ -17,6 +17,8 @@
 # include <android/log.h>
 #endif
 
+#include <qi/property.hpp>
+
 // Define a portable JNIEnv* pointer (API between arm and intel differs)
 #ifdef ANDROID
   typedef JNIEnv** envPtr;
@@ -276,4 +278,74 @@ jint throwNewConnectionException(JNIEnv *env, const char *message = "");
 jint throwNewPostException(JNIEnv *env, const char *message = "");
 jint throwNewSessionException(JNIEnv *env, const char *message = "");
 jint throwNewIllegalStateException(JNIEnv *env, const char *message = "");
+
+/**
+ * @brief Manage property and maintain a global reference alive until ist i no more use
+ */
+class PropertyManager
+{
+public:
+  /**The managed property*/
+  qi::Property<qi::AnyValue> * property;
+  /**Indicates if a global reference is set*/
+  bool hasGlobalReference;
+  /**Last setted global reference*/
+  jobject goblaReference;
+
+  /**
+   * @brief Create the manager
+   */
+  PropertyManager()
+  {
+    this->property = new qi::Property<qi::AnyValue>();
+    this->hasGlobalReference = false;
+  }
+
+  /**
+   * @brief Clear global reference if need
+   * @param env JNI environment
+   */
+  void clearReference(JNIEnv * env)
+  {
+    if(this->hasGlobalReference)
+    {
+      this->hasGlobalReference = false;
+      env->DeleteGlobalRef(this->goblaReference);
+      this->goblaReference = nullptr;
+    }
+  }
+
+  /**
+   * @brief Destroy properly the manager
+   * @param env JNI environment
+   */
+  void destroy(JNIEnv * env)
+  {
+    this->clearReference(env);
+    delete this->property;
+  }
+
+  /**
+   * @brief Change the value, store it properly to keep alive the reference
+   * @param env JNI evironment
+   * @param value New value
+   */
+  void setValue(JNIEnv * env, jobject value)
+  {
+    this->clearReference(env);
+
+    if(env->IsSameObject(value, nullptr))
+    {
+      this->hasGlobalReference = false;
+      this->goblaReference = nullptr;
+    }
+    else
+    {
+      this->hasGlobalReference = true;
+      this->goblaReference = env->NewGlobalRef(value);
+    }
+  }
+};
+
+
 #endif // !_JAVA_JNI_JNITOOLS_HPP_

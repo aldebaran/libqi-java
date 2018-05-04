@@ -13,6 +13,7 @@ import java.util.Map.Entry;
 import java.util.Stack;
 
 import com.aldebaran.qi.serialization.QiSerializer;
+import com.aldebaran.qi.util.UtilReflexion;
 
 /**
  * Class that provides type erasure on objects. It represents an object
@@ -280,25 +281,69 @@ public class AnyObject {
         return connect(signalName, new QiSignalListener() {
             @Override
             public void onSignalReceived(Object... args) {
+                System.out.println("NONO - AnyObject.connect$onSignalReceived - args=" + args);
+
+                if (args != null && args.length > 0) {
+                    System.out.println("NONO - AnyObject.connect$onSignalReceived - args[0]=" + args[0]);
+                }
+
                 Object[] convertedArgs = null;
                 try {
                     method.setAccessible(true);
                     // convert tuples to custom structs if necessary
-                    convertedArgs = serializer.deserialize(args, method.getGenericParameterTypes());
+                    try {
+                        convertedArgs = serializer.deserialize(args, method.getGenericParameterTypes());
+                    }
+                    catch (Exception exception) {
+                        exception.printStackTrace();
+
+                        final Class<?>[] parametersTypes = method.getParameterTypes();
+                        final int length = parametersTypes.length;
+                        convertedArgs = new Object[length];
+                        Object toConvert;
+                        final int limit = Math.min(length, args == null ? 0 : args.length);
+
+                        // Fill parameters received
+                        for (int index = 0; index < limit; index++) {
+                            toConvert = args[index];
+
+                            if (toConvert == null) {
+                                convertedArgs[index] = UtilReflexion.defaultValue(parametersTypes[index]);
+                            }
+                            else {
+                                try {
+                                    convertedArgs[index] = serializer.deserialize(args[index], parametersTypes[index]);
+                                }
+                                catch (Exception ignored) {
+                                    convertedArgs[index] = toConvert;
+                                }
+                            }
+                        }
+
+                        // Fill missing parameters with default value
+                        for (int index = limit; index < length; index++) {
+                            convertedArgs[index] = UtilReflexion.defaultValue(parametersTypes[index]);
+                        }
+                    }
+
                     method.invoke(annotatedSlotContainer, convertedArgs);
                 }
                 catch (IllegalAccessException e) {
+                    e.printStackTrace();
                     throw new QiSlotException(e);
                 }
                 catch (IllegalArgumentException e) {
+                    e.printStackTrace();
                     String message = "Cannot call method " + method + " with parameter types "
                             + Arrays.toString(getTypes(convertedArgs));
                     throw new QiSlotException(message, e);
                 }
                 catch (InvocationTargetException e) {
+                    e.printStackTrace();
                     throw new QiSlotException(e);
                 }
-                catch (QiConversionException e) {
+                catch (Exception e) {
+                    e.printStackTrace();
                     throw new QiSlotException(e);
                 }
             }

@@ -55,6 +55,9 @@ public final class Property<T> {
     /** Property value type */
     private final Class<T> propertyValueClass;
 
+    /** Last set value, to keep the reference alive, don't use it for get */
+    private T lastSettedValue;
+
     /**
      * Create an empty property.<br>
      * <b>Warning</b> the property have no value until someone set it!
@@ -69,6 +72,7 @@ public final class Property<T> {
 
         this.propertyValueClass = propertyValueClass;
         this.pointer = this.createProperty();
+        System.out.println("NONO ->-<- Property # " + this.pointer + " | " + Long.toHexString(this.pointer));
     }
 
     /**
@@ -133,7 +137,9 @@ public final class Property<T> {
         }
 
         try {
-            return new Future<Void>(this.set(this.pointer, qiSerializer.serialize(value)));
+            this.lastSettedValue = value;
+            this.set(this.pointer, qiSerializer.serialize(this.lastSettedValue));
+            return Future.of(null);
         }
         catch (final Throwable throwable) {
             throwable.printStackTrace();

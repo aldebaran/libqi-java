@@ -156,6 +156,7 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_connectSignal(JNIEnv *en
   qi::SignalSubscriber subscriber {
     qi::AnyFunction::fromDynamicFunction(
       [gListener](const std::vector<qi::AnyReference> &params) -> qi::AnyReference {
+      qiLogError("NONO") << "- Java_com_aldebaran_qi_AnyObject_connectSignal - RECEIVED";
         jobject listener = gListener.get();
 
         qi::jni::JNIAttach attach;
@@ -169,6 +170,7 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_connectSignal(JNIEnv *en
         jthrowable exception = env->ExceptionOccurred();
         if (exception)
         {
+          qiLogError("NONO") << " INVOKATION FAILED !";
           env->ExceptionDescribe();
           // an exception occurred in a listener, report and ignore
           env->ExceptionClear();
