@@ -287,10 +287,8 @@ class PropertyManager
 public:
   /**The managed property*/
   qi::Property<qi::AnyValue> * property;
-  /**Indicates if a global reference is set*/
-  bool hasGlobalReference;
   /**Last setted global reference*/
-  jobject goblaReference;
+  jobject globalReference;
 
   /**
    * @brief Create the manager
@@ -298,7 +296,7 @@ public:
   PropertyManager()
   {
     this->property = new qi::Property<qi::AnyValue>();
-    this->hasGlobalReference = false;
+    this->globalReference = nullptr;
   }
 
   /**
@@ -307,11 +305,10 @@ public:
    */
   void clearReference(JNIEnv * env)
   {
-    if(this->hasGlobalReference)
+    if(!env->IsSameObject(this->goblaReference, nullptr))
     {
-      this->hasGlobalReference = false;
       env->DeleteGlobalRef(this->goblaReference);
-      this->goblaReference = nullptr;
+      this->globalReference = nullptr;
     }
   }
 
@@ -336,13 +333,11 @@ public:
 
     if(env->IsSameObject(value, nullptr))
     {
-      this->hasGlobalReference = false;
-      this->goblaReference = nullptr;
+      this->globalReference = nullptr;
     }
     else
     {
-      this->hasGlobalReference = true;
-      this->goblaReference = env->NewGlobalRef(value);
+      this->globalReference = env->NewGlobalRef(value);
     }
   }
 };

@@ -133,5 +133,13 @@ JNIEXPORT void JNICALL Java_com_aldebaran_qi_DynamicObjectBuilder_advertisePrope
   qi::DynamicObjectBuilder  *dynamicObjectBuilder = reinterpret_cast<qi::DynamicObjectBuilder *>(pObjectBuilder);
   auto propertyManager = reinterpret_cast<PropertyManager *>(pointerProperty);
   std::string propertyName = qi::jni::toString(name);
-  dynamicObjectBuilder -> advertiseProperty(propertyName, propertyManager->property);
+
+  try
+  {
+    dynamicObjectBuilder -> advertiseProperty(propertyName, propertyManager->property);
+  }
+  catch (std::runtime_error &e)
+  {
+    throwNewAdvertisementException(env, e.what());
+  }
 }

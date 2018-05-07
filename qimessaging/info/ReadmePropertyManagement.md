@@ -1,4 +1,4 @@
-Their two property types. They are managed in different manner. 
+There are two property types. They are managed in different manner. 
 **Don't mix the usage**.
 
 
@@ -6,7 +6,7 @@ Their two property types. They are managed in different manner.
 First case: The object comes from external
 ------------------------------------------
 
-In that case you have an **AnyObject** provides by the service:
+In that case you have an **AnyObject** provided by the service:
 
 ### Get property value
 
@@ -20,7 +20,8 @@ In that case you have an **AnyObject** provides by the service:
 
     AnyObject.connect(String, QiSignalListener)
 
-**Warning**: The value received by the listener are serialized (One of **libqi-java** managed type). Have to use a QiSerializer to have a custom type.
+**Warning**: The values received by the listener are serialized (Into one of **libqi-java** managed type). 
+You have to use a QiSerializer to have a custom type.
 
 
 
@@ -39,7 +40,7 @@ Steps to follow:
 
     DynamicObjectBuilder.object()
 
-**Warning**: It is important to have advertise all methods, properties and signals before call the **object()** method. Never advertise something after called this method.
+**Warning**: It is important to advertise all methods, properties and signals before calling the **object()** method. Do **not** advertise something after calling this method.
 
 ### Get property value
 
@@ -57,12 +58,12 @@ Steps to follow:
 
     AnyObject.connect(String, QiSignalListener)
 
-**Warning**: The value received by the listener are serialized (One of **libqi-java** managed type). Have to use a QiSerializer to have a custom type.
+**Warning**: The values received by the listener are serialized (Into one of **libqi-java** managed types). You have to use a QiSerializer to have a custom type.
 
 
 
 Remarks:
 --------
 
-Pay a real attention in witch case you are before using a method.
+Pay a real attention in which case you are before using a method.
 

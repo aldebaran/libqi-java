@@ -72,7 +72,6 @@ public final class Property<T> {
 
         this.propertyValueClass = propertyValueClass;
         this.pointer = this.createProperty();
-        System.out.println("NONO ->-<- Property # " + this.pointer + " | " + Long.toHexString(this.pointer));
     }
 
     /**

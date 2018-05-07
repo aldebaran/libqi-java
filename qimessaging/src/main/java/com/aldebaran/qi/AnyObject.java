@@ -281,12 +281,6 @@ public class AnyObject {
         return connect(signalName, new QiSignalListener() {
             @Override
             public void onSignalReceived(Object... args) {
-                System.out.println("NONO - AnyObject.connect$onSignalReceived - args=" + args);
-
-                if (args != null && args.length > 0) {
-                    System.out.println("NONO - AnyObject.connect$onSignalReceived - args[0]=" + args[0]);
-                }
-
                 Object[] convertedArgs = null;
                 try {
                     method.setAccessible(true);
