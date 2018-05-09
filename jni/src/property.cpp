@@ -46,8 +46,8 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Property_set(JNIEnv * env, jobject
     auto propertyPointer = propertyManager->property;
     // Have wait the result here.
     // When embed inside a future, it happen time to time some crash.
-    propertyPointer->setValue(qi::AnyValue::from<jobject>(propertyManager->goblaReference)).wait();
-    //Keep to keep Java signaute, must be change later.
+    propertyPointer->setValue(qi::AnyValue::from<jobject>(propertyManager->globalReference)).wait();
+    //Keep to keep Java signature, must be change later.
     return 0;
 }
 

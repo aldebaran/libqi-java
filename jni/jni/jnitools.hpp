@@ -305,9 +305,9 @@ public:
    */
   void clearReference(JNIEnv * env)
   {
-    if(!env->IsSameObject(this->goblaReference, nullptr))
+    if(!env->IsSameObject(this->globalReference, nullptr))
     {
-      env->DeleteGlobalRef(this->goblaReference);
+      env->DeleteGlobalRef(this->globalReference);
       this->globalReference = nullptr;
     }
   }
