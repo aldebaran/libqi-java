@@ -13,6 +13,7 @@
 #include <qi/type/dynamicobjectbuilder.hpp>
 #include <qi/anyobject.hpp>
 #include <qi/anyfunction.hpp>
+#include <qi/property.hpp>
 #include <jnitools.hpp>
 
 #include <object_jni.hpp>
@@ -117,4 +118,28 @@ JNIEXPORT void JNICALL Java_com_aldebaran_qi_DynamicObjectBuilder_setThreadSafen
 {
   qi::DynamicObjectBuilder  *ob = reinterpret_cast<qi::DynamicObjectBuilder *>(pObjectBuilder);
   ob->setThreadingModel(isThreadSafe?qi::ObjectThreadingModel_MultiThread:qi::ObjectThreadingModel_SingleThread);
+}
+
+/**
+ * Advertise a property with property object
+ * @param env JNI environment
+ * @param clazz DynamicObjectBuilder class
+ * @param pObjectBuilder Pointer on DynamicObjectBuilder instance
+ * @param name Property name
+ * @param pointerProperty Pointer on property instance
+ */
+JNIEXPORT void JNICALL Java_com_aldebaran_qi_DynamicObjectBuilder_advertisePropertyObject(JNIEnv * env, jclass clazz, jlong pObjectBuilder, jstring name, jlong pointerProperty)
+{
+  qi::DynamicObjectBuilder  *dynamicObjectBuilder = reinterpret_cast<qi::DynamicObjectBuilder *>(pObjectBuilder);
+  auto propertyManager = reinterpret_cast<PropertyManager *>(pointerProperty);
+  std::string propertyName = qi::jni::toString(name);
+
+  try
+  {
+    dynamicObjectBuilder -> advertiseProperty(propertyName, propertyManager->property);
+  }
+  catch (std::runtime_error &e)
+  {
+    throwNewAdvertisementException(env, e.what());
+  }
 }

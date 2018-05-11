@@ -50,6 +50,21 @@ public class DynamicObjectBuilder {
 
     private native void setThreadSafeness(long pObjectBuilder, boolean isThreadSafe);
 
+    /**
+     * Advertise a property link to the future AnyObject
+     *
+     * @param dynamicObjectBuilderPointer
+     *            Dynamic object builder to link with
+     * @param propertyName
+     *            Property name
+     * @param propertyPointer
+     *            Property pointer
+     * @throws AdvertisementException
+     *             If advertising failed
+     */
+    private static native void advertisePropertyObject(long dynamicObjectBuilderPointer, String propertyName,
+            long propertyPointer) throws AdvertisementException;
+
     // / Possible thread models for an object
 
     /**
@@ -189,13 +204,37 @@ public class DynamicObjectBuilder {
     }
 
     /**
-     * Advertise a property
+     * @deprecated Advertise a property
      *
      * @param name         Property name
      * @param propertyBase Class warp the property
      */
+    @Deprecated
     public void advertiseProperty(String name, Class<?> propertyBase) {
         advertiseProperty(_p, name, propertyBase);
+    }
+
+    /**
+     * Advertise a property<br>
+     * Must be called before {@link #object()}
+     *
+     * @param <T>
+     *            Property type
+     * @param name
+     *            Property name. Must not be null
+     * @param property
+     *            Property to share. Must not be null
+     */
+    public <T> void advertiseProperty(String name, Property<T> property) {
+        if (name == null) {
+            throw new NullPointerException("name must not be null!");
+        }
+
+        if (property == null) {
+            throw new NullPointerException("property must not be null!");
+        }
+
+        DynamicObjectBuilder.advertisePropertyObject(this._p, name, property.pointer);
     }
 
     /**
