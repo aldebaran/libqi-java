@@ -580,8 +580,11 @@ namespace qi {
         std::pair<AnyReference, bool> converted = ref.convert(qi::typeOf<jobject>());
         jobject value = *reinterpret_cast<jobject *>(converted.first.rawValue());
         env->SetObjectArrayElement(array, i++, value);
+
         if (converted.second)
+        {
           converted.first.destroy();
+        }
       }
       return array;
     }
