@@ -90,6 +90,10 @@ public class MethodDescription {
      * not have the choice for now
      */
     private static final int DISTANCE_ANY_OBJECT = 100000;
+    /**
+     * "Distance" between compatible types like List and ArrayList, Map and Hashmap, ...
+     */
+    private static final int DISTANCE_COMPATIBLE= 100;
 
     /**
      * Read the next class described by characters array at given offset.<br>
@@ -412,6 +416,10 @@ public class MethodDescription {
 
         if (AnyObject.class.isAssignableFrom(class1) || AnyObject.class.isAssignableFrom(class2)) {
             return MethodDescription.DISTANCE_ANY_OBJECT;
+        }
+
+        if(class1.isAssignableFrom(class2) || class2.isAssignableFrom(class1)) {
+            return MethodDescription.DISTANCE_COMPATIBLE;
         }
 
         return Integer.MAX_VALUE;
