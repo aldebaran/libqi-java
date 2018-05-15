@@ -24,6 +24,10 @@ public class UtilReflexion {
         }
 
         if (long.class.equals(clazz) || Long.class.equals(clazz)) {
+            return 0L;
+        }
+
+        if (float.class.equals(clazz) || Float.class.equals(clazz)) {
             return 0f;
         }
 
