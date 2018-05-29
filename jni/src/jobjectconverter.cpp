@@ -162,6 +162,12 @@ struct toJObject
       }
     }
 
+    void visitOptional(qi::AnyReference optionalReference)
+    {
+      qiLogFatal() << "Error in conversion: Unable to convert optional in Java";
+      throwNewException(env, "Error in conversion: Unable to convert optional in Java");
+    }
+
     void visitPointer(qi::AnyReference pointee)
     {
       qiLogFatal() << "Error in conversion: Unable to convert pointer in Java";
