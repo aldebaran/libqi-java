@@ -248,3 +248,33 @@ JNIEXPORT jstring JNICALL Java_com_aldebaran_qi_AnyObject_encodeJSON(JNIEnv *QI_
   std::string res = qi::encodeJSON(what);
   return qi::jni::toJstring(res);
 }
+
+/**
+ * @brief Compare 2 AnyObject.
+ * It returns -1, if object1 < object2
+ * It returns 0, if object1 == object2
+ * It returns 1, if object1 > object2
+ * @param env JNI evironment
+ * @param cls Class reference
+ * @param object1 Object1 memory address
+ * @param object2 Object2 memory address
+ * @return Comparison result
+ */
+JNIEXPORT jint JNICALL Java_com_aldebaran_qi_AnyObject_compare(JNIEnv * env, jclass cls, jlong object1, jlong object2)
+{
+  qi::AnyObject anyObject1 = *(reinterpret_cast<qi::AnyObject *>(object1));
+  qi::AnyObject anyObject2 = *(reinterpret_cast<qi::AnyObject *>(object2));
+
+  if(anyObject1 == anyObject2)
+  {
+    return 0;
+  }
+
+  if(anyObject1 < anyObject2)
+  {
+    return -1;
+  }
+
+  return 1;
+}
+
