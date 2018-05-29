@@ -5,7 +5,7 @@ package com.aldebaran.qi;
  * the {@link Future}.
  * <p>
  * Promise and {@link Future} are two complementary concepts. They are designed
- * to synchronise data between multiples threads. The {@link Future} holds the
+ * to synchronize data between multiples threads. The {@link Future} holds the
  * result of an asynchronous computation, from which you can retrieve the value
  * of the result; the Promise sets the value of this computation, which resolves
  * the associated {@link Future}.
@@ -13,6 +13,10 @@ package com.aldebaran.qi;
  * For promises that don't need a value and are just used to ensure correct
  * ordering of asynchronous operations, the common pattern to use is
  * {@link java.lang.Void} as a generic type.
+ * <p>
+ * Warning:
+ * After a call of {@link #setValue(Object)}, {@link #setError(String)} or {@link #setCancelled()},
+ * it is illegal to call any of them
  *
  * @param <T>
  *            The type of the result
@@ -63,10 +67,22 @@ public class Promise<T> {
         return future;
     }
 
+    /**
+     * Set the promise value and transfer the information to linked future.<br>
+     * Warning after call this method, call {@link #setValue(Object)}, {@link #setError(String)} or {@link #setCancelled()} will cause an IllegalStateException
+     * @param value Promise value
+     * @throws IllegalStateException If {@link #setValue(Object)}, {@link #setError(String)} or {@link #setCancelled()} was previously called
+     */
     public void setValue(T value) {
         _setValue(promisePtr, value);
     }
 
+    /**
+     * Set the promise on error state and transfer the information to linked future.<br>
+     * Warning after call this method, call {@link #setValue(Object)}, {@link #setError(String)} or {@link #setCancelled()} will cause an IllegalStateException
+     * @param errorMessage Error message
+     * @throws IllegalStateException If {@link #setValue(Object)}, {@link #setError(String)} or {@link #setCancelled()} was previously called
+     */
     public void setError(String errorMessage) {
         // we cannot use a Throwable, libqi must be able to send the errors
         // across
@@ -78,6 +94,11 @@ public class Promise<T> {
         _setError(promisePtr, errorMessage);
     }
 
+    /**
+     * Set the promise on cancel state and transfer the information to linked future.<br>
+     * Warning after call this method, call {@link #setValue(Object)}, {@link #setError(String)} or {@link #setCancelled()} will cause an IllegalStateException
+     * @throws IllegalStateException If {@link #setValue(Object)}, {@link #setError(String)} or {@link #setCancelled()} was previously called
+     */
     public void setCancelled() {
         _setCancelled(promisePtr);
         // the qi Future must match the semantics of
@@ -135,11 +156,11 @@ public class Promise<T> {
 
     private native long _getFuture(long promisePtr);
 
-    private native void _setValue(long promisePtr, T value);
+    private native void _setValue(long promisePtr, T value) throws IllegalStateException;
 
-    private native void _setError(long promisePtr, String errorMessage);
+    private native void _setError(long promisePtr, String errorMessage) throws IllegalStateException;
 
-    private native void _setCancelled(long promisePtr);
+    private native void _setCancelled(long promisePtr) throws IllegalStateException;
 
     private native void _setOnCancel(long promisePtr, CancelRequestCallback<T> callback);
 

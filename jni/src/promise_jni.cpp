@@ -37,10 +37,17 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Promise__1getFuture
  * Signature: (JLjava/lang/Object;)V
  */
 JNIEXPORT void JNICALL Java_com_aldebaran_qi_Promise__1setValue
-  (JNIEnv *QI_UNUSED(env), jobject QI_UNUSED(obj), jlong promisePtr, jobject value)
+  (JNIEnv *env, jobject QI_UNUSED(obj), jlong promisePtr, jobject value)
 {
-  auto promise = reinterpret_cast<qi::Promise<qi::AnyValue> *>(promisePtr);
-  promise->setValue(qi::AnyValue::from<jobject>(value));
+  try
+  {
+    auto promise = reinterpret_cast<qi::Promise<qi::AnyValue> *>(promisePtr);
+    promise->setValue(qi::AnyValue::from<jobject>(value));
+  }
+  catch (std::exception& e)
+  {
+    throwNewIllegalStateException(env, e.what());
+  }
 }
 
 /*
@@ -49,10 +56,17 @@ JNIEXPORT void JNICALL Java_com_aldebaran_qi_Promise__1setValue
  * Signature: (JLjava/lang/String;)V
  */
 JNIEXPORT void JNICALL Java_com_aldebaran_qi_Promise__1setError
-  (JNIEnv *QI_UNUSED(env), jobject QI_UNUSED(obj), jlong promisePtr, jstring error)
+  (JNIEnv *env, jobject QI_UNUSED(obj), jlong promisePtr, jstring error)
 {
-  auto promise = reinterpret_cast<qi::Promise<qi::AnyValue> *>(promisePtr);
-  promise->setError(qi::jni::toString(error));
+  try
+  {
+    auto promise = reinterpret_cast<qi::Promise<qi::AnyValue> *>(promisePtr);
+    promise->setError(qi::jni::toString(error));
+  }
+  catch (std::exception& e)
+  {
+    throwNewIllegalStateException(env, e.what());
+  }
 }
 
 /*
@@ -61,11 +75,18 @@ JNIEXPORT void JNICALL Java_com_aldebaran_qi_Promise__1setError
  * Signature: (J)V
  */
 JNIEXPORT void JNICALL Java_com_aldebaran_qi_Promise__1setCancelled
-  (JNIEnv *QI_UNUSED(env), jobject QI_UNUSED(obj), jlong promisePtr)
+  (JNIEnv *env, jobject QI_UNUSED(obj), jlong promisePtr)
 {
-  auto promise = reinterpret_cast<qi::Promise<qi::AnyValue> *>(promisePtr);
-  // "cancelled" in Java, "canceled" in libqi
-  promise->setCanceled();
+  try
+  {
+    auto promise = reinterpret_cast<qi::Promise<qi::AnyValue> *>(promisePtr);
+    // "cancelled" in Java, "canceled" in libqi
+    promise->setCanceled();
+  }
+  catch (std::exception& e)
+  {
+    throwNewIllegalStateException(env, e.what());
+  }
 }
 
 namespace

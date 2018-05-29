@@ -1,13 +1,13 @@
 package com.aldebaran.qi;
 
-import com.aldebaran.qi.serialization.MethodDescription;
-import com.aldebaran.qi.serialization.SignatureUtilities;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+
+import com.aldebaran.qi.serialization.MethodDescription;
+import com.aldebaran.qi.serialization.SignatureUtilities;
 
 /**
  * Utilities tools to communicate with native code (Code in C++)
@@ -74,7 +74,7 @@ public class NativeTools {
     private static RuntimeException storeException(Exception exception) {
         String message = ERROR_MESSAGE_HEADER + NEXT_EXCEPTION_ID.getAndIncrement() + ERROR_MESSAGE_FOOTER;
         ERRORS_MAP.put(message, exception);
-        return new RuntimeException(message, exception);
+        return new RuntimeException(message+": "+exception.getMessage(), exception);
     }
 
     /**
@@ -112,6 +112,7 @@ public class NativeTools {
                         arguments[index] = SignatureUtilities.convert(arguments[index], parametersTarget[index]);
                     }
 
+                    method.setAccessible(true);
                     Object result = method.invoke(instance, arguments);
                     Class<?> returnType = methodDescription.getReturnType();
 

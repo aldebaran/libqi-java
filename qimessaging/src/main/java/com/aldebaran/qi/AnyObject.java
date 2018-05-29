@@ -1,6 +1,5 @@
 /*
- * * Copyright (C) 2015 Softbank Robotics
- * * See COPYING for the license
+ * * Copyright (C) 2015 Softbank Robotics * See COPYING for the license
  */
 package com.aldebaran.qi;
 
@@ -8,8 +7,13 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Stack;
 
 import com.aldebaran.qi.serialization.QiSerializer;
+import com.aldebaran.qi.util.UtilReflexion;
 
 /**
  * Class that provides type erasure on objects. It represents an object
@@ -26,7 +30,7 @@ import com.aldebaran.qi.serialization.QiSerializer;
  *
  * @see DynamicObjectBuilder
  */
-public class AnyObject {
+public class AnyObject implements Comparable<AnyObject> {
 
     static {
         // Loading native C++ libraries.
@@ -35,6 +39,36 @@ public class AnyObject {
             loader.loadEmbeddedLibraries();
         }
     }
+
+    /**
+     * _obj->ptrUid; Compare 2 {@link AnyObject}. <br>
+     * The return value is: <br>
+     * <table border=1>
+     * <tr>
+     * <th>comparison</th>
+     * <th>result</th>
+     * </tr>
+     * <tr>
+     * <td>object1 &lt; object2</td>
+     * <th>-1</th>
+     * </tr>
+     * <tr>
+     * <td>object1 == object2</td>
+     * <th>0</th>
+     * </tr>
+     * <tr>
+     * <td>object1 &gt; object2</td>
+     * <th>1</th>
+     * </tr>
+     * </table>
+     *
+     * @param object1
+     *            Any object reference 1
+     * @param object2
+     *            Any object reference 2
+     * @return Comparison value
+     */
+    private static native int compare(long object1, long object2);
 
     private final long _p;
 
@@ -57,7 +91,7 @@ public class AnyObject {
 
     private native long disconnectSignal(long pObject, long subscriberId);
 
-    private native long post(long pObject, String name, Object[] args);
+    private native void post(long pObject, String name, Object[] args);
 
     public static native Object decodeJSON(String str);
 
@@ -123,7 +157,7 @@ public class AnyObject {
     public <T> Future<T> getProperty(Class<T> targetType, String property) {
         // Specialization to benefit from type inference when targetType is a
         // Class
-        return getProperty((Type) targetType, property);
+        return getProperty(QiSerializer.getDefault(), (Type) targetType, property);
     }
 
     /**
@@ -137,6 +171,54 @@ public class AnyObject {
      * @throws DynamicCallException
      */
     public <T> Future<T> call(String method, Object... args) {
+        // Nulls checks
+        // Recursive search, the "null" can hide at any deep
+        final Stack stack = new Stack();
+
+        if (args != null) {
+            for (final Object object : args) {
+                stack.push(object);
+            }
+        }
+
+        while (!stack.isEmpty()) {
+            final Object object = stack.pop();
+
+            if (object != null) {
+                if (object instanceof Tuple) {
+                    final Tuple tuple = (Tuple) object;
+                    final int size = tuple.size();
+
+                    for (int index = 0; index < size; index++) {
+                        final Object element = tuple.get(index);
+
+                        if (element == null) {
+                            throw new NullPointerException("One field of a tuple is null!");
+                        }
+
+                        stack.push(element);
+                    }
+                }
+                else if (object instanceof Map) {
+                    final Map map = (Map) object;
+
+                    for (final Object element : map.entrySet()) {
+                        final Entry entry = (Entry) element;
+                        stack.push(entry.getKey());
+                        stack.push(entry.getValue());
+                    }
+                }
+                else if (object instanceof List) {
+                    final List list = (List) object;
+
+                    for (final Object element : list) {
+                        stack.push(element);
+                    }
+                }
+            }
+        }
+
+        // Do the call
         return new Future<T>(asyncCall(_p, method, args));
     }
 
@@ -233,21 +315,59 @@ public class AnyObject {
                 try {
                     method.setAccessible(true);
                     // convert tuples to custom structs if necessary
-                    convertedArgs = serializer.deserialize(args, method.getGenericParameterTypes());
+                    try {
+                        convertedArgs = serializer.deserialize(args, method.getGenericParameterTypes());
+                    }
+                    catch (Exception exception) {
+                        exception.printStackTrace();
+
+                        final Class<?>[] parametersTypes = method.getParameterTypes();
+                        final int length = parametersTypes.length;
+                        convertedArgs = new Object[length];
+                        Object toConvert;
+                        final int limit = Math.min(length, args == null ? 0 : args.length);
+
+                        // Fill parameters received
+                        for (int index = 0; index < limit; index++) {
+                            toConvert = args[index];
+
+                            if (toConvert == null) {
+                                convertedArgs[index] = UtilReflexion.defaultValue(parametersTypes[index]);
+                            }
+                            else {
+                                try {
+                                    convertedArgs[index] = serializer.deserialize(args[index], parametersTypes[index]);
+                                }
+                                catch (Exception ignored) {
+                                    convertedArgs[index] = toConvert;
+                                }
+                            }
+                        }
+
+                        // Fill missing parameters with default value
+                        for (int index = limit; index < length; index++) {
+                            convertedArgs[index] = UtilReflexion.defaultValue(parametersTypes[index]);
+                        }
+                    }
+
                     method.invoke(annotatedSlotContainer, convertedArgs);
                 }
                 catch (IllegalAccessException e) {
+                    e.printStackTrace();
                     throw new QiSlotException(e);
                 }
                 catch (IllegalArgumentException e) {
+                    e.printStackTrace();
                     String message = "Cannot call method " + method + " with parameter types "
                             + Arrays.toString(getTypes(convertedArgs));
                     throw new QiSlotException(message, e);
                 }
                 catch (InvocationTargetException e) {
+                    e.printStackTrace();
                     throw new QiSlotException(e);
                 }
-                catch (QiConversionException e) {
+                catch (Exception e) {
+                    e.printStackTrace();
                     throw new QiSlotException(e);
                 }
             }
@@ -297,7 +417,40 @@ public class AnyObject {
      * @see DynamicObjectBuilder#advertiseSignal(long, String)
      */
     public void post(String eventName, Object... args) {
-        post(_p, eventName, args);
+        this.post(QiSerializer.getDefault(), eventName, args);
+    }
+
+    /**
+     * Post an event advertised with advertiseEvent method.
+     *
+     * @param qiSerializer
+     *            Serializer to use
+     * @param eventName
+     *            Name of the event to trigger.
+     * @param args
+     *            Arguments sent to callback
+     * @see DynamicObjectBuilder#advertiseSignal(long, String)
+     */
+    public void post(QiSerializer qiSerializer, String eventName, Object... args) {
+        final Object[] transformed;
+
+        if (args == null) {
+            transformed = null;
+        }
+        else {
+            transformed = new Object[args.length];
+
+            for (int index = args.length - 1; index >= 0; index--) {
+                try {
+                    transformed[index] = qiSerializer.serialize(args[index]);
+                }
+                catch (Exception exception) {
+                    transformed[index] = args[index];
+                }
+            }
+        }
+
+        post(_p, eventName, transformed);
     }
 
     @Override
@@ -339,5 +492,40 @@ public class AnyObject {
             }
         }
         return slot;
+    }
+
+    /**
+     * Indicates if given object is equals to this AnyObject
+     * @param object Object to compare with
+     * @return {@code true} if given object is equals
+     */
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+
+        if (null == object || !AnyObject.class.equals(object.getClass())) {
+            return false;
+        }
+
+        return AnyObject.compare(this._p, ((AnyObject) object)._p) == 0;
+    }
+
+    /**
+     * Compare this AnyObject with a given one.<br>
+     * Comparison result is :
+     * <table border=1>
+     *  <tr><th>Comparison</th><th>Result</th></tr>
+     *  <tr><td><center><b>this</b> &lt; anyObject</center></td><th>-1</th></tr>
+     *  <tr><td><center><b>this</b> == anyObject</center></td><th>0</th></tr>
+     *  <tr><td><center><b>this</b> &gt; anyObject</center></td><th>1</th></tr>
+     * </table>
+     * @param anyObject AnyObject to compare with
+     * @return Comparison result
+     */
+    @Override
+    public int compareTo(AnyObject anyObject) {
+        return AnyObject.compare(this._p, anyObject._p);
     }
 }

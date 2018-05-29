@@ -4,9 +4,13 @@
 package com.aldebaran.qi;
 
 import com.aldebaran.qi.serialization.SignatureUtilities;
+import com.aldebaran.qi.serialization.QiSerializer;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+
+import com.aldebaran.qi.serialization.QiSerializer;
+import com.aldebaran.qi.serialization.SignatureUtilities;
 
 /**
  * Class that exposes directly an {@link AnyObject} that can be manipulated.
@@ -45,6 +49,21 @@ public class DynamicObjectBuilder {
             throws AdvertisementException;
 
     private native void setThreadSafeness(long pObjectBuilder, boolean isThreadSafe);
+
+    /**
+     * Advertise a property link to the future AnyObject
+     *
+     * @param dynamicObjectBuilderPointer
+     *            Dynamic object builder to link with
+     * @param propertyName
+     *            Property name
+     * @param propertyPointer
+     *            Property pointer
+     * @throws AdvertisementException
+     *             If advertising failed
+     */
+    private static native void advertisePropertyObject(long dynamicObjectBuilderPointer, String propertyName,
+            long propertyPointer) throws AdvertisementException;
 
     // / Possible thread models for an object
 
@@ -185,13 +204,37 @@ public class DynamicObjectBuilder {
     }
 
     /**
-     * Advertise a property
+     * @deprecated Advertise a property
      *
      * @param name         Property name
      * @param propertyBase Class warp the property
      */
+    @Deprecated
     public void advertiseProperty(String name, Class<?> propertyBase) {
         advertiseProperty(_p, name, propertyBase);
+    }
+
+    /**
+     * Advertise a property<br>
+     * Must be called before {@link #object()}
+     *
+     * @param <T>
+     *            Property type
+     * @param name
+     *            Property name. Must not be null
+     * @param property
+     *            Property to share. Must not be null
+     */
+    public <T> void advertiseProperty(String name, Property<T> property) {
+        if (name == null) {
+            throw new NullPointerException("name must not be null!");
+        }
+
+        if (property == null) {
+            throw new NullPointerException("property must not be null!");
+        }
+
+        DynamicObjectBuilder.advertisePropertyObject(this._p, name, property.pointer);
     }
 
     /**
@@ -228,6 +271,8 @@ public class DynamicObjectBuilder {
     }
 
     /**
+     * Deprecated: Prefer use {@link #advertiseMethods(QiSerializer, Class, Object)} with the good serializer<br>
+     * <br>
      * Advertise methods from interface.<br>
      * All methods of given interface are automatically registered.<br>
      * To specify a description on method add
@@ -239,8 +284,33 @@ public class DynamicObjectBuilder {
      * @param instance       Instance of interface implementation.
      * @return Interface implementation to use for call methods.
      */
-    @SuppressWarnings("unchecked")
+    @Deprecated
     public <INTERFACE, INSTANCE extends INTERFACE> INTERFACE advertiseMethods(final Class<INTERFACE> interfaceClass,
+            final INSTANCE instance) {
+        return this.advertiseMethods(QiSerializer.getDefault(), interfaceClass, instance);
+    }
+
+    /**
+     * Advertise methods from interface.<br>
+     * All methods of given interface are automatically registered.<br>
+     * To specify a description on method add
+     * {@link AdvertisedMethodDescription} annotation on the method.
+     *
+     * @param <INTERFACE>
+     *            Interface type that specifies the list of methods to expose.
+     * @param <INSTANCE>
+     *            Instance type of interface.
+     * @param serializer
+     *            Serializer to use
+     * @param interfaceClass
+     *            Interface that specifies the list of methods to expose.
+     * @param instance
+     *            Instance of interface implementation.
+     * @return Interface implementation to use for call methods.
+     */
+    @SuppressWarnings("unchecked")
+    public <INTERFACE, INSTANCE extends INTERFACE> INTERFACE advertiseMethods(final QiSerializer serializer,
+                                                                              final Class<INTERFACE> interfaceClass,
                                                                               final INSTANCE instance) {
         if (!interfaceClass.isInterface()) {
             throw new IllegalArgumentException(interfaceClass.getName() + " is not an interface!");
@@ -270,7 +340,7 @@ public class DynamicObjectBuilder {
                     interfaceClass.getName(), description);
         }
 
-        return (INTERFACE) Proxy.newProxyInstance(interfaceClass.getClassLoader(), new Class<?>[]{interfaceClass},
-                new AdvertisedMethodCaller<INTERFACE>(this, advertisedMethodMonitor));
+        return (INTERFACE) Proxy.newProxyInstance(interfaceClass.getClassLoader(), new Class<?>[] { interfaceClass },
+                new AdvertisedMethodCaller<INTERFACE>(serializer, this, advertisedMethodMonitor));
     }
 }

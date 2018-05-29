@@ -13,6 +13,12 @@
 #include <iostream>
 #include <jni.h>
 
+#ifdef ANDROID
+# include <android/log.h>
+#endif
+
+#include <qi/property.hpp>
+
 // Define a portable JNIEnv* pointer (API between arm and intel differs)
 #ifdef ANDROID
   typedef JNIEnv** envPtr;
@@ -309,5 +315,74 @@ jint throwNewTimeoutException(JNIEnv *env, const char *message = "");
 
 jint throwNewDynamicCallException(JNIEnv *env, const char *message = "");
 jint throwNewAdvertisementException(JNIEnv *env, const char *message = "");
+jint throwNewApplicationException(JNIEnv *env, const char *message = "");
+jint throwNewConnectionException(JNIEnv *env, const char *message = "");
+jint throwNewPostException(JNIEnv *env, const char *message = "");
+jint throwNewSessionException(JNIEnv *env, const char *message = "");
+jint throwNewIllegalStateException(JNIEnv *env, const char *message = "");
+
+/**
+ * @brief Manage property and maintain a global reference alive until ist i no more use
+ */
+class PropertyManager
+{
+public:
+  /**The managed property*/
+  qi::Property<qi::AnyValue> * property;
+  /**Last setted global reference*/
+  jobject globalReference;
+
+  /**
+   * @brief Create the manager
+   */
+  PropertyManager()
+  {
+    this->property = new qi::Property<qi::AnyValue>();
+    this->globalReference = nullptr;
+  }
+
+  /**
+   * @brief Clear global reference if need
+   * @param env JNI environment
+   */
+  void clearReference(JNIEnv * env)
+  {
+    if(!env->IsSameObject(this->globalReference, nullptr))
+    {
+      env->DeleteGlobalRef(this->globalReference);
+      this->globalReference = nullptr;
+    }
+  }
+
+  /**
+   * @brief Destroy properly the manager
+   * @param env JNI environment
+   */
+  void destroy(JNIEnv * env)
+  {
+    this->clearReference(env);
+    delete this->property;
+  }
+
+  /**
+   * @brief Change the value, store it properly to keep alive the reference
+   * @param env JNI evironment
+   * @param value New value
+   */
+  void setValue(JNIEnv * env, jobject value)
+  {
+    this->clearReference(env);
+
+    if(env->IsSameObject(value, nullptr))
+    {
+      this->globalReference = nullptr;
+    }
+    else
+    {
+      this->globalReference = env->NewGlobalRef(value);
+    }
+  }
+};
+
 
 #endif // !_JAVA_JNI_JNITOOLS_HPP_

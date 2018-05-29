@@ -79,11 +79,12 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Session_qiSessionConnect(JNIEnv *e
   return (jlong) fref;
 }
 
-JNIEXPORT void JNICALL Java_com_aldebaran_qi_Session_qiSessionClose(JNIEnv *QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pSession)
+JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Session_qiSessionClose(JNIEnv *QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pSession)
 {
-  qi::Session *s = reinterpret_cast<qi::Session*>(pSession);
-
-  s->close();
+  qi::Session *session = reinterpret_cast<qi::Session*>(pSession);
+  qi::Future<void> closeFuture = session->close();
+  auto futurePtr = new qi::Future<void>(std::move(closeFuture));
+  return reinterpret_cast<jlong>(futurePtr);
 }
 
 JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Session_service(JNIEnv *env, jobject QI_UNUSED(obj), jlong pSession, jstring jname)
@@ -133,12 +134,13 @@ JNIEXPORT jint JNICALL Java_com_aldebaran_qi_Session_registerService(JNIEnv *env
   return ret;
 }
 
-JNIEXPORT void JNICALL Java_com_aldebaran_qi_Session_unregisterService(JNIEnv *QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pSession, jint serviceId)
+JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Session_unregisterService(JNIEnv *QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pSession, jint serviceId)
 {
   qi::Session*    session = reinterpret_cast<qi::Session*>(pSession);
   unsigned int    id = static_cast<unsigned int>(serviceId);
-
-  session->unregisterService(id);
+  qi::Future<void> unregisterFuture = session->unregisterService(id);
+  auto futurePtr = new qi::Future<void>(std::move(unregisterFuture));
+  return reinterpret_cast<jlong>(futurePtr);
 }
 
 JNIEXPORT void JNICALL Java_com_aldebaran_qi_Session_onDisconnected(JNIEnv *env, jobject jobj, jlong pSession, jstring jcallbackName, jobject jobjectInstance)
@@ -184,20 +186,21 @@ JNIEXPORT void JNICALL Java_com_aldebaran_qi_Session_addConnectionListener(JNIEn
 class Java_ClientAuthenticator : public qi::ClientAuthenticator
 {
 public:
-  Java_ClientAuthenticator(JNIEnv* env, jobject object)
+  Java_ClientAuthenticator(JNIEnv*   env, jobject object)
   {
     _jobjectRef = qi::jni::makeSharedGlobalRef(env, object);
   }
 
   qi::CapabilityMap initialAuthData()
   {
-    JNIEnv* env = nullptr;
-#ifndef ANDROID
-    javaVirtualMachine->AttachCurrentThread(reinterpret_cast<void**>(&env), nullptr);
-#else
-    javaVirtualMachine->AttachCurrentThread(&env, nullptr);
-#endif
+      JNIEnv* env = nullptr;
+   #ifndef ANDROID
+       javaVirtualMachine->AttachCurrentThread(reinterpret_cast<void**>(&env), nullptr);
+   #else
+       javaVirtualMachine->AttachCurrentThread(&env, nullptr);
+   #endif
     jobject _jobject = _jobjectRef.get();
+
     jobject ca = qi::jni::Call<jobject>::invoke(env, _jobject, "initialAuthData", "()Ljava/util/Map;");
     auto result = JNI_JavaMaptoMap(env, ca);
     env->DeleteLocalRef(ca);
@@ -207,12 +210,7 @@ public:
 
   qi::CapabilityMap _processAuth(const qi::CapabilityMap &authData)
   {
-    JNIEnv* env = nullptr;
-#ifndef ANDROID
-    javaVirtualMachine->AttachCurrentThread(reinterpret_cast<void**>(&env), nullptr);
-#else
-    javaVirtualMachine->AttachCurrentThread(&env, nullptr);
-#endif
+    JNIEnv*   env = qi::jni::env();
     jobject _jobject = _jobjectRef.get();
     jobject jmap = JNI_MapToJavaMap(env, authData);
     jobject ca = qi::jni::Call<jobject>::invoke(env, _jobject, "_processAuth", "(Ljava/util/Map;)Ljava/util/Map;", jmap);
@@ -314,12 +312,13 @@ public:
 
   qi::ClientAuthenticatorPtr newAuthenticator()
   {
-    JNIEnv* env = nullptr;
+   JNIEnv* env = nullptr;
 #ifndef ANDROID
     javaVirtualMachine->AttachCurrentThread(reinterpret_cast<void**>(&env), nullptr);
 #else
     javaVirtualMachine->AttachCurrentThread(&env, nullptr);
 #endif
+
     jobject ca = qi::jni::Call<jobject>::invoke(env, _jobject, "newAuthenticator", "()Lcom/aldebaran/qi/ClientAuthenticator;");
     auto result = boost::make_shared<Java_ClientAuthenticator>(env, ca);
     env->DeleteLocalRef(ca);
@@ -364,4 +363,21 @@ JNIEXPORT void JNICALL Java_com_aldebaran_qi_Session_endpoints(JNIEnv * env, job
     env->CallBooleanMethod(endpointsList, methodAdd, url);
     qi::jni::releaseString(url);
   }
+}
+
+/**
+ * @brief Wait for a service is connected
+ * @param env JNI environment.
+ * @param obj Object Java instance.
+ * @param pointerSession Pointer on current session
+ * @param jServiceName Service name to wait its connection
+ * @return Pointer on future to track/link the connection
+ */
+JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Session_waitForService(JNIEnv * env, jobject obj, jlong pointerSession,  jstring jServiceName)
+{
+  qi::Session* session = reinterpret_cast<qi::Session*>(pointerSession);
+  std::string serviceName = qi::jni::toString(jServiceName);
+  qi::Future<void> waitForServiceFuture = session->waitForService(serviceName);
+  auto futurePtr = new qi::Future<void>(std::move(waitForServiceFuture));
+  return reinterpret_cast<jlong>(futurePtr);
 }

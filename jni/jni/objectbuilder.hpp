@@ -21,8 +21,15 @@ extern "C"
   JNIEXPORT void JNICALL Java_com_aldebaran_qi_DynamicObjectBuilder_advertiseSignal(JNIEnv *env, jobject obj, jlong pObjectBuilder, jstring eventSignature);
   JNIEXPORT void JNICALL Java_com_aldebaran_qi_DynamicObjectBuilder_advertiseProperty(JNIEnv *env, jobject obj, jlong pObjectBuilder, jstring name, jclass propertyBase);
   JNIEXPORT void JNICALL Java_com_aldebaran_qi_DynamicObjectBuilder_setThreadSafeness(JNIEnv *env, jobject obj, jlong pObjectBuilder, jboolean isThreadSafe);
-
-
+  /**
+   * Advertise a property with property object
+   * @param env JNI environment
+   * @param clazz DynamicObjectBuilder class
+   * @param pObjectBuilder Pointer on DynamicObjectBuilder instance
+   * @param name Property name
+   * @param pointerProperty Pointer on property instance
+   */
+  JNIEXPORT void JNICALL Java_com_aldebaran_qi_DynamicObjectBuilder_advertisePropertyObject(JNIEnv * env, jclass clazz, jlong pObjectBuilder, jstring name, jlong pointerProperty);
 } // !extern "C"
 
 #endif // !_JAVA_JNI_OBJECTBUILDER_HPP_

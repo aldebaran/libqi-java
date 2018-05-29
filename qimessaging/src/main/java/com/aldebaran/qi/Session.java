@@ -46,13 +46,13 @@ public class Session {
 
     private native boolean qiSessionIsConnected(long pSession);
 
-    private native void qiSessionClose(long pSession);
+    private native long qiSessionClose(long pSession);
 
     private native long service(long pSession, String name);
 
     private native int registerService(long pSession, String name, AnyObject obj);
 
-    private native void unregisterService(long pSession, int idx);
+    private native long unregisterService(long pSession, int idx);
 
     private native void onDisconnected(long pSession, String callback, Object obj);
 
@@ -61,6 +61,8 @@ public class Session {
     private native void setClientAuthenticatorFactory(long pSession, ClientAuthenticatorFactory factory);
 
     private native void loadService(long pSession, String name);
+
+    private native long waitForService(long pointerSession, String serviceName);
 
     /**
      * List of URL session endpoints.
@@ -123,9 +125,12 @@ public class Session {
 
     /**
      * Close connection to Service Directory
+     *
+     * @return Future to track/linked the effective close
      */
-    public void close() {
-        qiSessionClose(_session);
+    public Future<Void> close() {
+        final long pFuture = qiSessionClose(this._session);
+        return new Future<Void>(pFuture);
     }
 
     /**
@@ -154,10 +159,12 @@ public class Session {
      * Unregister service from Service Directory
      *
      * @param idx is return by registerService
+     * @return Future to track/linked to the complete finished
      * @see #registerService(String, AnyObject)
      */
-    public void unregisterService(int idx) {
-        unregisterService(_session, idx);
+    public Future<Void> unregisterService(int idx) {
+        final long pFuture = unregisterService(this._session, idx);
+        return new Future<Void>(pFuture);
     }
 
     @Deprecated
@@ -244,5 +251,15 @@ public class Session {
         final List<String> urls = new ArrayList<String>();
         this.endpoints(this._session, urls);
         return Collections.unmodifiableList(urls);
+    }
+
+    /**
+     * Create future for wait a service is ready to use.
+     * @param serviceName Service name
+     * @return Future to track/link service connection
+     */
+    public Future<Void> waitForService(String serviceName) {
+        final long pFuture = this.waitForService(this._session, serviceName);
+        return new Future<Void>(pFuture);
     }
 }
