@@ -115,7 +115,7 @@ void JNIlogHandler::log(const qi::LogLevel verb,
         //So we try to attach JNI environment to current thread. Have to detach it in success
         char threadName[] = "qimessaging-reportLog-thread";
         JavaVMAttachArgs args = { JNI_VERSION_1_6, threadName, nullptr };
-        succeed = javaVirtualMachine->AttachCurrentThread(&env, &args);
+        succeed = javaVirtualMachine->AttachCurrentThread((envPtr)&env, &args);
 
         if(succeed != JNI_OK || !env)
         {
