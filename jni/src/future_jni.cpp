@@ -45,27 +45,27 @@ static jobject extractValue(JNIEnv *env, const qi::AnyValue& value)
             return extractValue(env, *reinterpret_cast<qi::AnyValue*>(arRes.rawValue()));
         }
 
-        std::pair<qi::AnyReference, bool> converted = arRes.convert(qi::typeOf<jobject>());
+        // FIXME:
+        // We cannot use `qi::AnyReference::to<jobject>()` because it would return a jobject that
+        // was already released:
+        // The `to` method converts the AnyReference into a temporary AnyReference to jobject,
+        // copies it in a local jobject (which is a pointer), destroys the temporary (which calls
+        // `JNIEnv::DestroyGlobalRef`) and returns the copy of the jobject, which then references a
+        // object that was released. Instead we call `AnyReference::convert` directly a use the
+        // jobject before the result of the `convert` method is destroyed.
+        const auto converted = arRes.convert(qi::typeOf<jobject>());
 
         //If the converted value doesn't have a valid type, trying to obtain its rawValue will do a SIGSEGV,
         // because the method rawValue() refers to a non initialized value in this case
-        if(! converted.first.type())
+        if (!converted->isValid())
         {
-            //Not valid, return "null" object to Java
-            return nullptr;
+          //Not valid, return "null" object to Java
+          return nullptr;
         }
 
         //The converted value is valid
-        jobject result = * reinterpret_cast<jobject*>(converted.first.rawValue());
-        // keep it alive while we remove the global ref
-        result = env->NewLocalRef(result);
-
-        if (converted.second)
-        {
-            converted.first.destroy();
-        }
-
-        return result;
+        const auto result = *reinterpret_cast<jobject*>(converted->rawValue());
+        return env->NewLocalRef(result);
     }
     catch (const std::exception &e)
     {
