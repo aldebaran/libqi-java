@@ -5,6 +5,7 @@
 #include <jnitools.hpp>
 #include <jobjectconverter.hpp>
 #include <object.hpp>
+#include <objectbuilder.hpp>
 
 
 qiLogCategory("qimessaging.jni.test");
@@ -115,4 +116,25 @@ TEST_F(QiJNI, futureErrorIfSetPropertyThrows)
   auto status = future->waitFor(qi::MilliSeconds{200});
   ASSERT_EQ(qi::FutureState_FinishedWithError, status);
   ASSERT_EQ(initialValue, object.property<int>(propertyName).value());
+}
+
+
+TEST_F(QiJNI, dynamicObjectBuilderAdvertiseMethodVoidVoid)
+{
+  // Object.notify() is a typical example of function taking and returning nothing.
+  const auto javaObjectClassName = "java/lang/Object";
+  const auto javaObjectClass = env->FindClass(javaObjectClassName);
+  const auto javaObjectConstructor = env->GetMethodID(javaObjectClass, "<init>", "()V");
+  const auto javaObject = env->NewObject(javaObjectClass, javaObjectConstructor);
+
+  // Let's make a Qi Object calling that method.
+  const auto objectBuilderAddress = Java_com_aldebaran_qi_DynamicObjectBuilder_create(env, nullptr);
+  env->ExceptionClear();
+  Java_com_aldebaran_qi_DynamicObjectBuilder_advertiseMethod(
+        env, jobject{},
+        objectBuilderAddress,
+        qi::jni::toJstring("notify::v()"), javaObject, // 'v' stands for "void"
+        qi::jni::toJstring(javaObjectClassName),
+        qi::jni::toJstring("Whatever"));
+  ASSERT_FALSE(env->ExceptionCheck());
 }
