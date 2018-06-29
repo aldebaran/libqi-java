@@ -44,7 +44,9 @@ JNIEXPORT void JNICALL Java_com_aldebaran_qi_DynamicObjectBuilder_destroy(JNIEnv
   delete ob;
 }
 
-JNIEXPORT void JNICALL Java_com_aldebaran_qi_DynamicObjectBuilder_advertiseMethod(JNIEnv *env, jobject jobj, jlong pObjectBuilder, jstring method, jobject instance, jstring className, jstring desc)
+JNIEXPORT void JNICALL Java_com_aldebaran_qi_DynamicObjectBuilder_advertiseMethod(
+    JNIEnv *env, jobject jobj, jlong pObjectBuilder,
+    jstring method, jobject instance, jstring className, jstring desc)
 {
   extern MethodInfoHandler   gInfoHandler;
   qi::DynamicObjectBuilder  *ob = reinterpret_cast<qi::DynamicObjectBuilder *>(pObjectBuilder);
