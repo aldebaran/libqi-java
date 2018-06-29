@@ -6,6 +6,19 @@
 #include <jobjectconverter.hpp>
 #include <object.hpp>
 
+
+qiLogCategory("qimessaging.jni.test");
+
+
+int main(int argc, char** argv)
+{
+  // Avoid making a qi::Application. Real Java apps cannot do it.
+  qi::log::addFilter("qimessaging.jni", qi::LogLevel_Debug);
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
+}
+
+
 class QiJNI: public ::testing::Test
 {
 protected:
@@ -26,6 +39,10 @@ protected:
     if (status == JNI_ERR)
       throw std::runtime_error("Failed to set a JVM up");
     jvm->AttachCurrentThread((void**)&env, nullptr);
+
+    // Real Java apps will always call this when loading the library.
+    JNI_OnLoad(jvm, nullptr);
+
     Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(env, jclass{});
   }
 
