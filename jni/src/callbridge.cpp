@@ -179,17 +179,10 @@ qi::AnyReference call_to_java(std::string signature, void* data, const qi::Gener
   callJavaArguments[3] = object2value(arguments);
   jobject valueResult = env->CallStaticObjectMethodA(cls_nativeTools, method_NativeTools_callJava, callJavaArguments);
 
-  if (sigInfo[0] == "" || sigInfo[0] == "v")
+  if (!env->ExceptionCheck())
   {
-    res = qi::AnyReference(qi::typeOf<void>());
-  }
-  else
-  {
-    if (!env->ExceptionCheck())
-    {
-      res = AnyValue_from_JObject(valueResult).first;
-      qi::jni::releaseObject(valueResult);
-    }
+    res = AnyValue_from_JObject(valueResult).first;
+    qi::jni::releaseObject(valueResult);
   }
 
   // Did method throw?

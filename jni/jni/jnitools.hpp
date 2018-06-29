@@ -31,6 +31,7 @@
 // QI_OBJECT_CLASS defines complete name of java generic object class
 #define QI_OBJECT_CLASS "com/aldebaran/qi/AnyObject"
 
+extern jclass cls_void;
 extern jclass cls_string;
 extern jclass cls_integer;
 extern jclass cls_float;

@@ -18,6 +18,7 @@
 
 qiLogCategory("qimessaging.jni");
 
+jclass cls_void;
 jclass cls_string;
 jclass cls_integer;
 jclass cls_float;
@@ -166,6 +167,7 @@ static inline jclass loadClass(JNIEnv *env, const char *className)
 
 static void init_classes(JNIEnv *env)
 {
+  cls_void = loadClass(env, "java/lang/Void");
   cls_string = loadClass(env, "java/lang/String");
   cls_integer = loadClass(env, "java/lang/Integer");
   cls_float = loadClass(env, "java/lang/Float");

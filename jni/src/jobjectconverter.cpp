@@ -362,7 +362,7 @@ qi::AnyReference _AnyValue_from_JObject(jobject val);
 std::pair<qi::AnyReference, bool> AnyValue_from_JObject(jobject val)
 {
   if (!val)
-    return std::make_pair(qi::AnyReference(), false);
+    return std::make_pair(qi::AnyReference(qi::typeOf<void>()), false);
 
   return std::make_pair(_AnyValue_from_JObject(val), true);
 }
@@ -371,6 +371,11 @@ qi::AnyReference _AnyValue_from_JObject(jobject val)
 {
   qi::jni::JNIAttach attach;
   JNIEnv *env = attach.get();
+
+  if (env->IsInstanceOf(val, cls_void))
+  {
+    return qi::AnyReference(qi::typeOf<void>());
+  }
 
   if (env->IsInstanceOf(val, cls_string))
   {

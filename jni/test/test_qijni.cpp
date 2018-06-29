@@ -138,3 +138,28 @@ TEST_F(QiJNI, dynamicObjectBuilderAdvertiseMethodVoidVoid)
         qi::jni::toJstring("Whatever"));
   ASSERT_FALSE(env->ExceptionCheck());
 }
+
+
+qi::Future<void> cancellableAsyncFuture()
+{
+  qi::Promise<void> p{[](qi::Promise<void> p){ p.setCanceled(); }};
+  return p.future();
+}
+
+
+qi::AnyReference typeErasedCancellableAsyncFuture(const qi::GenericFunctionParameters&)
+{
+  return qi::AnyReference::from(cancellableAsyncFuture());
+}
+
+
+TEST_F(QiJNI, callAdvertisedAnyFunctionReturningAFuture)
+{
+  auto anyFunction = qi::AnyFunction::fromDynamicFunction(typeErasedCancellableAsyncFuture);
+  qi::DynamicObjectBuilder ob;
+  ob.xAdvertiseMethod("v", "cancellableAsyncFuture", "()", std::move(anyFunction));
+  auto anyObject = ob.object();
+  auto future = anyObject.metaCall("cancellableAsyncFuture", qi::GenericFunctionParameters{});
+  auto status = future.waitFor(qi::MilliSeconds{100});
+  ASSERT_EQ(qi::FutureState_Running, status);
+}

@@ -24,6 +24,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.aldebaran.qi.serialization.QiSerializer;
+
 /**
  * Integration test for QiMessaging java bindings.
  */
@@ -70,6 +72,7 @@ public class FutureTest {
         ob.advertiseMethod("throwUp::v()", reply, "Throws");
         ob.advertiseMethod("getFuture::s(s)", reply, "Returns a future");
         ob.advertiseMethod("getCancellableFuture::s(s)", reply, "Returns a cancellable future");
+        ob.advertiseMethod("getCancellableInfiniteFuture::v()", reply, "Returns a cancellable future that will not finish by itself");
 
         // Connect session to Service Directory
         s.connect(url).sync();
@@ -773,6 +776,12 @@ public class FutureTest {
     public void testAdvertisedFutureReturn() throws ExecutionException, InterruptedException {
         Future f = proxy.call(Future.class, "getFuture", "toto");
         assertEquals("ENDtoto", f.get());
+    }
+
+    @Test(expected = TimeoutException.class)
+    public void testReturnedFutureIsNotFinished() throws ExecutionException, TimeoutException {
+        Future f = proxy.call(Future.class, "getCancellableInfiniteFuture");
+        f.get(100, TimeUnit.MILLISECONDS);
     }
 
     // @Test
