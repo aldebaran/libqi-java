@@ -769,7 +769,7 @@ public class FutureTest {
         p.getFuture().get(0, TimeUnit.SECONDS); // must not throw
     }
 
-    // @Test
+    @Test
     public void testAdvertisedFutureReturn() throws ExecutionException, InterruptedException {
         Future f = proxy.call(Future.class, "getFuture", "toto");
         assertEquals("ENDtoto", f.get());
