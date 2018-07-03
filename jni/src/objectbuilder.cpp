@@ -72,11 +72,15 @@ JNIEXPORT void JNICALL Java_com_aldebaran_qi_DynamicObjectBuilder_advertiseMetho
     // Bind method signature on generic java callback
     sigInfo = qi::signatureSplit(signature);
 
-    ob->xAdvertiseMethod(sigInfo[0],
-        sigInfo[1],
-        sigInfo[2],
-        qi::AnyFunction::fromDynamicFunction(boost::bind(&call_to_java, signature, data, _1)).dropFirstArgument(),
-        description);
+    auto callToJava = [signature, data](const qi::GenericFunctionParameters& params)
+    {
+      return call_to_java(signature, data, params);
+    };
+
+    ob->xAdvertiseMethod(
+          sigInfo[0], sigInfo[1], sigInfo[2],
+          qi::AnyFunction::fromDynamicFunction(callToJava).dropFirstArgument(),
+          description);
   }
   catch (std::runtime_error &e)
   {
