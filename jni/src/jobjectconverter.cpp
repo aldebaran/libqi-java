@@ -341,11 +341,8 @@ qi::AnyReference AnyValue_from_JObject_Future(jobject val, JNIEnv* env)
   auto fieldId = env->GetFieldID(cls_future, "_fut", "J");
   auto futureAddress = env->GetLongField(val, fieldId);
   auto future = reinterpret_cast<qi::Future<qi::AnyValue>*>(futureAddress);
-
-  // like done with the other types, we store the real data somewhere for the
-  // reference to survive
-  auto& futureCopy = *new qi::Future<qi::AnyValue>(*future);
-  return qi::AnyReference::from(futureCopy);
+  auto any = qi::AnyReference::from(*future);
+  return any.clone(); // makes a copy of the content, and keeps ownership on it
 }
 
 qi::AnyReference AnyValue_from_JObject_RemoteObject(jobject val)
