@@ -791,7 +791,7 @@ public class FutureTest {
         assertTrue(f.isCancelled());
     }
 
-    // @Test(expected = CancellationException.class)
+    @Test(expected = CancellationException.class)
     public void testCancelPropagationOnWaitAll() throws ExecutionException, TimeoutException, InterruptedException {
         Future cancellableFut = proxy.call(Future.class, "getCancellableFuture", "toto");
         Future otherCancellableFut = proxy.call(Future.class, "getCancellableFuture", "toto");
