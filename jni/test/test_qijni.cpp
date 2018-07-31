@@ -149,7 +149,7 @@ qi::Future<void> cancellableAsyncFuture()
 
 qi::AnyReference typeErasedCancellableAsyncFuture(const qi::GenericFunctionParameters&)
 {
-  return qi::AnyReference::from(cancellableAsyncFuture());
+  return qi::AnyReference::from(cancellableAsyncFuture()).clone();
 }
 
 
