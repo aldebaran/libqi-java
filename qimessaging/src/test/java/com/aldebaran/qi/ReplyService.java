@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ReplyService extends QiService {
     private int storedValue = 0;
+    private Promise<Void> cancellableTask = null;
 
     public Boolean iWillThrow() throws Exception {
         throw new Exception("Expected Failure");
@@ -227,6 +228,18 @@ public class ReplyService extends QiService {
                 doCancellableWork(promise, param);
             }
         }).start();
+        return promise.getFuture();
+    }
+
+    public Future<Void> getCancellableInfiniteFuture() {
+        final Promise<Void> promise = new Promise<Void>();
+        promise.setOnCancel(new Promise.CancelRequestCallback<Void>() {
+            @Override
+            public void onCancelRequested(Promise<Void> unusedPromise) {
+                promise.setCancelled();
+            }
+        });
+        System.out.println("getCancellableInfiniteFuture was called");
         return promise.getFuture();
     }
 }

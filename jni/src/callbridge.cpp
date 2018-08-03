@@ -60,29 +60,38 @@ qi::Future<qi::AnyValue>* call_from_java(JNIEnv *env, qi::AnyObject object, cons
   try
   {
     auto metfut = object.metaCall(strMethodName, params);
-    qi::Promise<qi::AnyValue> promise{[=](qi::Promise<qi::AnyValue>) mutable {
-            metfut.cancel();
-          }, qi::FutureCallbackType_Sync};
+    qi::Promise<qi::AnyValue> promise{
+      [=](qi::Promise<qi::AnyValue>) mutable { metfut.cancel(); },
+      qi::FutureCallbackType_Sync};
 
-    metfut.then([=](qi::Future<qi::AnyReference> result) mutable {
-      if (result.hasError())
+    metfut.then([=](qi::Future<qi::AnyReference> result) mutable
+    {
+      try
       {
-        promise.setError(result.error());
+        if (result.hasError())
+        {
+          promise.setError(result.error());
+        }
+        else if (result.isCanceled())
+        {
+          promise.setCanceled();
+        }
+        else
+        {
+          promise.setValue(qi::AnyValue{result.value(), false, true});
+        }
       }
-      else if (result.isCanceled())
+      catch (const std::exception& e)
       {
-        promise.setCanceled();
-      }
-      else
-      {
-        promise.setValue(qi::AnyValue(result.value(), false, true));
+        qiLogError() << "Failed to transmit the result of the meta call: " << e.what();
       }
     });
 
     std::unique_ptr<qi::Future<qi::AnyValue>> fut ( new auto(promise.future()) );
     return fut.release();
 
-  } catch (std::runtime_error &e)
+  }
+  catch (std::runtime_error &e)
   {
     throwNewDynamicCallException(env, e.what());
     return nullptr;
@@ -179,17 +188,10 @@ qi::AnyReference call_to_java(std::string signature, void* data, const qi::Gener
   callJavaArguments[3] = object2value(arguments);
   jobject valueResult = env->CallStaticObjectMethodA(cls_nativeTools, method_NativeTools_callJava, callJavaArguments);
 
-  if (sigInfo[0] == "" || sigInfo[0] == "v")
+  if (!env->ExceptionCheck())
   {
-    res = qi::AnyReference(qi::typeOf<void>());
-  }
-  else
-  {
-    if (!env->ExceptionCheck())
-    {
-      res = AnyValue_from_JObject(valueResult).first;
-      qi::jni::releaseObject(valueResult);
-    }
+    res = AnyValue_from_JObject(valueResult).first;
+    qi::jni::releaseObject(valueResult);
   }
 
   // Did method throw?

@@ -18,6 +18,7 @@
 
 qiLogCategory("qimessaging.jni");
 
+jclass cls_void;
 jclass cls_string;
 jclass cls_integer;
 jclass cls_float;
@@ -49,13 +50,13 @@ jclass LogReportClass;
  */
 jmethodID jniLog;
 
-JavaVM* javaVirtualMachine;
+JavaVM* javaVirtualMachine = nullptr;
 
 /**
  * @brief Instance of registered JNI log capture handler.
  * Global to maintain it alive durring all the application life
  */
-JNIlogHandler* jniLogHandler;
+JNIlogHandler* jniLogHandler = nullptr;
 
 static void emergency()
 {
@@ -127,15 +128,19 @@ void JNIlogHandler::log(const qi::LogLevel verb,
         attached = true;
     }
 
-    try
+
+    //Send the message to Java side, if available
+    if (LogReportClass)
     {
-        //Send the message to Java side
-        jstring message = env->NewStringUTF(msg);
-        env->CallStaticVoidMethod(LogReportClass, jniLog, logLevel, message);
-    }
-    catch (...)
-    {
-        // Exception while report log
+      try
+      {
+          jstring message = env->NewStringUTF(msg);
+          env->CallStaticVoidMethod(LogReportClass, jniLog, logLevel, message);
+      }
+      catch (...)
+      {
+          // Exception while report log
+      }
     }
 
 
@@ -162,6 +167,7 @@ static inline jclass loadClass(JNIEnv *env, const char *className)
 
 static void init_classes(JNIEnv *env)
 {
+  cls_void = loadClass(env, "java/lang/Void");
   cls_string = loadClass(env, "java/lang/String");
   cls_integer = loadClass(env, "java/lang/Integer");
   cls_float = loadClass(env, "java/lang/Float");
@@ -188,8 +194,9 @@ static void init_classes(JNIEnv *env)
                                                        "callJava",
                                                        "(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;");
 
+  // KLUDGE: LogReport has been written outside, and may not be available.
   LogReportClass = loadClass(env, "com/aldebaran/qi/log/LogReport");
-  jniLog = env->GetStaticMethodID(LogReportClass, "jniLog", "(ILjava/lang/String;)V");
+  jniLog = LogReportClass ? env->GetStaticMethodID(LogReportClass, "jniLog", "(ILjava/lang/String;)V") : nullptr;
 }
 
 JNIEXPORT void JNICALL Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(JNIEnv* env, jclass QI_UNUSED(cls))
