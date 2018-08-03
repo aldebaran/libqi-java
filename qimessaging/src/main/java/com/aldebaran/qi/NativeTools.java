@@ -114,7 +114,7 @@ public class NativeTools {
 
                     method.setAccessible(true);
                     Object result = method.invoke(instance, arguments);
-                    Class<?> returnType = methodDescription.getReturnType();
+                    Class<?> returnType = method.getReturnType();
 
                     if (void.class.equals(returnType) || Void.class.equals(returnType))
                         return null;

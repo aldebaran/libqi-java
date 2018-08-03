@@ -96,6 +96,7 @@ public class ObjectTest {
 
         s.close();
         client.close();
+        sd.close();
 
         s = null;
         client = null;

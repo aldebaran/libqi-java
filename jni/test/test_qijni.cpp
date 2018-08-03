@@ -5,6 +5,20 @@
 #include <jnitools.hpp>
 #include <jobjectconverter.hpp>
 #include <object.hpp>
+#include <objectbuilder.hpp>
+
+
+qiLogCategory("qimessaging.jni.test");
+
+
+int main(int argc, char** argv)
+{
+  // Avoid making a qi::Application. Real Java apps cannot do it.
+  qi::log::addFilter("qimessaging.jni", qi::LogLevel_Debug);
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
+}
+
 
 class QiJNI: public ::testing::Test
 {
@@ -26,6 +40,10 @@ protected:
     if (status == JNI_ERR)
       throw std::runtime_error("Failed to set a JVM up");
     jvm->AttachCurrentThread((void**)&env, nullptr);
+
+    // Real Java apps will always call this when loading the library.
+    JNI_OnLoad(jvm, nullptr);
+
     Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(env, jclass{});
   }
 
@@ -98,4 +116,50 @@ TEST_F(QiJNI, futureErrorIfSetPropertyThrows)
   auto status = future->waitFor(qi::MilliSeconds{200});
   ASSERT_EQ(qi::FutureState_FinishedWithError, status);
   ASSERT_EQ(initialValue, object.property<int>(propertyName).value());
+}
+
+
+TEST_F(QiJNI, dynamicObjectBuilderAdvertiseMethodVoidVoid)
+{
+  // Object.notify() is a typical example of function taking and returning nothing.
+  const auto javaObjectClassName = "java/lang/Object";
+  const auto javaObjectClass = env->FindClass(javaObjectClassName);
+  const auto javaObjectConstructor = env->GetMethodID(javaObjectClass, "<init>", "()V");
+  const auto javaObject = env->NewObject(javaObjectClass, javaObjectConstructor);
+
+  // Let's make a Qi Object calling that method.
+  const auto objectBuilderAddress = Java_com_aldebaran_qi_DynamicObjectBuilder_create(env, nullptr);
+  env->ExceptionClear();
+  Java_com_aldebaran_qi_DynamicObjectBuilder_advertiseMethod(
+        env, jobject{},
+        objectBuilderAddress,
+        qi::jni::toJstring("notify::v()"), javaObject, // 'v' stands for "void"
+        qi::jni::toJstring(javaObjectClassName),
+        qi::jni::toJstring("Whatever"));
+  ASSERT_FALSE(env->ExceptionCheck());
+}
+
+
+qi::Future<void> cancellableAsyncFuture()
+{
+  qi::Promise<void> p{[](qi::Promise<void> p){ p.setCanceled(); }};
+  return p.future();
+}
+
+
+qi::AnyReference typeErasedCancellableAsyncFuture(const qi::GenericFunctionParameters&)
+{
+  return qi::AnyReference::from(cancellableAsyncFuture()).clone();
+}
+
+
+TEST_F(QiJNI, callAdvertisedAnyFunctionReturningAFuture)
+{
+  auto anyFunction = qi::AnyFunction::fromDynamicFunction(typeErasedCancellableAsyncFuture);
+  qi::DynamicObjectBuilder ob;
+  ob.xAdvertiseMethod("v", "cancellableAsyncFuture", "()", std::move(anyFunction));
+  auto anyObject = ob.object();
+  auto future = anyObject.metaCall("cancellableAsyncFuture", qi::GenericFunctionParameters{});
+  auto status = future.waitFor(qi::MilliSeconds{100});
+  ASSERT_EQ(qi::FutureState_Running, status);
 }
