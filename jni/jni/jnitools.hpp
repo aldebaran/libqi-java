@@ -49,6 +49,7 @@ extern jclass cls_arraylist;
 
 extern jclass cls_map;
 extern jclass cls_hashmap;
+extern jclass cls_enum;
 
 extern jclass cls_object;
 extern jclass cls_nativeTools;
