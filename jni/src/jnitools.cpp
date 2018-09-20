@@ -689,14 +689,18 @@ namespace qi {
       int i = 0;
       for (const AnyReference &ref : values)
       {
-        std::pair<AnyReference, bool> converted = ref.convert(qi::typeOf<jobject>());
-        jobject value = *reinterpret_cast<jobject *>(converted.first.rawValue());
+        // FIXME:
+        // We cannot use `qi::AnyReference::to<jobject>()` because it would return a jobject that
+        // was already released:
+        // The `to` method converts the AnyReference into a temporary AnyReference to jobject,
+        // copies it in a local jobject (which is a pointer), destroys the temporary (which calls
+        // `JNIEnv::DestroyGlobalRef`) and returns the copy of the jobject, which then references a
+        // object that was released. Instead we call `AnyReference::convert` directly a use the
+        // jobject before the result of the `convert` method is destroyed.
+        const auto converted = ref.convert(qi::typeOf<jobject>());
+        QI_ASSERT(converted->isValid());
+        const auto value = *reinterpret_cast<jobject*>(converted->rawValue());
         env->SetObjectArrayElement(array, i++, value);
-
-        if (converted.second)
-        {
-          converted.first.destroy();
-        }
       }
       return array;
     }
