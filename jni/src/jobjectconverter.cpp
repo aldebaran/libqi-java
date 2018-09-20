@@ -112,11 +112,18 @@ struct toJObject
       for(; it != end; ++it)
       {
         qi::AnyReference arRes = *it;
-        std::pair<qi::AnyReference, bool> converted = arRes.convert(qi::typeOf<jobject>());
-        jobject result = *(jobject*)converted.first.rawValue();
+        // FIXME:
+        // We cannot use `qi::AnyReference::to<jobject>()` because it would return a jobject that
+        // was already released:
+        // The `to` method converts the AnyReference into a temporary AnyReference to jobject,
+        // copies it in a local jobject (which is a pointer), destroys the temporary (which calls
+        // `JNIEnv::DestroyGlobalRef`) and returns the copy of the jobject, which then references a
+        // object that was released. Instead we call `AnyReference::convert` directly a use the
+        // jobject before the result of the `convert` method is destroyed.
+        const auto converted = arRes.convert(qi::typeOf<jobject>());
+        QI_ASSERT(converted->isValid());
+        const auto result = *reinterpret_cast<jobject*>(converted->rawValue());
         list.push_back(result);
-        if (converted.second)
-          converted.first.destroy();
       }
 
       *result = list.object();
@@ -128,18 +135,22 @@ struct toJObject
 
       for (; it != end; ++it)
       {
-        std::pair<qi::AnyReference, bool> keyConv =
-          (*it)[0].convert(qi::typeOf<jobject>());
-        std::pair<qi::AnyReference, bool> valConv =
-          (*it)[1].convert(qi::typeOf<jobject>());
-
-        map.put(*(jobject*)keyConv.first.rawValue(),
-            *(jobject*)valConv.first.rawValue());
-
-        if (keyConv.second)
-          keyConv.first.destroy();
-        if (valConv.second)
-          valConv.first.destroy();
+        // FIXME:
+        // We cannot use `qi::AnyReference::to<jobject>()` because it would return a jobject that
+        // was already released:
+        // The `to` method converts the AnyReference into a temporary AnyReference to jobject,
+        // copies it in a local jobject (which is a pointer), destroys the temporary (which calls
+        // `JNIEnv::DestroyGlobalRef`) and returns the copy of the jobject, which then references a
+        // object that was released. Instead we call `AnyReference::convert` directly a use the
+        // jobject before the result of the `convert` method is destroyed.
+        const auto typeOfObject = qi::typeOf<jobject>();
+        const auto keyConv = (*it)[0].convert(typeOfObject);
+        QI_ASSERT(keyConv->isValid());
+        const auto valConv = (*it)[1].convert(typeOfObject);
+        QI_ASSERT(valConv->isValid());
+        const auto key = *reinterpret_cast<jobject*>(keyConv->rawValue());
+        const auto val = *reinterpret_cast<jobject*>(valConv->rawValue());
+        map.put(key, val);
       }
 
       *result = map.object();
