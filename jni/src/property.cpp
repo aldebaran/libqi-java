@@ -9,10 +9,21 @@
  * @param obj Object source
  * @return Pointer on created property
  */
-JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Property_createProperty(JNIEnv * obj, jobject clazz)
+JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Property_createProperty(JNIEnv* env,
+                                                                      jobject /*obj*/,
+                                                                      jclass valueClass)
 {
-    auto propertyPointer = new PropertyManager();
-    return reinterpret_cast<jlong>(propertyPointer);
+    auto* valueType = propertyValueClassToType(env, valueClass);
+    if (!valueType)
+    {
+      const std::string message =
+        "Could not find the qi.TypeInterface of property value class of signature '" +
+        propertyBaseSignature(env, valueClass) + "'";
+      throwNewRuntimeException(env, message.c_str());
+      return 0;
+    }
+    auto propertyManager = new PropertyManager(*valueType);
+    return reinterpret_cast<jlong>(propertyManager);
 }
 
 /**
@@ -25,7 +36,7 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Property_createProperty(JNIEnv * o
 JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Property_get(JNIEnv * env, jobject obj, jlong pointer)
 {
     auto propertyManager = reinterpret_cast<PropertyManager *>(pointer);
-    auto propertyPointer = propertyManager->property;
+    const auto& propertyPointer = propertyManager->property;
     // Potential global reference issue here, due multithread, Garbage collector and other fun.
     auto futurePointer = new qi::Future<qi::AnyValue> { propertyPointer->value().async() };
     return reinterpret_cast<jlong>(futurePointer);
@@ -43,7 +54,7 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Property_set(JNIEnv * env, jobject
 {
     auto propertyManager = reinterpret_cast<PropertyManager *>(pointer);
     propertyManager->setValue(env, value);
-    auto propertyPointer = propertyManager->property;
+    const auto& propertyPointer = propertyManager->property;
     // Have wait the result here.
     // When embed inside a future, it happen time to time some crash.
     propertyPointer->setValue(qi::AnyValue::from<jobject>(propertyManager->globalReference)).wait();

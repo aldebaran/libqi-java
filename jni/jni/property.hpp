@@ -11,7 +11,7 @@ extern "C"
    * @param obj Object source
    * @return Pointer on creater property
    */
-  JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Property_createProperty(JNIEnv * env, jobject obj);
+  JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Property_createProperty(JNIEnv * env, jobject obj, jclass valueClass);
 
   /**
    * Obtain a property value

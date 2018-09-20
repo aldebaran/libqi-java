@@ -142,7 +142,7 @@ JNIEXPORT void JNICALL Java_com_aldebaran_qi_DynamicObjectBuilder_advertisePrope
 
   try
   {
-    dynamicObjectBuilder -> advertiseProperty(propertyName, propertyManager->property);
+    dynamicObjectBuilder -> advertiseProperty(propertyName, propertyManager->property.get());
   }
   catch (std::runtime_error &e)
   {

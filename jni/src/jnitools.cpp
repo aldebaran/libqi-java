@@ -451,13 +451,7 @@ jint throwNewIllegalStateException(JNIEnv *env, const char *message)
   return throwNew(env, "java/lang/IllegalStateException", message);
 }
 
-/**
- * @brief propertyBaseSignature Get the qitype signature of a Java class template (jclass)
- * @param env JNI environment
- * @param propertyBase element to inspect
- * @return a qitype signature
- */
-std::string propertyBaseSignature(JNIEnv* env, jclass propertyBase)
+std::string propertyBaseSignature(JNIEnv *env, jclass propertyBase)
 {
   std::string sig;
 
@@ -496,6 +490,33 @@ std::string propertyBaseSignature(JNIEnv* env, jclass propertyBase)
   }
 
   return sig;
+}
+
+qi::TypeInterface *propertyValueClassToType(JNIEnv *env, jclass clazz)
+{
+  if (env->IsAssignableFrom(clazz, cls_string))
+    return qi::typeOf<std::string>();
+  if (env->IsAssignableFrom(clazz, cls_integer) || env->IsAssignableFrom(clazz, cls_enum))
+    return qi::typeOf<std::int32_t>();
+  if (env->IsAssignableFrom(clazz, cls_float))
+    return qi::typeOf<float>();
+  if (env->IsAssignableFrom(clazz, cls_boolean))
+    return qi::typeOf<bool>();
+  if (env->IsAssignableFrom(clazz, cls_long))
+    return qi::typeOf<std::int64_t>();
+  if (env->IsAssignableFrom(clazz, cls_anyobject))
+    return qi::typeOf<qi::AnyObject>();
+  if (env->IsAssignableFrom(clazz, cls_double))
+    return qi::typeOf<double>();
+  if (env->IsAssignableFrom(clazz, cls_map))
+    return qi::typeOf<std::map<qi::AnyValue, qi::AnyValue>>();
+  if (env->IsAssignableFrom(clazz, cls_list))
+    return qi::typeOf<std::vector<qi::AnyValue>>();
+
+  // For all other types, return a dynamic type. This includes the types that inherit the Tuple type
+  // that we expose in Java because it is dynamic and the types it contains are unknown until we
+  // instantiate one.
+  return qi::typeOf<qi::AnyValue>();
 }
 
 namespace qi {
