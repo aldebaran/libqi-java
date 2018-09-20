@@ -81,12 +81,12 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_asyncCall(JNIEnv* env, j
   return (jlong) fut;
 }
 
-JNIEXPORT jstring JNICALL Java_com_aldebaran_qi_AnyObject_printMetaObject(JNIEnv* QI_UNUSED(env), jobject QI_UNUSED(jobj), jlong pObject)
+JNIEXPORT jstring JNICALL Java_com_aldebaran_qi_AnyObject_metaObjectToString(JNIEnv* QI_UNUSED(env), jobject QI_UNUSED(jobj), jlong pObject)
 {
   qi::AnyObject&    obj = *(reinterpret_cast<qi::AnyObject*>(pObject));
   std::stringstream ss;
 
-  qi::detail::printMetaObject(ss, obj.metaObject());
+  qi::detail::printMetaObject(ss, obj.metaObject(), false /* do not print colors */);
   return qi::jni::toJstring(ss.str());
 }
 

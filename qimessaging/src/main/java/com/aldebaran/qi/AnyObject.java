@@ -78,7 +78,7 @@ public class AnyObject implements Comparable<AnyObject> {
 
     private native long asyncCall(long pObject, String method, Object[] args) throws DynamicCallException;
 
-    private native String printMetaObject(long pObject);
+    private native String metaObjectToString(long pObject);
 
     private native void destroy(long pObj);
 
@@ -455,7 +455,7 @@ public class AnyObject implements Comparable<AnyObject> {
 
     @Override
     public String toString() {
-        return printMetaObject(_p);
+        return metaObjectToString(_p);
     }
 
     /**
