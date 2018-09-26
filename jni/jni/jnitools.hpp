@@ -359,17 +359,29 @@ jint throwNewIllegalStateException(JNIEnv *env, const char *message = "");
 class PropertyManager
 {
 public:
-  /**The managed property*/
-  std::unique_ptr<qi::GenericProperty> property;
   /**Last setted global reference*/
   jobject globalReference;
 
+  /**The managed property*/
+  std::unique_ptr<qi::GenericProperty> property;
+
   /**
-   * @brief Create the manager
+   * @brief Create the manager with a property without a default value.
    */
   explicit PropertyManager(qi::TypeInterface &valueType)
-    : property{ new qi::GenericProperty{ &valueType } }
-    , globalReference{ nullptr }
+    : globalReference{ nullptr }
+    , property{ new qi::GenericProperty{ &valueType } }
+  {
+  }
+
+  /**
+   * @brief Create the manager with a property with a value.
+   * @pre `env.IsSameObject(value, nullptr) == JNI_FALSE`
+   */
+  PropertyManager(qi::TypeInterface& valueType, JNIEnv& env, jobject value)
+    : globalReference{ env.NewGlobalRef(value) }
+    , property{ new qi::GenericProperty{
+        qi::AnyValue::from(globalReference).convertCopy(&valueType) } }
   {
   }
 
@@ -379,7 +391,7 @@ public:
    */
   void clearReference(JNIEnv *env)
   {
-    if(!env->IsSameObject(globalReference, nullptr))
+    if(env->IsSameObject(globalReference, nullptr) == JNI_FALSE)
     {
       env->DeleteGlobalRef(globalReference);
       globalReference = nullptr;
@@ -392,8 +404,8 @@ public:
    */
   void destroy(JNIEnv *env)
   {
-    clearReference(env);
     property.reset();
+    clearReference(env);
   }
 
   /**
@@ -405,7 +417,7 @@ public:
   {
     clearReference(env);
 
-    if(env->IsSameObject(value, nullptr))
+    if(env->IsSameObject(value, nullptr) == JNI_TRUE)
     {
       globalReference = nullptr;
     }
@@ -413,6 +425,9 @@ public:
     {
       globalReference = env->NewGlobalRef(value);
     }
+
+    QI_ASSERT(property);
+    property->setValue(qi::AnyValue::from(globalReference)).wait();
   }
 };
 

@@ -6,20 +6,26 @@ import com.aldebaran.qi.serialization.QiSerializer;
  * Represents a property from distant object or can be advertised
  *
  * @param <T>
- *            Property type. Be sure the type is:
- *            <ul>
- *            <li>One of default : Byte, Short, Int, Long, Float, Double,
- *            String, List, Map, Tuple, QiStruct</li>
- *            <li>Or managed by a {@link QiSerializer}</li>
- *            </ul>
+ *   Property type. Be sure the type is:
+ *    * One of default : Byte, Short, Int, Long, Float, Double, String, List, Map, Tuple, QiStruct.
+ *    * Or managed by a {@link QiSerializer}.
  */
 public final class Property<T> {
+
+    static {
+        // Loading native C++ libraries.
+        if (!EmbeddedTools.LOADED_EMBEDDED_LIBRARY) {
+            EmbeddedTools loader = new EmbeddedTools();
+            loader.loadEmbeddedLibraries();
+        }
+    }
+
     /**
      * Create a new property instance
      *
      * @return Property pointer
      */
-    private native long createProperty(Class<T> valueClass);
+    private native long createProperty(Class valueClass, Object value);
 
     /**
      * Obtain a property value
@@ -53,31 +59,47 @@ public final class Property<T> {
     final long pointer;
 
     /** Property value type */
-    private final Class<T> propertyValueClass;
+    private final Class<T> valueClass;
 
     /** Last set value, to keep the reference alive, don't use it for get */
     private T lastSettedValue;
 
     /**
-     * Create an empty property.<br>
-     * <b>Warning</b> the property have no value until someone set it!
+     * Create an empty property.
      *
-     * @param propertyValueClass
-     *            Property value type. Must not be null
+     * @warning The property has no value until someone set it !
+     * @param valueClass Property value type.
+     * @throws NullPointerException if valueClass parameter is null.
      */
-    public Property(Class<T> propertyValueClass) {
-        if (propertyValueClass == null) {
-            throw new NullPointerException("propertyValueClass must not be null");
+    public Property(Class<T> valueClass) {
+        if (valueClass == null) {
+            throw new NullPointerException("The value class of the property must not be null.");
         }
 
-        this.propertyValueClass = propertyValueClass;
-        this.pointer = this.createProperty(propertyValueClass);
+        this.valueClass = valueClass;
+        pointer = createProperty(this.valueClass, null);
     }
 
     /**
-     * Current property value.<br>
+     * Create a property with a value.
+     *
+     * @param value Value to initialize the property with.
+     * @throws NullPointerException if value parameter is null.
+     */
+    public Property(T value) {
+        if (value == null) {
+            throw new NullPointerException("The value of the property must not be null.");
+        }
+
+        //noinspection unchecked
+        valueClass = (Class<T>) value.getClass();
+        pointer = createProperty(valueClass, value);
+    }
+
+    /**
+     * Current property value.
      * Here it used the default serializer, so it suppose that the property type
-     * is managed by it.<br>
+     * is managed by it.
      * For custom type use {@link #getValue(QiSerializer)}
      *
      * @return Future to get the value
@@ -102,15 +124,15 @@ public final class Property<T> {
         return future.thenApply(new Function<Future<Object>, T>() {
             @Override
             public T execute(Future<Object> future) throws Throwable {
-                return (T) qiSerializer.deserialize(future.get(), Property.this.propertyValueClass);
+                return (T) qiSerializer.deserialize(future.get(), Property.this.valueClass);
             }
         });
     }
 
     /**
-     * Change property value<br>
+     * Change property value
      * Here it used the default serializer, so it suppose that the property type
-     * is managed by it.<br>
+     * is managed by it.
      * For custom type use {@link #setValue(QiSerializer, Object)}
      *
      * @param value
