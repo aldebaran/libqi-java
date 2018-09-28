@@ -19,7 +19,7 @@ public final class Property<T> {
      *
      * @return Property pointer
      */
-    private native long createProperty();
+    private native long createProperty(Class<T> valueClass);
 
     /**
      * Obtain a property value
@@ -71,7 +71,7 @@ public final class Property<T> {
         }
 
         this.propertyValueClass = propertyValueClass;
-        this.pointer = this.createProperty();
+        this.pointer = this.createProperty(propertyValueClass);
     }
 
     /**
