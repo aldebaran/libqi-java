@@ -49,6 +49,7 @@ extern jclass cls_arraylist;
 
 extern jclass cls_map;
 extern jclass cls_hashmap;
+extern jclass cls_enum;
 
 extern jclass cls_object;
 extern jclass cls_nativeTools;
@@ -297,7 +298,16 @@ namespace qi {
 // Signature conversion
 std::string   toJavaSignature(const std::string &signature);
 std::string toJavaSignatureWithFuture(const std::string &signature);
-std::string   propertyBaseSignature(JNIEnv *env, jclass propertyBase);
+
+/**
+ * @brief Gets the qitype signature of a Java class.
+ */
+std::string propertyBaseSignature(JNIEnv *env, jclass propertyBase);
+
+/**
+ * @brief Returns the corresponding type interface of a Property value Java class.
+ */
+qi::TypeInterface* propertyValueClassToType(JNIEnv *env, jclass clazz);
 
 jthrowable createNewException(JNIEnv *env, const char *className, const char *message, jthrowable cause);
 jthrowable createNewException(JNIEnv *env, const char *className, const char *message);
@@ -329,29 +339,29 @@ class PropertyManager
 {
 public:
   /**The managed property*/
-  qi::Property<qi::AnyValue> * property;
+  std::unique_ptr<qi::GenericProperty> property;
   /**Last setted global reference*/
   jobject globalReference;
 
   /**
    * @brief Create the manager
    */
-  PropertyManager()
+  explicit PropertyManager(qi::TypeInterface &valueType)
+    : property{ new qi::GenericProperty{ &valueType } }
+    , globalReference{ nullptr }
   {
-    this->property = new qi::Property<qi::AnyValue>();
-    this->globalReference = nullptr;
   }
 
   /**
    * @brief Clear global reference if need
    * @param env JNI environment
    */
-  void clearReference(JNIEnv * env)
+  void clearReference(JNIEnv *env)
   {
-    if(!env->IsSameObject(this->globalReference, nullptr))
+    if(!env->IsSameObject(globalReference, nullptr))
     {
-      env->DeleteGlobalRef(this->globalReference);
-      this->globalReference = nullptr;
+      env->DeleteGlobalRef(globalReference);
+      globalReference = nullptr;
     }
   }
 
@@ -359,10 +369,10 @@ public:
    * @brief Destroy properly the manager
    * @param env JNI environment
    */
-  void destroy(JNIEnv * env)
+  void destroy(JNIEnv *env)
   {
-    this->clearReference(env);
-    delete this->property;
+    clearReference(env);
+    property.reset();
   }
 
   /**
@@ -370,17 +380,17 @@ public:
    * @param env JNI evironment
    * @param value New value
    */
-  void setValue(JNIEnv * env, jobject value)
+  void setValue(JNIEnv *env, jobject value)
   {
-    this->clearReference(env);
+    clearReference(env);
 
     if(env->IsSameObject(value, nullptr))
     {
-      this->globalReference = nullptr;
+      globalReference = nullptr;
     }
     else
     {
-      this->globalReference = env->NewGlobalRef(value);
+      globalReference = env->NewGlobalRef(value);
     }
   }
 };
