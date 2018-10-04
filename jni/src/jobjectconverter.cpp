@@ -163,14 +163,8 @@ struct toJObject
 
     void visitAnyObject(qi::AnyObject o)
     {
-      try
-      {
-        JNIObject obj(o);
-        *result = obj.object();
-      }
-      catch (std::exception&)
-      {
-      }
+      qi::jni::Object obj{ o, *env };
+      *result = obj.javaObject();
     }
 
     void visitOptional(qi::AnyReference optionalReference)
@@ -356,13 +350,10 @@ qi::AnyReference AnyValue_from_JObject_Future(jobject val, JNIEnv* env)
   return any.clone(); // makes a copy of the content, and keeps ownership on it
 }
 
-qi::AnyReference AnyValue_from_JObject_RemoteObject(jobject val)
+qi::AnyReference AnyValue_from_JObject_RemoteObject(jobject val, JNIEnv* env)
 {
-  JNIObject obj(val);
-
-  qi::AnyObject* tmp = new qi::AnyObject();
-  *tmp = obj.objectPtr();
-  return qi::AnyReference::from(*tmp);
+  qi::jni::Object obj{ val, *env };
+  return qi::AnyReference::from(obj.anyObject()).clone();
 }
 
 qi::AnyReference _AnyValue_from_JObject(jobject val);
@@ -448,7 +439,7 @@ qi::AnyReference _AnyValue_from_JObject(jobject val)
 
   if (env->IsInstanceOf(val, cls_anyobject))
   {
-    return AnyValue_from_JObject_RemoteObject(val);
+    return AnyValue_from_JObject_RemoteObject(val, env);
   }
   qiLogError() << "Cannot serialize return value: Unable to convert JObject to AnyValue";
   throw std::runtime_error("Cannot serialize return value: Unable to convert JObject to AnyValue");
