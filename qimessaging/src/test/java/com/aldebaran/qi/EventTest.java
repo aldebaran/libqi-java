@@ -86,36 +86,6 @@ public class EventTest {
         sd = null;
     }
 
-    @Test
-    public void testEvent() throws InterruptedException {
-
-        @SuppressWarnings("unused")
-        Object callback = new Object() {
-            public void fireCallback(Integer i) {
-                callbackCalled = true;
-                callbackParam = i.intValue();
-            }
-        };
-
-        long sid = 0;
-        try {
-            sid = proxy.connect("fire::(i)", "fireCallback::(i)", callback);
-        } catch (Exception e) {
-            fail("Connect to event must succeed : " + e.getMessage());
-        }
-        obj.post("fire", 42);
-
-        Thread.sleep(100); // Give time for callback to be called.
-        assertTrue("Event callback must have been called ", callbackCalled);
-        assertTrue("Parameter value must be 42 (" + callbackParam + ")", callbackParam == 42);
-
-        proxy.disconnect(sid);
-        callbackCalled = false;
-        obj.post("fire", 42);
-        Thread.sleep(100);
-        assertTrue("Event callback not called ", !callbackCalled);
-    }
-
     public void testCallback(String s) {
         callbackCalled = true;
     }

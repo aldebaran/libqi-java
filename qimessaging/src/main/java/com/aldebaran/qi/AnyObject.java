@@ -82,9 +82,6 @@ public class AnyObject implements Comparable<AnyObject> {
 
     private native void destroy(long pObj);
 
-    private native long connect(long pObject, String method, Object instance, String className, String eventName)
-            throws RuntimeException;
-
     private native long disconnect(long pObject, long subscriberId) throws RuntimeException;
 
     private native long connectSignal(long pObject, String signalName, QiSignalListener listener);
@@ -264,35 +261,6 @@ public class AnyObject implements Comparable<AnyObject> {
         // Specialization to benefit from type inference when targetType is a
         // Class
         return call((Type) targetType, method, args);
-    }
-
-    /**
-     * Connect a callback to a foreign event.
-     *
-     * @param eventName
-     *            Name of the event
-     * @param callback
-     *            Callback name
-     * @param object
-     *            Instance of class implementing callback
-     * @return an unique subscriber id
-     */
-    @Deprecated
-    public long connect(String eventName, String callback, Object object) {
-        Class<? extends Object> c = object.getClass();
-        Method[] methods = c.getDeclaredMethods();
-
-        for (Method method : methods) {
-            String className = object.getClass().toString();
-            className = className.substring(6); // Remove "class "
-            className = className.replace('.', '/');
-
-            // If method name match signature
-            if (callback.contains(method.getName()) == true)
-                return connect(_p, callback, object, className, eventName);
-        }
-
-        throw new QiRuntimeException("Cannot find " + callback + " in object " + object);
     }
 
     public QiSignalConnection connect(String signalName, QiSignalListener listener) {
