@@ -6,11 +6,11 @@ find_package(qibuild)
 qi_sanitize_compile_flags()
 if (NOT ANDROID AND NOT I_AM_A_ROBOT)
   find_package(JNI REQUIRED)
-  include_directories(${JNI_INCLUDE_DIRS})
+  include_directories(SYSTEM ${JNI_INCLUDE_DIRS})
 endif()
 if (I_AM_A_ROBOT)
   find_package(oracle-jdk)
-  include_directories(${ORACLE-JDK_INCLUDE_DIRS})
+  include_directories(SYSTEM ${ORACLE-JDK_INCLUDE_DIRS})
 endif()
 
 include_directories("jni")
@@ -54,7 +54,14 @@ set(SOURCE
    )
 
 # Compile qimessaging java compatibility layer using jni
-qi_create_lib(qimessagingjni ${SOURCE} SHARED DEPENDS QI)
+qi_create_lib(
+  qimessagingjni
+  ${SOURCE}
+  SHARED
+  DEPENDS
+    QI
+    ASSUME_SYSTEM_INCLUDE BOOST
+)
 
 qi_stage_lib(qimessagingjni)
 

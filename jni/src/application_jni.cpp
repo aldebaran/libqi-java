@@ -101,7 +101,7 @@ JNIEXPORT void JNICALL Java_com_aldebaran_qi_Application_qiApplicationStart(JNIE
 
   try
   {
-    app->start();
+    app->startSession();
   }
   catch (std::exception& e)
   {

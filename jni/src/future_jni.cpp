@@ -406,11 +406,6 @@ JNIEXPORT jboolean JNICALL Java_com_aldebaran_qi_Future_qiFutureCallCancel(JNIEn
     auto * future = futureFromPointer(pFuture);
     // Leave this method as it is (even if returning a boolean doesn't make sense) to avoid breaking
     // projects that were already using it. Future projects should prefer using qiFutureCallCancelRequest.
-    if (future->isCancelable() == false)
-    {
-        return false;
-    }
-
     future->cancel();
     return true;
 }

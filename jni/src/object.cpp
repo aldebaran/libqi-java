@@ -142,7 +142,7 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_connect(JNIEnv *env, job
 
     qi::SignalLink link = obj.connect(event,
                         qi::SignalSubscriber(
-                          qi::AnyFunction::fromDynamicFunction(eventCallbackToJava)));
+                          qi::AnyFunction::fromDynamicFunction(eventCallbackToJava))).value();
     return link;
   } catch (std::exception& e)
   {

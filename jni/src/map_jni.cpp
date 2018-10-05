@@ -17,7 +17,7 @@ qiLogCategory("qimessaging.jni");
 
 JNIMap::JNIMap()
 {
-  javaVirtualMachine->GetEnv((void**) &_env, QI_JNI_MIN_VERSION);
+  javaVirtualMachine->GetEnv(reinterpret_cast<void**>(&_env), QI_JNI_MIN_VERSION);
 
   jmethodID mid = _env->GetMethodID(cls_hashmap, "<init>", "()V");
   if (!mid)
