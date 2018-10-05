@@ -58,6 +58,10 @@ public class ReplyService extends QiService {
         return ro;
     }
 
+    public AnyObject createNullObject() {
+        return null;
+    }
+
     public Tuple info(String str, Integer i, Boolean b) {
         Tuple ret = Tuple.of(str, i, b);
         System.out.println("Received : " + str + "," + i + "," + b);
