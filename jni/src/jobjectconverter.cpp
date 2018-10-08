@@ -358,12 +358,22 @@ qi::AnyReference AnyValue_from_JObject_RemoteObject(jobject val, JNIEnv* env)
 
 qi::AnyReference _AnyValue_from_JObject(jobject val);
 
-std::pair<qi::AnyReference, bool> AnyValue_from_JObject(jobject val)
+std::pair<qi::AnyReference, bool> AnyValue_from_JObject(jobject val, qi::Signature signatureHint)
 {
-  if (!val)
-    return std::make_pair(qi::AnyReference(qi::typeOf<void>()), false);
+  qi::jni::JNIAttach attach;
+  JNIEnv *env = attach.get();
 
-  return std::make_pair(_AnyValue_from_JObject(val), true);
+  if (env->IsSameObject(val, nullptr))
+  {
+    // Converting a `null` Java object to an object results in a null `qi.Object` and to anything
+    // else it results in a invalid value.
+    if (signatureHint.isValid() && signatureHint.type() == qi::Signature::Type_Object)
+      return std::make_pair(qi::AnyReference::from(AnyObject{}).clone(), true);
+    else
+      return std::make_pair(qi::AnyReference(qi::typeOf<void>()), false);
+  }
+
+  return { _AnyValue_from_JObject(val), true };
 }
 
 qi::AnyReference _AnyValue_from_JObject(jobject val)

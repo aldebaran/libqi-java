@@ -183,10 +183,9 @@ public class ObjectTest {
             ret = anyObject.<String>call("add", 42).get();
         } catch (Exception e) {
             ok = true;
-            String expected = "Arguments types did not match for add:\n  Candidate:\n  add::(iii) (1)\n";
             System.out.println(e.getMessage());
-            System.out.println(expected);
-            assertTrue(e.getMessage().contains("did not match"));
+            assertTrue(e.getMessage().startsWith("Could not find suitable " +
+                    "method"));
         }
         assertTrue(ok);
 
@@ -195,10 +194,9 @@ public class ObjectTest {
             ret = anyObject.<String>call("add", "42", 42, 42).get();
         } catch (ExecutionException e) {
             ok = true;
-            String expected = "cannot convert parameters from (sii) to (iii)";
+            String prefix = "Could not find suitable method";
             System.out.println(e.getMessage());
-            System.out.println(expected);
-            assertEquals(expected, e.getMessage());
+            assertTrue(e.getMessage().startsWith(prefix));
         }
         assertTrue(ok);
 
@@ -210,7 +208,8 @@ public class ObjectTest {
             String expected = "Can't find method: addFoo\n";
             System.out.println(e.getMessage());
             System.out.println(expected);
-            assertTrue(e.getMessage().contains("Can't find method"));
+            assertTrue(e.getMessage().startsWith("Could not find suitable " +
+                    "method"));
         }
         assertTrue(ok);
     }
