@@ -137,7 +137,6 @@ namespace qi {
     void        releaseObject(jobject obj);
     // Signature
     std::string javaSignature(const std::string& qiSignature);
-    std::string qiSignature(jclass clazz);
     jobjectArray toJobjectArray(const std::vector<AnyReference> &values);
 
     template<typename R>
