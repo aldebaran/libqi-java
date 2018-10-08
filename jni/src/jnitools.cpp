@@ -651,6 +651,34 @@ namespace qi {
       env->DeleteLocalRef(clazz);
     }
 
+    boost::optional<std::string> name(jclass clazz)
+    {
+      const auto prefix = "Cannot get class name: ";
+      const auto env = qi::jni::env();
+      if (!env)
+      {
+        qiLogInfo() << prefix << "env: <null>.";
+        return {};
+      }
+
+      if (env->IsSameObject(clazz, nullptr))
+      {
+        qiLogInfo() << prefix << "env: " << env << ", class: <null>.";
+        return {};
+      }
+
+      const auto nameJavaStr =
+        static_cast<jstring>(Call<jobject>::invoke(env, clazz, "getName", "()Ljava/lang/String;"));
+      handlePendingException(*env);
+      if (env->IsSameObject(nameJavaStr, nullptr))
+      {
+        qiLogInfo() << prefix << "env: " << env << ", class: " << clazz << ", name: <null>.";
+        return {};
+      }
+
+      return toString(nameJavaStr);
+    }
+
     // Convert jstring into std::string
     // Use of std::string ensures ref leak safety.
     std::string toString(jstring inputString)

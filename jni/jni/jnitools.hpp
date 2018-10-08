@@ -130,6 +130,7 @@ namespace qi {
     // TypeSystem tools
     jclass      clazz(jobject object);
     void        releaseClazz(jclass clazz);
+    boost::optional<std::string> name(jclass clazz);
     // JVM Environment management
     JNIEnv*     env();
     void        releaseObject(jobject obj);

@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <boost/algorithm/string/replace.hpp>
 #include <jni.h>
 #include <ka/errorhandling.hpp>
 #include <qi/type/dynamicobjectbuilder.hpp>
@@ -172,4 +173,13 @@ TEST(QiJNI, dynamicObjectBuilderAdvertiseMethodVoidVoid)
         toJstring(javaObjectClassName),
         toJstring("Whatever"));
   ASSERT_FALSE(test::environment->jniEnv->ExceptionCheck());
+}
+
+TEST(QiJNI, className)
+{
+  const std::string className("java/lang/NullPointerException");
+  const auto clazz = test::environment->jniEnv->FindClass(className.c_str());
+  const auto actual = name(clazz);
+  ASSERT_TRUE(actual);
+  EXPECT_EQ(boost::replace_all_copy(className, "/", "."), *actual);
 }
