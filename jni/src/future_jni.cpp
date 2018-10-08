@@ -145,7 +145,7 @@ static jobject callFunctionExecute(JNIEnv *env, jobject function, jobject argume
     jobject answer = qi::jni::Call<jobject>::invoke(env, function, method, methodSig, argument);
 
     //Check if exception happened on Java side
-    checkJavaExceptionAndReport(env);
+    qi::jni::handlePendingException(*env);
 
     return answer;
 }
@@ -163,7 +163,7 @@ static void callConsumerConsume(JNIEnv *env, jobject function, jobject argument)
     qi::jni::Call<void>::invoke(env, function, method, methodSig, argument);
 
     //Check if exception happened on Java side
-    checkJavaExceptionAndReport(env);
+    qi::jni::handlePendingException(*env);
 }
 
 /**
@@ -195,7 +195,7 @@ static qi::Future<qi::AnyValue> obtainFutureCfromFutureJava(JNIEnv *env, jobject
     jlong pointer = env->GetLongField(future, field_future_pointer);
 
     //Check if exception happened on Java side
-    checkJavaExceptionAndReport(env);
+    qi::jni::handlePendingException(*env);
 
     //Obtain the C++ Future linked to the pointer
     return *reinterpret_cast<qi::Future<qi::AnyValue>*>(pointer);

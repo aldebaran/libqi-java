@@ -19,12 +19,6 @@
 qi::Future<qi::AnyValue>*    call_from_java(JNIEnv *env, qi::AnyObject object, const std::string& strMethodName, jobjectArray listParams);
 qi::AnyReference                 call_to_java(std::string signature, void* data, const qi::GenericFunctionParameters& params);
 qi::AnyReference                 event_callback_to_java(void *vinfo, const std::vector<qi::AnyReference>& params);
-/**
- * @brief checkJavaExceptionAndReport Check if last call to java have an error.
- * If error just happen, report it properly
- * @param env JNI environment
- */
-void checkJavaExceptionAndReport(JNIEnv *env);
 
 struct qi_method_info
 {

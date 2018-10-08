@@ -739,6 +739,29 @@ namespace qi {
       return array;
     }
 
+    namespace
+    {
+      jstring throwableMessage(JNIEnv& env, jthrowable throwable)
+      {
+        const auto message = static_cast<jstring>(
+          Call<jobject>::invoke(&env, throwable, "getMessage", "()Ljava/lang/String;"));
+        if (!env.IsSameObject(message, nullptr))
+          return message;
+        // Fallback to `Object.toString` that never returns null.
+        return static_cast<jstring>(
+          Call<jobject>::invoke(&env, throwable, "toString", "()Ljava/lang/String;"));
+      }
+    }
+
+    void handlePendingException(JNIEnv& env)
+    {
+      if (env.ExceptionCheck() == JNI_FALSE)
+        return;
+      const auto throwable =
+        ka::scoped(env.ExceptionOccurred(), [&](jthrowable) { env.ExceptionClear(); });
+      throw std::runtime_error(toString(throwableMessage(env, throwable.value)));
+    }
+
     const char* errorToString(jint code)
     {
       switch (code)
@@ -753,5 +776,5 @@ namespace qi {
         default:            return "Unhandled error.";
       }
     }
-  }// !jni
+  } // !jni
 }// !qi

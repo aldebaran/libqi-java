@@ -239,38 +239,3 @@ qi::AnyReference event_callback_to_java(void *vinfo, const std::vector<qi::AnyRe
 
   return call_to_java(info->sig, info, params);
 }
-
-/**
- * @brief checkJavaExceptionAndReport Check if last call to java has an error.
- * If error just happened, report it properly
- * @param env JNI environment
- */
-void checkJavaExceptionAndReport(JNIEnv *env)
-{
-    if (env->ExceptionCheck() == JNI_TRUE)
-    {
-        // Obtain exception message and throw an exception
-        jthrowable exception = env->ExceptionOccurred();
-        // the callback threw an exception, it must have no impact on the caller
-        env->ExceptionClear();
-        jclass throwable_class = env->FindClass("java/lang/Throwable");
-        jmethodID getMessage = env->GetMethodID(throwable_class,
-                                                "getMessage",
-                                                "()Ljava/lang/String;");
-        jstring message = (jstring)env->CallObjectMethod(exception, getMessage);
-
-        if (env->IsSameObject(message, NULL))
-        {
-            //toString never return null
-            jmethodID toString = env->GetMethodID(cls_object,
-                                                  "toString",
-                                                  "()Ljava/lang/String;");
-            message = (jstring)env->CallObjectMethod(exception, toString);
-        }
-
-        const char* data = env->GetStringUTFChars(message, 0);
-        std::string errorMessage = std::string(data);
-        env->ReleaseStringUTFChars(message, data);
-        throw std::runtime_error(errorMessage);
-    }
-}

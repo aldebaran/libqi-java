@@ -295,6 +295,11 @@ namespace qi {
       }};
     }
 
+    /// If a Java exception is pending, fetches it, clears its pending status and then throws a
+    /// std::runtime_error with the same error message. If no exception is pending,
+    /// returns immediately.
+    void handlePendingException(JNIEnv& env);
+
     /// Returns a string describing the given JNI error code.
     const char* errorToString(jint code);
   }// !jni
