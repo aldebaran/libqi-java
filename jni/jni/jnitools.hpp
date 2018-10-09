@@ -294,6 +294,9 @@ namespace qi {
         env->DeleteGlobalRef(globalRef);
       }};
     }
+
+    /// Returns a string describing the given JNI error code.
+    const char* errorToString(jint code);
   }// !jni
 }// !qi
 

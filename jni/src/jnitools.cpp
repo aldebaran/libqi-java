@@ -738,5 +738,20 @@ namespace qi {
       }
       return array;
     }
+
+    const char* errorToString(jint code)
+    {
+      switch (code)
+      {
+        case JNI_OK:        return "Success.";
+        case JNI_EDETACHED: return "Thread is detached from the virtual machine.";
+        case JNI_EVERSION:  return "JNI version error.";
+        case JNI_ENOMEM:    return "Not enough memory.";
+        case JNI_EEXIST:    return "Virtual machine has already been created.";
+        case JNI_EINVAL:    return "Invalid arguments.";
+        case JNI_ERR:       return "Unknown error.";
+        default:            return "Unhandled error.";
+      }
+    }
   }// !jni
 }// !qi
