@@ -804,5 +804,12 @@ namespace qi {
         default:            return "Unhandled error.";
       }
     }
+
+    bool assertion(JNIEnv* env, bool condition, const char* message)
+    {
+      if (!condition)
+        throwNew(env, "java/lang/AssertionError", message);
+      return condition;
+    }
   } // !jni
 }// !qi

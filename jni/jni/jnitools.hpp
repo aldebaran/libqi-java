@@ -303,6 +303,9 @@ namespace qi {
 
     /// Returns a string describing the given JNI error code.
     const char* errorToString(jint code);
+
+    /// Raises a java.lang.AssertionError with the given message if the condition is false.
+    bool assertion(JNIEnv* env, bool condition, const char* message = "");
   }// !jni
 }// !qi
 
