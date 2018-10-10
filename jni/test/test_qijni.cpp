@@ -183,3 +183,21 @@ TEST(QiJNI, className)
   ASSERT_TRUE(actual);
   EXPECT_EQ(boost::replace_all_copy(className, "/", "."), *actual);
 }
+
+TEST(QiJNITypeConversion, NullJavaObjectToQiObjectConvertsToNullObject)
+{
+  const auto jobj = ka::scoped(test::environment->jniEnv->NewGlobalRef(nullptr), [](jobject obj) {
+    test::environment->jniEnv->DeleteGlobalRef(obj);
+  });
+  const auto ref = ka::scoped(AnyValue_from_JObject(jobj.value, typeOf<AnyObject>()->signature()),
+                              [&](std::pair<AnyReference, bool> p) {
+                                if (p.second)
+                                  p.first.destroy();
+                              });
+
+  // qi.Objects actually are of type Dynamic in the type system, not of type Object.
+  ASSERT_EQ(TypeKind_Dynamic, ref.value.first.kind());
+  AnyObject obj;
+  EXPECT_NO_THROW(obj = ref.value.first.to<AnyObject>());
+  EXPECT_FALSE(obj.isValid());
+}
