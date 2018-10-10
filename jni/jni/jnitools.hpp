@@ -68,8 +68,10 @@ extern jmethodID jniLog;
 // JNI utils
 extern "C"
 {
-  JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void*);
-  JNIEXPORT void JNICALL Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(JNIEnv* env, jclass cls);
+  JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* unused);
+  JNIEXPORT void JNICALL JNI_OnUnload(JavaVM* vm, void* unused);
+  JNIEXPORT void JNICALL Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(JNIEnv* env,
+                                                                            jclass unused = nullptr);
 } // !extern C
 
 /**

@@ -151,13 +151,19 @@ void JNIlogHandler::log(const qi::LogLevel verb,
     }
 }
 
-JNIEXPORT jint JNICALL JNI_OnLoad (JavaVM* virtualMachine, void* QI_UNUSED(reserved))
+JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* virtualMachine, void* QI_UNUSED(reserved))
 {
   javaVirtualMachine = virtualMachine;
   // seems like a good number
   qi::getEventLoop()->setMaxThreads(8);
   qi::getEventLoop()->setEmergencyCallback(emergency);
   return QI_JNI_MIN_VERSION;
+}
+
+JNIEXPORT void JNICALL JNI_OnUnload(JavaVM* QI_UNUSED(vm), void* QI_UNUSED(reserved))
+{
+  qi::getEventLoop()->setEmergencyCallback({}); // reset the emergency callback
+  javaVirtualMachine = nullptr;
 }
 
 static inline jclass loadClass(JNIEnv *env, const char *className)
@@ -541,6 +547,13 @@ namespace qi {
 
     JNIAttach::JNIAttach(JNIEnv* env)
     {
+      if (!javaVirtualMachine)
+      {
+        static const auto msg = "Cannot attach callback thread to Java VM: the VM pointer is null.";
+        qiLogError() << msg;
+        throw std::runtime_error{ msg };
+      }
+
       if (!ThreadJNI.get())
         ThreadJNI.reset(new JNIHandle);
       if (env)
@@ -576,7 +589,7 @@ namespace qi {
       {
         if (ThreadJNI->attached)
         {
-          if (javaVirtualMachine->DetachCurrentThread() != JNI_OK)
+          if (javaVirtualMachine && javaVirtualMachine->DetachCurrentThread() != JNI_OK)
           {
             qiLogError() << "Cannot detach from current thread";
           }
