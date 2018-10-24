@@ -1,39 +1,59 @@
 /*
-**
-** Author(s):
-**  - Pierre ROULLON <proullon@aldebaran-robotics.com>
-**
-** Copyright (C) 2012, 2013 Aldebaran Robotics
-** See COPYING for the license
+**  Copyright (C) 2018 SoftBank Robotics Europe
+**  See COPYING for the license
 */
 
-#ifndef _JAVA_JNI_OBJECT_JNI_HPP_
-#define _JAVA_JNI_OBJECT_JNI_HPP_
+#ifndef QI_JNI_OBJECT_JNI_HPP
+#define QI_JNI_OBJECT_JNI_HPP
 
 #include <jni.h>
-
 #include <qi/anyobject.hpp>
+#include "jnitools.hpp"
 
-/**
- * @brief The JNIObject class Helper for conversion between qi::AnyObject and com.aldebaran.qimessaging.Object
- */
-class JNIObject
+namespace qi
 {
-  public:
-    JNIObject(const qi::AnyObject& o);
-    JNIObject(qi::AnyObject* o);
-    JNIObject(jobject value);
+namespace jni
+{
 
-    jobject object();
-    qi::AnyObject      objectPtr();
+/// Helper for conversion between qi::AnyObject and com.aldebaran.qi.AnyObject
+class Object
+{
+public:
+  Object(const AnyObject& o, boost::optional<JNIEnv&> env = {});
 
-  private:
-    void build(qi::AnyObject *o);
+  Object(jobject value, boost::optional<JNIEnv&> env = {});
 
-    qi::jni::JNIAttach attach;
+  Object(std::unique_ptr<AnyObject> o, boost::optional<JNIEnv&> env = {});
 
-    jobject _obj;
-    JNIEnv* _env;
+  // Copyable
+  Object(const Object& o);
+  Object& operator=(const Object& o);
+
+  // Movable
+  Object(Object&& o);
+  Object& operator=(Object&& o);
+
+  ~Object();
+
+  void reset();
+
+  /// Returns a new global reference to the internal Java object. The caller is responsible of the
+  /// reference and must release it itself.
+  jobject javaObject();
+
+  AnyObject anyObject();
+
+private:
+  jobject moveRef(jobject& ref) const;
+  jobject copyRef(jobject ref) const;
+
+  void reset(boost::optional<JNIEnv&> env);
+
+  JNIEnv* _env; // TODO: Make a wrapper for environment.
+  jobject _javaObject = nullptr; // TODO: Make a wrapper for global refs.
 };
 
-#endif // !_JAVA_JNI_OBJECT_JNI_HPP_
+} // namespace jni
+} // namespace qi
+
+#endif // !QI_JNI_OBJECT_JNI_HPP

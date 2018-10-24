@@ -70,7 +70,7 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Session_qiSessionConnect(JNIEnv *e
   try
   {
     qi::Future<void> f = s->connect(qi::jni::toString(jurl));
-    f.connect(adaptFuture, _1, promise);
+    f.connect(boost::bind(adaptFuture, _1, promise));
   }
   catch (const std::exception& e)
   {
@@ -111,12 +111,12 @@ JNIEXPORT jint JNICALL Java_com_aldebaran_qi_Session_registerService(JNIEnv *env
 {
   qi::Session*    session = reinterpret_cast<qi::Session*>(pSession);
   std::string     name    = qi::jni::toString(jname);
-  JNIObject obj(object);
   jint ret = 0;
 
   try
   {
-    ret = session->registerService(name, obj.objectPtr());
+    qi::jni::Object obj{ object, *env };
+    ret = session->registerService(name, obj.anyObject()).value();
   }
   catch (std::runtime_error &e)
   {

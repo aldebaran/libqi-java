@@ -151,13 +151,19 @@ void JNIlogHandler::log(const qi::LogLevel verb,
     }
 }
 
-JNIEXPORT jint JNICALL JNI_OnLoad (JavaVM* virtualMachine, void* QI_UNUSED(reserved))
+JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* virtualMachine, void* QI_UNUSED(reserved))
 {
   javaVirtualMachine = virtualMachine;
   // seems like a good number
   qi::getEventLoop()->setMaxThreads(8);
   qi::getEventLoop()->setEmergencyCallback(emergency);
   return QI_JNI_MIN_VERSION;
+}
+
+JNIEXPORT void JNICALL JNI_OnUnload(JavaVM* QI_UNUSED(vm), void* QI_UNUSED(reserved))
+{
+  qi::getEventLoop()->setEmergencyCallback({}); // reset the emergency callback
+  javaVirtualMachine = nullptr;
 }
 
 static inline jclass loadClass(JNIEnv *env, const char *className)
@@ -541,6 +547,13 @@ namespace qi {
 
     JNIAttach::JNIAttach(JNIEnv* env)
     {
+      if (!javaVirtualMachine)
+      {
+        static const auto msg = "Cannot attach callback thread to Java VM: the VM pointer is null.";
+        qiLogError() << msg;
+        throw std::runtime_error{ msg };
+      }
+
       if (!ThreadJNI.get())
         ThreadJNI.reset(new JNIHandle);
       if (env)
@@ -576,7 +589,7 @@ namespace qi {
       {
         if (ThreadJNI->attached)
         {
-          if (javaVirtualMachine->DetachCurrentThread() != JNI_OK)
+          if (javaVirtualMachine && javaVirtualMachine->DetachCurrentThread() != JNI_OK)
           {
             qiLogError() << "Cannot detach from current thread";
           }
@@ -636,6 +649,34 @@ namespace qi {
       }
 
       env->DeleteLocalRef(clazz);
+    }
+
+    boost::optional<std::string> name(jclass clazz)
+    {
+      const auto prefix = "Cannot get class name: ";
+      const auto env = qi::jni::env();
+      if (!env)
+      {
+        qiLogInfo() << prefix << "env: <null>.";
+        return {};
+      }
+
+      if (env->IsSameObject(clazz, nullptr))
+      {
+        qiLogInfo() << prefix << "env: " << env << ", class: <null>.";
+        return {};
+      }
+
+      const auto nameJavaStr =
+        static_cast<jstring>(Call<jobject>::invoke(env, clazz, "getName", "()Ljava/lang/String;"));
+      handlePendingException(*env);
+      if (env->IsSameObject(nameJavaStr, nullptr))
+      {
+        qiLogInfo() << prefix << "env: " << env << ", class: " << clazz << ", name: <null>.";
+        return {};
+      }
+
+      return toString(nameJavaStr);
     }
 
     // Convert jstring into std::string
@@ -725,5 +766,50 @@ namespace qi {
       }
       return array;
     }
-  }// !jni
+
+    namespace
+    {
+      jstring throwableMessage(JNIEnv& env, jthrowable throwable)
+      {
+        const auto message = static_cast<jstring>(
+          Call<jobject>::invoke(&env, throwable, "getMessage", "()Ljava/lang/String;"));
+        if (!env.IsSameObject(message, nullptr))
+          return message;
+        // Fallback to `Object.toString` that never returns null.
+        return static_cast<jstring>(
+          Call<jobject>::invoke(&env, throwable, "toString", "()Ljava/lang/String;"));
+      }
+    }
+
+    void handlePendingException(JNIEnv& env)
+    {
+      if (env.ExceptionCheck() == JNI_FALSE)
+        return;
+      const auto throwable =
+        ka::scoped(env.ExceptionOccurred(), [&](jthrowable) { env.ExceptionClear(); });
+      throw std::runtime_error(toString(throwableMessage(env, throwable.value)));
+    }
+
+    const char* errorToString(jint code)
+    {
+      switch (code)
+      {
+        case JNI_OK:        return "Success.";
+        case JNI_EDETACHED: return "Thread is detached from the virtual machine.";
+        case JNI_EVERSION:  return "JNI version error.";
+        case JNI_ENOMEM:    return "Not enough memory.";
+        case JNI_EEXIST:    return "Virtual machine has already been created.";
+        case JNI_EINVAL:    return "Invalid arguments.";
+        case JNI_ERR:       return "Unknown error.";
+        default:            return "Unhandled error.";
+      }
+    }
+
+    bool assertion(JNIEnv* env, bool condition, const char* message)
+    {
+      if (!condition)
+        throwNew(env, "java/lang/AssertionError", message);
+      return condition;
+    }
+  } // !jni
 }// !qi

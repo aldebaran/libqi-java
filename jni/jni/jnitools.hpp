@@ -68,8 +68,10 @@ extern jmethodID jniLog;
 // JNI utils
 extern "C"
 {
-  JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void*);
-  JNIEXPORT void JNICALL Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(JNIEnv* env, jclass cls);
+  JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* unused);
+  JNIEXPORT void JNICALL JNI_OnUnload(JavaVM* vm, void* unused);
+  JNIEXPORT void JNICALL Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(JNIEnv* env,
+                                                                            jclass unused = nullptr);
 } // !extern C
 
 /**
@@ -128,6 +130,7 @@ namespace qi {
     // TypeSystem tools
     jclass      clazz(jobject object);
     void        releaseClazz(jclass clazz);
+    boost::optional<std::string> name(jclass clazz);
     // JVM Environment management
     JNIEnv*     env();
     void        releaseObject(jobject obj);
@@ -292,6 +295,17 @@ namespace qi {
         env->DeleteGlobalRef(globalRef);
       }};
     }
+
+    /// If a Java exception is pending, fetches it, clears its pending status and then throws a
+    /// std::runtime_error with the same error message. If no exception is pending,
+    /// returns immediately.
+    void handlePendingException(JNIEnv& env);
+
+    /// Returns a string describing the given JNI error code.
+    const char* errorToString(jint code);
+
+    /// Raises a java.lang.AssertionError with the given message if the condition is false.
+    bool assertion(JNIEnv* env, bool condition, const char* message = "");
   }// !jni
 }// !qi
 
