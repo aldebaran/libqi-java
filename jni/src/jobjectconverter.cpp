@@ -539,7 +539,7 @@ class JObjectTypeInterface: public qi::DynamicTypeInterface
       // Giving jobject* to JObject_from_AnyValue
       JObject_from_AnyValue(src, target);
 
-      if (*target)
+      if (*target && env->GetObjectRefType(*target) == JNILocalRefType)
       {
         // create a global ref to keep the object alive until we decide it may
         // die, but delete the local ref because they are limited to 512 in
