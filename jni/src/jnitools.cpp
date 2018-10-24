@@ -794,14 +794,25 @@ namespace qi {
     {
       switch (code)
       {
+        default:            return "Unhandled error code.";
         case JNI_OK:        return "Success.";
         case JNI_EDETACHED: return "Thread is detached from the virtual machine.";
         case JNI_EVERSION:  return "JNI version error.";
-        case JNI_ENOMEM:    return "Not enough memory.";
-        case JNI_EEXIST:    return "Virtual machine has already been created.";
-        case JNI_EINVAL:    return "Invalid arguments.";
         case JNI_ERR:       return "Unknown error.";
-        default:            return "Unhandled error.";
+
+        // Android NDK JNI header does not define the JNI_ENOMEM, JNI_EEXIST and JNI_EINVAL error
+        // codes (probably because they seem to be related to the instantiation of the Java
+        // virtual machine). We have to enable each case only if the corresponding code is
+        // defined.
+#ifdef JNI_ENOMEM
+        case JNI_ENOMEM:    return "Not enough memory.";
+#endif
+#ifdef JNI_EEXIST
+        case JNI_EEXIST:    return "Virtual machine has already been created.";
+#endif
+#ifdef JNI_EINVAL
+        case JNI_EINVAL:    return "Invalid arguments.";
+#endif
       }
     }
 
