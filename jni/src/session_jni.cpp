@@ -115,8 +115,8 @@ JNIEXPORT jint JNICALL Java_com_aldebaran_qi_Session_registerService(JNIEnv *env
 
   try
   {
-    qi::jni::Object obj{ object, *env };
-    ret = session->registerService(name, obj.anyObject()).value();
+    auto anyObj = qi::jni::internalQiAnyObject(object, *env);
+    ret = session->registerService(name, std::move(anyObj)).value();
   }
   catch (std::runtime_error &e)
   {

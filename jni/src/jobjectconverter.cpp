@@ -163,8 +163,7 @@ struct toJObject
 
     void visitAnyObject(qi::AnyObject o)
     {
-      qi::jni::Object obj{ o, *env };
-      *result = obj.javaObject();
+      *result = qi::jni::createAnyObject(o);
     }
 
     void visitOptional(qi::AnyReference optionalReference)
@@ -352,8 +351,8 @@ qi::AnyReference AnyValue_from_JObject_Future(jobject val, JNIEnv* env)
 
 qi::AnyReference AnyValue_from_JObject_RemoteObject(jobject val, JNIEnv* env)
 {
-  qi::jni::Object obj{ val, *env };
-  return qi::AnyReference::from(obj.anyObject()).clone();
+  auto anyObj = qi::jni::internalQiAnyObject(val, *env);
+  return qi::AnyReference::from(std::move(anyObj)).clone();
 }
 
 qi::AnyReference _AnyValue_from_JObject(jobject val);

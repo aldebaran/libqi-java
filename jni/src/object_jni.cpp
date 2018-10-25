@@ -19,13 +19,6 @@ namespace jni
 namespace
 {
 
-boost::optional<JNIEnv&> optEnv(JNIEnv* env)
-{
-  if (env)
-    return *env;
-  return {};
-}
-
 boost::optional<JNIEnv&> findEnv(boost::optional<JNIEnv&> env = {})
 {
   if (env)
@@ -45,129 +38,47 @@ JNIEnv& getEnv(boost::optional<JNIEnv&> aenv = {})
 
 }
 
-Object::Object(const AnyObject& obj, boost::optional<JNIEnv&> env)
-  : Object{  obj.isValid() ? std::unique_ptr<AnyObject>(new AnyObject{ obj }) : nullptr, env}
+jobject createAnyObject(std::unique_ptr<qi::AnyObject> object, boost::optional<JNIEnv&> aenv)
 {
+  if (!object || !object->isValid())
+    return nullptr;
+
+  auto& env = getEnv(aenv);
+  const auto methodId = env.GetMethodID(cls_anyobject, "<init>", "(J)V");
+  if (!methodId)
+  {
+    const auto msg = "qi::jni::AnyObject: Cannot find AnyObject constructor.";
+    qiLogError() << msg;
+    throw std::runtime_error(msg);
+  }
+
+  // Release the `qi::AnyObject`, its lifetime will be bound to the Java object.
+  const auto internalPtr = reinterpret_cast<jlong>(object.release());
+  return env.NewObject(cls_anyobject, methodId, internalPtr);
 }
 
-Object::Object(std::unique_ptr<AnyObject> object, boost::optional<JNIEnv&> aenv)
-  : Object{ object && object->isValid() ?
-              [&] {
-                auto& env = getEnv(aenv);
-                const auto methodId = env.GetMethodID(cls_anyobject, "<init>", "(J)V");
-                if (!methodId)
-                {
-                  const auto msg = "qi::jni::Object: Cannot find AnyObject constructor.";
-                  qiLogError() << msg;
-                  throw std::runtime_error(msg);
-                }
-
-                // Release the AnyObject, its lifetime will be bound to the Java object.
-                const auto pObj = reinterpret_cast<jlong>(object.release());
-                return env.NewObject(cls_anyobject, methodId, pObj);
-              }() :
-            nullptr, aenv}
+jobject createAnyObject(const qi::AnyObject& o, boost::optional<JNIEnv&> env)
 {
+  return o.isValid() ? createAnyObject(std::unique_ptr<qi::AnyObject>(new auto(o)), env) : nullptr;
 }
 
-Object::Object(jobject value, boost::optional<JNIEnv&> aenv)
-  : _env{ aenv ? &*aenv : nullptr }
-  , _javaObject{ [&]() -> jobject {
-    auto& env = getEnv(aenv);
-    if (env.IsSameObject(value, nullptr))
-      return nullptr;
-    return env.NewGlobalRef(value);
-  }() }
+qi::AnyObject internalQiAnyObject(jobject jAnyObject, boost::optional<JNIEnv&> aenv)
 {
-}
-
-Object::Object(const Object& o)
-  : _env{ o._env }
-  , _javaObject{ copyRef(o._javaObject) }
-{
-}
-
-Object& Object::operator=(const Object& o)
-{
-  if (this == &o)
-    return *this;
-
-  reset();
-  _env = o._env;
-  _javaObject = copyRef(o._javaObject);
-  return *this;
-}
-
-Object::Object(Object&& o)
-  : _env{ o._env }
-  , _javaObject{ moveRef(o._javaObject) }
-{
-}
-
-Object& Object::operator=(Object&& o)
-{
-  if (this == &o)
-    return *this;
-
-  reset();
-  _env = o._env;
-  _javaObject = moveRef(o._javaObject);
-  return *this;
-}
-
-Object::~Object()
-{
-  reset(findEnv(optEnv(_env)));
-}
-
-void Object::reset()
-{
-  reset(getEnv(optEnv(_env)));
-}
-
-jobject Object::javaObject()
-{
-  return copyRef(_javaObject);
-}
-
-AnyObject Object::anyObject()
-{
-  auto& env = getEnv(optEnv(_env));
-  if (env.IsSameObject(_javaObject, nullptr))
+  auto& env = getEnv(aenv);
+  if (env.IsSameObject(jAnyObject, nullptr))
     return {};
 
   const auto fieldId = env.GetFieldID(cls_anyobject, "_p", "J");
   if (!fieldId)
   {
-    const auto msg = "qi::jni::Object: Cannot get AnyObject Java object internal native pointer.";
+    const auto msg = "qi::jni::AnyObject: Cannot get AnyObject Java object internal native pointer.";
     qiLogWarning() << msg;
     throw std::runtime_error{ msg };
   }
 
-  auto fieldValue = env.GetLongField(_javaObject, fieldId);
-  return *(reinterpret_cast<AnyObject*>(fieldValue));
-}
-
-jobject Object::moveRef(jobject& ref) const
-{
-  return ka::exchange(ref, nullptr);
-}
-
-jobject Object::copyRef(jobject ref) const
-{
-  auto& env = getEnv(optEnv(_env));
-  if (env.IsSameObject(ref, nullptr))
-    return nullptr;
-  return env.NewGlobalRef(ref);
-}
-
-void Object::reset(boost::optional<JNIEnv&> env)
-{
-  if (auto obj = ka::exchange(_javaObject, nullptr))
-  {
-    if (env)
-      env->DeleteGlobalRef(obj);
-  }
+  const auto internalPtr = env.GetLongField(jAnyObject, fieldId);
+  auto* const qiAnyObj = reinterpret_cast<const qi::AnyObject*>(internalPtr);
+  return qiAnyObj ? *qiAnyObj : qi::AnyObject();
 }
 
 } // namespace jni

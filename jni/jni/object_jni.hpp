@@ -15,43 +15,21 @@ namespace qi
 namespace jni
 {
 
-/// Helper for conversion between qi::AnyObject and com.aldebaran.qi.AnyObject
-class Object
-{
-public:
-  Object(const AnyObject& o, boost::optional<JNIEnv&> env = {});
+/// Creates a `com.aldebaran.qi.AnyObject` object with the given `qi::AnyObject` as the internal
+/// pointer and returns a local reference to the object.
+jobject createAnyObject(std::unique_ptr<qi::AnyObject> object, boost::optional<JNIEnv&> env = {});
 
-  Object(jobject value, boost::optional<JNIEnv&> env = {});
+/// Same as `createAnyObject(std::unique_ptr<qi::AnyObject>, boost::optional<JNIEnv&>)` but
+/// allocates a copy of the object first.
+jobject createAnyObject(const qi::AnyObject& object, boost::optional<JNIEnv&> env = {});
 
-  Object(std::unique_ptr<AnyObject> o, boost::optional<JNIEnv&> env = {});
-
-  // Copyable
-  Object(const Object& o);
-  Object& operator=(const Object& o);
-
-  // Movable
-  Object(Object&& o);
-  Object& operator=(Object&& o);
-
-  ~Object();
-
-  void reset();
-
-  /// Returns a new global reference to the internal Java object. The caller is responsible of the
-  /// reference and must release it itself.
-  jobject javaObject();
-
-  AnyObject anyObject();
-
-private:
-  jobject moveRef(jobject& ref) const;
-  jobject copyRef(jobject ref) const;
-
-  void reset(boost::optional<JNIEnv&> env);
-
-  JNIEnv* _env; // TODO: Make a wrapper for environment.
-  jobject _javaObject = nullptr; // TODO: Make a wrapper for global refs.
-};
+/// If the object is a non-null reference to a `com.aldebaran.qi.AnyObject` object, fetches its
+/// internal pointer and returns a copy of the `qi::AnyObject`. Otherwise returns an invalid
+/// `qi::AnyObject`.
+///
+/// Throws a std::runtime_error if it fails to access the internal pointer or if that pointer is
+/// null.
+qi::AnyObject internalQiAnyObject(jobject jAnyObject, boost::optional<JNIEnv&> env = {});
 
 } // namespace jni
 } // namespace qi
