@@ -96,59 +96,13 @@ void JNIlogHandler::log(const qi::LogLevel verb,
                         const char* fct,
                         const int line)
 {
-    if(!msg)
-    {
-        //No message, nothing to log
+    // Do nothing if the LogReport Java class could not be loaded.
+    if(!msg || !LogReportClass)
        return;
-    }
-
-    jint logLevel = (jint)verb;
-    JNIEnv* env = nullptr;
-    jint succeed = -1;
-    bool attached = false;
-
-    //Get environement directly. Succeed if called from JNI method
-    succeed = javaVirtualMachine->GetEnv((void**)&env, JNI_VERSION_1_6);
-
-    if(succeed != JNI_OK || !env)
-    {
-        //The environment is not get, it is maybe because we are not inside a JNI thread
-        //So we try to attach JNI environment to current thread. Have to detach it in success
-        char threadName[] = "qimessaging-reportLog-thread";
-        JavaVMAttachArgs args = { JNI_VERSION_1_6, threadName, nullptr };
-        succeed = javaVirtualMachine->AttachCurrentThread((envPtr)&env, &args);
-
-        if(succeed != JNI_OK || !env)
-        {
-            //Issue to get the environemnt, can't continue
-            return;
-        }
-
-        //Attach succeed, we remeber it is attached to detach it later
-        attached = true;
-    }
-
-
-    //Send the message to Java side, if available
-    if (LogReportClass)
-    {
-      try
-      {
-          jstring message = env->NewStringUTF(msg);
-          env->CallStaticVoidMethod(LogReportClass, jniLog, logLevel, message);
-      }
-      catch (...)
-      {
-          // Exception while report log
-      }
-    }
-
-
-    if(attached)
-    {
-        //Detach from current thread if need
-        javaVirtualMachine->DetachCurrentThread();
-    }
+    qi::jni::JNIAttach attach;
+    auto* const env = attach.get();
+    const auto message = ka::scoped(env->NewStringUTF(msg), qi::jni::releaseString);
+    env->CallStaticVoidMethod(LogReportClass, jniLog, static_cast<jint>(verb), message.value);
 }
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* virtualMachine, void* QI_UNUSED(reserved))
@@ -549,9 +503,8 @@ namespace qi {
     {
       if (!javaVirtualMachine)
       {
-        static const auto msg = "Cannot attach callback thread to Java VM: the VM pointer is null.";
-        qiLogError() << msg;
-        throw std::runtime_error{ msg };
+        throw std::runtime_error(
+          "Cannot attach callback thread to Java VM: the VM pointer is null.");
       }
 
       if (!ThreadJNI.get())
@@ -571,7 +524,6 @@ namespace qi {
           if (javaVirtualMachine->AttachCurrentThread((envPtr)&ThreadJNI->env, &args) != JNI_OK ||
               ThreadJNI->env == 0)
           {
-            qiLogError() << "Cannot attach callback thread to Java VM";
             throw std::runtime_error("Cannot attach callback thread to Java VM");
           }
           ThreadJNI->attached = true;
@@ -589,10 +541,8 @@ namespace qi {
       {
         if (ThreadJNI->attached)
         {
-          if (javaVirtualMachine && javaVirtualMachine->DetachCurrentThread() != JNI_OK)
-          {
-            qiLogError() << "Cannot detach from current thread";
-          }
+          if (javaVirtualMachine)
+            javaVirtualMachine->DetachCurrentThread();
           ThreadJNI->attached = false;
         }
         ThreadJNI->env = 0;
