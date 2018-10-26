@@ -332,26 +332,7 @@ qi::AnyReference call_to_java(std::string signature, void* data, const qi::Gener
     res = AnyValue_from_JObject(valueResult, sigInfo[0]).first;
     qi::jni::releaseObject(valueResult);
   }
-
-  // Did method throw?
-  if (jthrowable exc = env->ExceptionOccurred())
-  {
-    env->ExceptionClear();
-
-    jclass throwable_class = env->FindClass("java/lang/Throwable");
-    jmethodID getMessage =
-      env->GetMethodID(throwable_class,
-          "getMessage",
-          "()Ljava/lang/String;");
-
-    jstring msg = (jstring)env->CallObjectMethod(exc, getMessage);
-
-    const char* data = env->GetStringUTFChars(msg, 0);
-    std::string tmp = std::string(data);
-    env->ReleaseStringUTFChars(msg, data);
-
-    throw std::runtime_error(tmp);
-  }
+  qi::jni::handlePendingException(*env);
 
   // Release instance clazz
   qi::jni::releaseClazz(cls);

@@ -39,6 +39,7 @@ jclass cls_hashmap;
 jclass cls_enum;
 jclass cls_object;
 jclass cls_nativeTools;
+jclass cls_throwable;
 jmethodID method_NativeTools_callJava;
 
 /**
@@ -149,6 +150,7 @@ static void init_classes(JNIEnv *env)
   cls_object =loadClass(env, "java/lang/Object");
   cls_nativeTools = loadClass(env, "com/aldebaran/qi/NativeTools");
   cls_enum = loadClass(env, "java/lang/Enum");
+  cls_throwable = loadClass(env, "java/lang/Throwable");
 
   method_NativeTools_callJava = env->GetStaticMethodID(cls_nativeTools,
                                                        "callJava",
@@ -722,12 +724,12 @@ namespace qi {
       jstring throwableMessage(JNIEnv& env, jthrowable throwable)
       {
         const auto message = static_cast<jstring>(
-          Call<jobject>::invoke(&env, throwable, "getMessage", "()Ljava/lang/String;"));
+          Call<jobject>::invoke(&env, cls_throwable, throwable, "getMessage", "()Ljava/lang/String;"));
         if (!env.IsSameObject(message, nullptr))
           return message;
         // Fallback to `Object.toString` that never returns null.
         return static_cast<jstring>(
-          Call<jobject>::invoke(&env, throwable, "toString", "()Ljava/lang/String;"));
+          Call<jobject>::invoke(&env, cls_throwable, throwable, "toString", "()Ljava/lang/String;"));
       }
     }
 
