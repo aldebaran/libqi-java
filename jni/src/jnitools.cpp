@@ -737,8 +737,8 @@ namespace qi {
     {
       if (env.ExceptionCheck() == JNI_FALSE)
         return;
-      const auto throwable =
-        ka::scoped(env.ExceptionOccurred(), [&](jthrowable) { env.ExceptionClear(); });
+      const auto throwable = ka::scoped(env.ExceptionOccurred(), qi::jni::releaseObject);
+      env.ExceptionClear();
       throw std::runtime_error(toString(throwableMessage(env, throwable.value)));
     }
 
