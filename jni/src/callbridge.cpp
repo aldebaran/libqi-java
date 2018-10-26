@@ -258,14 +258,12 @@ jvalue object2value(jobject object)
  */
 qi::AnyReference call_to_java(std::string signature, void* data, const qi::GenericFunctionParameters& params)
 {
-  qi::AnyReference res;
   // Arguments given to Java to call NativeTools.callJava method
   // NativeTools.callJava(Object instance, String methodName, String methodSignature, Object[] methodArguments):Object
-  jvalue*             callJavaArguments = new jvalue[4];
+  jvalue callJavaArguments[4];
   int                 index = 0;
   JNIEnv*             env = 0;
   qi_method_info*     info = reinterpret_cast<qi_method_info*>(data);
-  jclass              cls = 0;
   std::vector<std::string>  sigInfo = qi::signatureSplit(signature);
 
   qi::jni::JNIAttach attach;
@@ -276,7 +274,7 @@ qi::AnyReference call_to_java(std::string signature, void* data, const qi::Gener
   {
     qiLogError() << "Internal method informations are not valid";
     throwNewException(env, "Internal method informations are not valid");
-    return res;
+    return qi::AnyReference();
   }
 
   // Translate parameters from AnyValues to jobjects
@@ -312,9 +310,9 @@ qi::AnyReference call_to_java(std::string signature, void* data, const qi::Gener
   }
 
   // Find method class and get methodID
-  cls = qi::jni::clazz(info->instance);
+  const auto cls = ka::scoped(qi::jni::clazz(info->instance), qi::jni::releaseClazz);
 
-  if (!cls)
+  if (!cls.value)
   {
     qiLogError() << "Service class not found";
     throw std::runtime_error("Service class not found");
@@ -325,24 +323,20 @@ qi::AnyReference call_to_java(std::string signature, void* data, const qi::Gener
   callJavaArguments[1] = object2value(env->NewStringUTF(sigInfo[1].c_str()));
   callJavaArguments[2] = object2value(env->NewStringUTF(javaSignature.c_str()));
   callJavaArguments[3] = object2value(arguments);
-  jobject valueResult = env->CallStaticObjectMethodA(cls_nativeTools, method_NativeTools_callJava, callJavaArguments);
+  const auto scopedArgs = ka::scoped([&]{
+    qi::jni::releaseObject(callJavaArguments[3].l);
+    qi::jni::releaseObject(callJavaArguments[2].l);
+    qi::jni::releaseObject(callJavaArguments[1].l);
+    // callJavaArguments[0].l is not released by purpose: it is info->instance
+  });
 
-  if (!env->ExceptionCheck())
-  {
-    res = AnyValue_from_JObject(valueResult, sigInfo[0]).first;
-    qi::jni::releaseObject(valueResult);
-  }
+  const auto valueResult =
+    ka::scoped(env->CallStaticObjectMethodA(cls_nativeTools, method_NativeTools_callJava,
+                                            callJavaArguments),
+               qi::jni::releaseObject);
+
   qi::jni::handlePendingException(*env);
-
-  // Release instance clazz
-  qi::jni::releaseClazz(cls);
-  // callJavaArguments[0].l is not released by purpose: it is info->instance
-  qi::jni::releaseObject(callJavaArguments[1].l);
-  qi::jni::releaseObject(callJavaArguments[2].l);
-  qi::jni::releaseObject(callJavaArguments[3].l);
-  delete[] callJavaArguments;
-
-  return res;
+  return AnyValue_from_JObject(valueResult.value, sigInfo[0]).first;
 }
 
 /**
