@@ -31,8 +31,7 @@ JNIEXPORT jobject JNICALL Java_com_aldebaran_qi_DynamicObjectBuilder_object(JNIE
   const auto ob = reinterpret_cast<qi::DynamicObjectBuilder *>(pObjectBuilder);
   try
   {
-    qi::jni::Object jobj{ std::unique_ptr<qi::AnyObject>{ new qi::AnyObject{ ob->object() } }, *env };
-    return jobj.javaObject();
+    return qi::jni::createAnyObject(ob->object(), *env);
   }
   catch (const std::runtime_error& e)
   {
