@@ -1,79 +1,85 @@
 /*
-**
-** Author(s):
-**  - Pierre ROULLON <proullon@aldebaran-robotics.com>
-**
-** Copyright (C) 2013 Aldebaran Robotics
-** See COPYING for the license
+**  Copyright (C) 2018 SoftBank Robotics Europe
+**  See COPYING for the license
 */
 
 #include <stdexcept>
 #include <sstream>
-
 #include <qi/log.hpp>
 #include <qi/type/dynamicobject.hpp>
+#include "object_jni.hpp"
 
-#include <jnitools.hpp>
-#include <object_jni.hpp>
+qiLogCategory("qi.jni.object");
 
-qiLogCategory("qimessaging.jni");
-
-JNIObject::JNIObject(const qi::AnyObject& o)
+namespace qi
 {
-  // FIXME where is the delete?
-  qi::AnyObject* newO = new qi::AnyObject();
-  *newO = o;
+namespace jni
+{
 
-  this->build(newO);
+namespace
+{
+
+boost::optional<JNIEnv&> findEnv(boost::optional<JNIEnv&> env = {})
+{
+  if (env)
+    return *env;
+  if (auto* const globalEnv = qi::jni::env())
+    return *globalEnv;
+  return {};
 }
 
-JNIObject::JNIObject(qi::AnyObject *newO)
+JNIEnv& getEnv(boost::optional<JNIEnv&> aenv = {})
 {
-  this->build(newO);
+  auto env = findEnv(aenv);
+  if (!env)
+    throw std::runtime_error("Failed to get a valid JNI environment.");
+  return *env;
 }
 
-JNIObject::JNIObject(jobject value)
-{
-  _env = attach.get();
-
-  _obj = value;
 }
 
-jobject JNIObject::object()
+jobject createAnyObject(std::unique_ptr<qi::AnyObject> object, boost::optional<JNIEnv&> aenv)
 {
-  return _obj;
-}
+  if (!object || !object->isValid())
+    return nullptr;
 
-qi::AnyObject      JNIObject::objectPtr()
-{
-  jfieldID fid = _env->GetFieldID(cls_anyobject, "_p", "J");
-
-  if (!fid)
+  auto& env = getEnv(aenv);
+  const auto methodId = env.GetMethodID(cls_anyobject, "<init>", "(J)V");
+  if (!methodId)
   {
-    qiLogFatal() << "JNIObject: Cannot get GenericObject";
-    throw "JNIObject: Cannot get GenericObject";
+    const auto msg = "qi::jni::AnyObject: Cannot find AnyObject constructor.";
+    qiLogError() << msg;
+    throw std::runtime_error(msg);
   }
 
-  jlong fieldValue = _env->GetLongField(_obj, fid);
-  return *(reinterpret_cast<qi::AnyObject*>(fieldValue));
+  // Release the `qi::AnyObject`, its lifetime will be bound to the Java object.
+  const auto internalPtr = reinterpret_cast<jlong>(object.release());
+  return env.NewObject(cls_anyobject, methodId, internalPtr);
 }
 
-void JNIObject::build(qi::AnyObject *newO)
+jobject createAnyObject(const qi::AnyObject& o, boost::optional<JNIEnv&> env)
 {
-  _env = attach.get();
+  return o.isValid() ? createAnyObject(std::unique_ptr<qi::AnyObject>(new auto(o)), env) : nullptr;
+}
 
-  jmethodID mid = _env->GetMethodID(cls_anyobject, "<init>", "(J)V");
+qi::AnyObject internalQiAnyObject(jobject jAnyObject, boost::optional<JNIEnv&> aenv)
+{
+  auto& env = getEnv(aenv);
+  if (env.IsSameObject(jAnyObject, nullptr))
+    return {};
 
-  if (!mid)
+  const auto fieldId = env.GetFieldID(cls_anyobject, "_p", "J");
+  if (!fieldId)
   {
-    qiLogError() << "JNIObject : Cannot find constructor";
-    throwNewException(_env, "JNIObject : Cannot find constructor");
+    const auto msg = "qi::jni::AnyObject: Cannot get AnyObject Java object internal native pointer.";
+    qiLogWarning() << msg;
+    throw std::runtime_error{ msg };
   }
 
-  jlong pObj = (long) newO;
-
-  _obj = _env->NewObject(cls_anyobject, mid, pObj);
-
-  // Keep a global ref on this object to avoid destruction EVER
-  _env->NewGlobalRef(_obj);
+  const auto internalPtr = env.GetLongField(jAnyObject, fieldId);
+  auto* const qiAnyObj = reinterpret_cast<const qi::AnyObject*>(internalPtr);
+  return qiAnyObj ? *qiAnyObj : qi::AnyObject();
 }
+
+} // namespace jni
+} // namespace qi

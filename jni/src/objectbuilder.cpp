@@ -28,14 +28,16 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_DynamicObjectBuilder_create(JNIEnv
 
 JNIEXPORT jobject JNICALL Java_com_aldebaran_qi_DynamicObjectBuilder_object(JNIEnv *env, jobject QI_UNUSED(jobj), jlong pObjectBuilder)
 {
-  qi::DynamicObjectBuilder *ob = reinterpret_cast<qi::DynamicObjectBuilder *>(pObjectBuilder);
-  qi::AnyObject *obj = new qi::AnyObject();
-  qi::AnyObject &o = *(reinterpret_cast<qi::AnyObject *>(obj));
-
-  o = ob->object();
-
-  JNIObject jobj(obj);
-  return jobj.object();
+  const auto ob = reinterpret_cast<qi::DynamicObjectBuilder *>(pObjectBuilder);
+  try
+  {
+    return qi::jni::createAnyObject(ob->object(), *env);
+  }
+  catch (const std::runtime_error& e)
+  {
+    throwNewRuntimeException(env, e.what());
+  }
+  return nullptr;
 }
 
 JNIEXPORT void JNICALL Java_com_aldebaran_qi_DynamicObjectBuilder_destroy(JNIEnv *env, jobject QI_UNUSED(obj), jlong pObjectBuilder)

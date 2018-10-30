@@ -39,6 +39,7 @@ jclass cls_hashmap;
 jclass cls_enum;
 jclass cls_object;
 jclass cls_nativeTools;
+jclass cls_throwable;
 jmethodID method_NativeTools_callJava;
 
 /**
@@ -96,68 +97,28 @@ void JNIlogHandler::log(const qi::LogLevel verb,
                         const char* fct,
                         const int line)
 {
-    if(!msg)
-    {
-        //No message, nothing to log
+    // Do nothing if the LogReport Java class could not be loaded.
+    if(!msg || !LogReportClass)
        return;
-    }
-
-    jint logLevel = (jint)verb;
-    JNIEnv* env = nullptr;
-    jint succeed = -1;
-    bool attached = false;
-
-    //Get environement directly. Succeed if called from JNI method
-    succeed = javaVirtualMachine->GetEnv((void**)&env, JNI_VERSION_1_6);
-
-    if(succeed != JNI_OK || !env)
-    {
-        //The environment is not get, it is maybe because we are not inside a JNI thread
-        //So we try to attach JNI environment to current thread. Have to detach it in success
-        char threadName[] = "qimessaging-reportLog-thread";
-        JavaVMAttachArgs args = { JNI_VERSION_1_6, threadName, nullptr };
-        succeed = javaVirtualMachine->AttachCurrentThread((envPtr)&env, &args);
-
-        if(succeed != JNI_OK || !env)
-        {
-            //Issue to get the environemnt, can't continue
-            return;
-        }
-
-        //Attach succeed, we remeber it is attached to detach it later
-        attached = true;
-    }
-
-
-    //Send the message to Java side, if available
-    if (LogReportClass)
-    {
-      try
-      {
-          jstring message = env->NewStringUTF(msg);
-          env->CallStaticVoidMethod(LogReportClass, jniLog, logLevel, message);
-      }
-      catch (...)
-      {
-          // Exception while report log
-      }
-    }
-
-
-    if(attached)
-    {
-        //Detach from current thread if need
-        javaVirtualMachine->DetachCurrentThread();
-    }
+    qi::jni::JNIAttach attach;
+    auto* const env = attach.get();
+    const auto message = ka::scoped(env->NewStringUTF(msg), qi::jni::releaseString);
+    env->CallStaticVoidMethod(LogReportClass, jniLog, static_cast<jint>(verb), message.value);
 }
 
-JNIEXPORT jint JNICALL JNI_OnLoad (JavaVM* virtualMachine, void* QI_UNUSED(reserved))
+JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* virtualMachine, void* QI_UNUSED(reserved))
 {
   javaVirtualMachine = virtualMachine;
   // seems like a good number
   qi::getEventLoop()->setMaxThreads(8);
   qi::getEventLoop()->setEmergencyCallback(emergency);
   return QI_JNI_MIN_VERSION;
+}
+
+JNIEXPORT void JNICALL JNI_OnUnload(JavaVM* QI_UNUSED(vm), void* QI_UNUSED(reserved))
+{
+  qi::getEventLoop()->setEmergencyCallback({}); // reset the emergency callback
+  javaVirtualMachine = nullptr;
 }
 
 static inline jclass loadClass(JNIEnv *env, const char *className)
@@ -189,6 +150,7 @@ static void init_classes(JNIEnv *env)
   cls_object =loadClass(env, "java/lang/Object");
   cls_nativeTools = loadClass(env, "com/aldebaran/qi/NativeTools");
   cls_enum = loadClass(env, "java/lang/Enum");
+  cls_throwable = loadClass(env, "java/lang/Throwable");
 
   method_NativeTools_callJava = env->GetStaticMethodID(cls_nativeTools,
                                                        "callJava",
@@ -541,6 +503,12 @@ namespace qi {
 
     JNIAttach::JNIAttach(JNIEnv* env)
     {
+      if (!javaVirtualMachine)
+      {
+        throw std::runtime_error(
+          "Cannot attach callback thread to Java VM: the VM pointer is null.");
+      }
+
       if (!ThreadJNI.get())
         ThreadJNI.reset(new JNIHandle);
       if (env)
@@ -558,7 +526,6 @@ namespace qi {
           if (javaVirtualMachine->AttachCurrentThread((envPtr)&ThreadJNI->env, &args) != JNI_OK ||
               ThreadJNI->env == 0)
           {
-            qiLogError() << "Cannot attach callback thread to Java VM";
             throw std::runtime_error("Cannot attach callback thread to Java VM");
           }
           ThreadJNI->attached = true;
@@ -576,10 +543,8 @@ namespace qi {
       {
         if (ThreadJNI->attached)
         {
-          if (javaVirtualMachine->DetachCurrentThread() != JNI_OK)
-          {
-            qiLogError() << "Cannot detach from current thread";
-          }
+          if (javaVirtualMachine)
+            javaVirtualMachine->DetachCurrentThread();
           ThreadJNI->attached = false;
         }
         ThreadJNI->env = 0;
@@ -636,6 +601,34 @@ namespace qi {
       }
 
       env->DeleteLocalRef(clazz);
+    }
+
+    boost::optional<std::string> name(jclass clazz)
+    {
+      const auto prefix = "Cannot get class name: ";
+      const auto env = qi::jni::env();
+      if (!env)
+      {
+        qiLogInfo() << prefix << "env: <null>.";
+        return {};
+      }
+
+      if (env->IsSameObject(clazz, nullptr))
+      {
+        qiLogInfo() << prefix << "env: " << env << ", class: <null>.";
+        return {};
+      }
+
+      const auto nameJavaStr =
+        static_cast<jstring>(Call<jobject>::invoke(env, clazz, "getName", "()Ljava/lang/String;"));
+      handlePendingException(*env);
+      if (env->IsSameObject(nameJavaStr, nullptr))
+      {
+        qiLogInfo() << prefix << "env: " << env << ", class: " << clazz << ", name: <null>.";
+        return {};
+      }
+
+      return toString(nameJavaStr);
     }
 
     // Convert jstring into std::string
@@ -725,5 +718,61 @@ namespace qi {
       }
       return array;
     }
-  }// !jni
+
+    namespace
+    {
+      jstring throwableMessage(JNIEnv& env, jthrowable throwable)
+      {
+        const auto message = static_cast<jstring>(
+          Call<jobject>::invoke(&env, cls_throwable, throwable, "getMessage", "()Ljava/lang/String;"));
+        if (!env.IsSameObject(message, nullptr))
+          return message;
+        // Fallback to `Object.toString` that never returns null.
+        return static_cast<jstring>(
+          Call<jobject>::invoke(&env, cls_throwable, throwable, "toString", "()Ljava/lang/String;"));
+      }
+    }
+
+    void handlePendingException(JNIEnv& env)
+    {
+      if (env.ExceptionCheck() == JNI_FALSE)
+        return;
+      const auto throwable = ka::scoped(env.ExceptionOccurred(), qi::jni::releaseObject);
+      env.ExceptionClear();
+      throw std::runtime_error(toString(throwableMessage(env, throwable.value)));
+    }
+
+    const char* errorToString(jint code)
+    {
+      switch (code)
+      {
+        default:            return "Unhandled error code.";
+        case JNI_OK:        return "Success.";
+        case JNI_EDETACHED: return "Thread is detached from the virtual machine.";
+        case JNI_EVERSION:  return "JNI version error.";
+        case JNI_ERR:       return "Unknown error.";
+
+        // Android NDK JNI header does not define the JNI_ENOMEM, JNI_EEXIST and JNI_EINVAL error
+        // codes (probably because they seem to be related to the instantiation of the Java
+        // virtual machine). We have to enable each case only if the corresponding code is
+        // defined.
+#ifdef JNI_ENOMEM
+        case JNI_ENOMEM:    return "Not enough memory.";
+#endif
+#ifdef JNI_EEXIST
+        case JNI_EEXIST:    return "Virtual machine has already been created.";
+#endif
+#ifdef JNI_EINVAL
+        case JNI_EINVAL:    return "Invalid arguments.";
+#endif
+      }
+    }
+
+    bool assertion(JNIEnv* env, bool condition, const char* message)
+    {
+      if (!condition)
+        throwNew(env, "java/lang/AssertionError", message);
+      return condition;
+    }
+  } // !jni
 }// !qi

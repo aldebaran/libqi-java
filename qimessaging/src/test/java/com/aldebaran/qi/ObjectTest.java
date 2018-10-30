@@ -57,6 +57,7 @@ public class ObjectTest {
         ob.advertiseMethod("abacus::{ib}({ib})", reply, "Flip all booleans in map");
         ob.advertiseMethod("echoFloatList::[m]([f])", reply, "Return the exact same list");
         ob.advertiseMethod("createObject::o()", reply, "Return a test object");
+        ob.advertiseMethod("createNullObject::o()", reply, "Return a null object");
         ob.advertiseMethod("setStored::v(i)", reply, "Set stored value");
         ob.advertiseMethod("waitAndAddToStored::i(ii)", reply, "Wait given time, and return stored + val");
         ob.advertiseMethod("genTuple::(is)()", reply, "Return a tuple");
@@ -182,10 +183,9 @@ public class ObjectTest {
             ret = anyObject.<String>call("add", 42).get();
         } catch (Exception e) {
             ok = true;
-            String expected = "Arguments types did not match for add:\n  Candidate:\n  add::(iii) (1)\n";
             System.out.println(e.getMessage());
-            System.out.println(expected);
-            assertTrue(e.getMessage().contains("did not match"));
+            assertTrue(e.getMessage().startsWith("Could not find suitable " +
+                    "method"));
         }
         assertTrue(ok);
 
@@ -194,10 +194,9 @@ public class ObjectTest {
             ret = anyObject.<String>call("add", "42", 42, 42).get();
         } catch (ExecutionException e) {
             ok = true;
-            String expected = "cannot convert parameters from (sii) to (iii)";
+            String prefix = "Could not find suitable method";
             System.out.println(e.getMessage());
-            System.out.println(expected);
-            assertEquals(expected, e.getMessage());
+            assertTrue(e.getMessage().startsWith(prefix));
         }
         assertTrue(ok);
 
@@ -209,7 +208,8 @@ public class ObjectTest {
             String expected = "Can't find method: addFoo\n";
             System.out.println(e.getMessage());
             System.out.println(expected);
-            assertTrue(e.getMessage().contains("Can't find method"));
+            assertTrue(e.getMessage().startsWith("Could not find suitable " +
+                    "method"));
         }
         assertTrue(ok);
     }
@@ -253,5 +253,15 @@ public class ObjectTest {
         Item item = new Item(42, "forty-two");
         int value = proxy.<Integer>call(int.class, "getFirstFieldValue", item).get();
         assertEquals(42, value);
+    }
+
+    @Test
+    public void callsCanReturnNullAkaInvalidObject() {
+        try {
+            AnyObject anyObject = proxy.<AnyObject>call("createNullObject").get();
+            assertNull(anyObject);
+        } catch (Exception e) {
+            fail("Call to 'createNullObject' failed: " + e.getMessage());
+        }
     }
 }

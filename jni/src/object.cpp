@@ -22,6 +22,9 @@ extern MethodInfoHandler gInfoHandler;
 JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_property(JNIEnv* env, jobject QI_UNUSED(jobj), jlong pObj, jstring name)
 {
   qi::AnyObject&     obj = *(reinterpret_cast<qi::AnyObject*>(pObj));
+  if (!qi::jni::assertion(env, obj.isValid(), "AnyObject.property: Invalid qi.AnyObject."))
+    return 0;
+
   std::string        propName = qi::jni::toString(name);
 
   qi::Future<qi::AnyValue>* ret = new qi::Future<qi::AnyValue>();
@@ -45,8 +48,11 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_setProperty(
     JNIEnv* env, jobject /*jObject*/, jlong objectAddress, jstring jPropertyName, jobject jValue)
 {
   auto objectPtr = reinterpret_cast<qi::AnyObject*>(objectAddress);
-  auto propertyName = qi::jni::toString(jPropertyName);
+  if (!qi::jni::assertion(env, objectPtr->isValid(),
+                          "AnyObject.setProperty: Invalid qi.AnyObject."))
+    return 0;
 
+  auto propertyName = qi::jni::toString(jPropertyName);
   qi::jni::JNIAttach attach(env);
   try
   {
@@ -64,6 +70,9 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_setProperty(
 JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_asyncCall(JNIEnv* env, jobject QI_UNUSED(jobj), jlong pObject, jstring jmethod, jobjectArray args)
 {
   qi::AnyObject&    obj = *(reinterpret_cast<qi::AnyObject*>(pObject));
+  if (!qi::jni::assertion(env, obj.isValid(), "AnyObject.asyncCall: Invalid qi.AnyObject."))
+    return 0;
+
   std::string       method;
   qi::Future<qi::AnyValue>* fut = 0;
 
@@ -81,11 +90,14 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_asyncCall(JNIEnv* env, j
   return (jlong) fut;
 }
 
-JNIEXPORT jstring JNICALL Java_com_aldebaran_qi_AnyObject_metaObjectToString(JNIEnv* QI_UNUSED(env), jobject QI_UNUSED(jobj), jlong pObject)
+JNIEXPORT jstring JNICALL Java_com_aldebaran_qi_AnyObject_metaObjectToString(JNIEnv* env, jobject QI_UNUSED(jobj), jlong pObject)
 {
   qi::AnyObject&    obj = *(reinterpret_cast<qi::AnyObject*>(pObject));
-  std::stringstream ss;
+  if (!qi::jni::assertion(env, obj.isValid(),
+                          "AnyObject.metaObjectToString: Invalid qi.AnyObject."))
+    return nullptr;
 
+  std::ostringstream ss;
   qi::detail::printMetaObject(ss, obj.metaObject(), false /* do not print colors */);
   return qi::jni::toJstring(ss.str());
 }
@@ -101,6 +113,9 @@ JNIEXPORT void JNICALL Java_com_aldebaran_qi_AnyObject_destroy(JNIEnv* QI_UNUSED
 JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_disconnect(JNIEnv *env, jobject QI_UNUSED(jobj), jlong pObject, jlong subscriberId)
 {
   qi::AnyObject&             obj = *(reinterpret_cast<qi::AnyObject *>(pObject));
+  if (!qi::jni::assertion(env, obj.isValid(), "AnyObject.disconnect: Invalid qi.AnyObject."))
+    return 0;
+
   try {
     obj.disconnect(subscriberId);
   } catch (std::exception& e)
@@ -113,6 +128,9 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_disconnect(JNIEnv *env, 
 JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_connect(JNIEnv *env, jobject jobj, jlong pObject, jstring method, jobject instance, jstring service, jstring eventName)
 {
   qi::AnyObject&             obj = *(reinterpret_cast<qi::AnyObject *>(pObject));
+  if (!qi::jni::assertion(env, obj.isValid(), "AnyObject.connect: Invalid qi.AnyObject."))
+    return 0;
+
   std::string                signature = qi::jni::toString(method);
   std::string                event = qi::jni::toString(eventName);
   qi_method_info*            data;
@@ -142,7 +160,7 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_connect(JNIEnv *env, job
 
     qi::SignalLink link = obj.connect(event,
                         qi::SignalSubscriber(
-                          qi::AnyFunction::fromDynamicFunction(eventCallbackToJava)));
+                          qi::AnyFunction::fromDynamicFunction(eventCallbackToJava))).value();
     return link;
   } catch (std::exception& e)
   {
@@ -154,6 +172,10 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_connect(JNIEnv *env, job
 JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_connectSignal(JNIEnv *env, jobject QI_UNUSED(obj), jlong pObject, jstring jSignalName, jobject listener)
 {
   qi::AnyObject *anyObject = reinterpret_cast<qi::AnyObject *>(pObject);
+  if (!qi::jni::assertion(env, anyObject->isValid(),
+                          "AnyObject.connectSignal: Invalid qi.AnyObject."))
+    return 0;
+
   std::string signalName = qi::jni::toString(jSignalName);
   auto gListener = qi::jni::makeSharedGlobalRef(env, listener);
 
@@ -192,6 +214,10 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_connectSignal(JNIEnv *en
 JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_disconnectSignal(JNIEnv *env, jobject QI_UNUSED(obj), jlong pObject, jlong subscriberId)
 {
   qi::AnyObject *anyObject = reinterpret_cast<qi::AnyObject *>(pObject);
+  if (!qi::jni::assertion(env, anyObject->isValid(),
+                          "AnyObject.disconnectSignal: Invalid qi.AnyObject."))
+    return 0;
+
   qi::Future<void> disconnectFuture = anyObject->disconnect(subscriberId);
 
   qi::Future<qi::AnyValue> future = qi::toAnyValueFuture(std::move(disconnectFuture));
@@ -202,6 +228,9 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_disconnectSignal(JNIEnv 
 JNIEXPORT void JNICALL Java_com_aldebaran_qi_AnyObject_post(JNIEnv *env, jobject QI_UNUSED(jobj), jlong pObject, jstring eventName, jobjectArray jargs)
 {
   qi::AnyObject obj = *(reinterpret_cast<qi::AnyObject *>(pObject));
+  if (!qi::jni::assertion(env, obj.isValid(), "AnyObject.post: Invalid qi.AnyObject."))
+    return;
+
   std::string   event = qi::jni::toString(eventName);
   qi::GenericFunctionParameters params;
   std::string signature;
@@ -268,6 +297,12 @@ JNIEXPORT jint JNICALL Java_com_aldebaran_qi_AnyObject_compare(JNIEnv * env, jcl
 {
   qi::AnyObject anyObject1 = *(reinterpret_cast<qi::AnyObject *>(object1));
   qi::AnyObject anyObject2 = *(reinterpret_cast<qi::AnyObject *>(object2));
+
+  if (!qi::jni::assertion(env, anyObject1.isValid(),
+                          "AnyObject.compare: Invalid first qi.AnyObject.") ||
+      !qi::jni::assertion(env, anyObject2.isValid(),
+                          "AnyObject.compare: Invalid second qi.AnyObject."))
+    return 0;
 
   if(anyObject1 == anyObject2)
   {

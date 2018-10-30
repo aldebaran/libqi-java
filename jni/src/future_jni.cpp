@@ -145,7 +145,7 @@ static jobject callFunctionExecute(JNIEnv *env, jobject function, jobject argume
     jobject answer = qi::jni::Call<jobject>::invoke(env, function, method, methodSig, argument);
 
     //Check if exception happened on Java side
-    checkJavaExceptionAndReport(env);
+    qi::jni::handlePendingException(*env);
 
     return answer;
 }
@@ -163,7 +163,7 @@ static void callConsumerConsume(JNIEnv *env, jobject function, jobject argument)
     qi::jni::Call<void>::invoke(env, function, method, methodSig, argument);
 
     //Check if exception happened on Java side
-    checkJavaExceptionAndReport(env);
+    qi::jni::handlePendingException(*env);
 }
 
 /**
@@ -195,7 +195,7 @@ static qi::Future<qi::AnyValue> obtainFutureCfromFutureJava(JNIEnv *env, jobject
     jlong pointer = env->GetLongField(future, field_future_pointer);
 
     //Check if exception happened on Java side
-    checkJavaExceptionAndReport(env);
+    qi::jni::handlePendingException(*env);
 
     //Obtain the C++ Future linked to the pointer
     return *reinterpret_cast<qi::Future<qi::AnyValue>*>(pointer);
@@ -406,11 +406,6 @@ JNIEXPORT jboolean JNICALL Java_com_aldebaran_qi_Future_qiFutureCallCancel(JNIEn
     auto * future = futureFromPointer(pFuture);
     // Leave this method as it is (even if returning a boolean doesn't make sense) to avoid breaking
     // projects that were already using it. Future projects should prefer using qiFutureCallCancelRequest.
-    if (future->isCancelable() == false)
-    {
-        return false;
-    }
-
     future->cancel();
     return true;
 }

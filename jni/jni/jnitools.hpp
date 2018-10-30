@@ -53,6 +53,7 @@ extern jclass cls_enum;
 
 extern jclass cls_object;
 extern jclass cls_nativeTools;
+extern jclass cls_throwable;
 extern jmethodID method_NativeTools_callJava;
 extern JavaVM* javaVirtualMachine;
 
@@ -68,8 +69,10 @@ extern jmethodID jniLog;
 // JNI utils
 extern "C"
 {
-  JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void*);
-  JNIEXPORT void JNICALL Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(JNIEnv* env, jclass cls);
+  JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* unused);
+  JNIEXPORT void JNICALL JNI_OnUnload(JavaVM* vm, void* unused);
+  JNIEXPORT void JNICALL Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(JNIEnv* env,
+                                                                            jclass unused = nullptr);
 } // !extern C
 
 /**
@@ -128,6 +131,7 @@ namespace qi {
     // TypeSystem tools
     jclass      clazz(jobject object);
     void        releaseClazz(jclass clazz);
+    boost::optional<std::string> name(jclass clazz);
     // JVM Environment management
     JNIEnv*     env();
     void        releaseObject(jobject obj);
@@ -144,49 +148,55 @@ namespace qi {
                       jobject     jobject,
                       const char* methodName,
                       const char* methodSig,
-                      Types       ...rest);
+                      Types&&...    rest)
+      {
+        const auto clazz = ka::scoped(env->GetObjectClass(jobject), qi::jni::releaseClazz);
+        return invoke(env, clazz.value, jobject, methodName, methodSig,
+                      std::forward<Types>(rest)...);
+      }
+
+      template <typename... Types>
+      static R invoke(JNIEnv*     env,
+                      jclass      clazz,
+                      jobject     jobject,
+                      const char* methodName,
+                      const char* methodSig,
+                      Types&&...    rest)
+      {
+        const auto mid = env->GetMethodID(clazz, methodName, methodSig);
+        return invokeImpl(env, jobject, mid, std::forward<Types>(rest)...);
+      }
+
+    private:
+      template <typename... Types>
+      static R invokeImpl(JNIEnv* env,
+                          jobject jobject,
+                          jmethodID methodId,
+                          Types&&... rest);
     };
 
     template <>
     template <typename... Types>
-    void Call<void>::invoke(JNIEnv*     env,
-                            jobject     jobject,
-                            const char* methodName,
-                            const char* methodSig,
-                            Types       ...rest)
+    void Call<void>::invokeImpl(JNIEnv* env, jobject jobject, jmethodID mid, Types&&... rest)
     {
-      jclass cls = env->GetObjectClass(jobject);
-      jmethodID mid = env->GetMethodID(cls, methodName, methodSig);
-      env->DeleteLocalRef(cls);
-      return env->CallVoidMethod(jobject, mid, rest...);
+      return env->CallVoidMethod(jobject, mid, std::forward<Types>(rest)...);
     }
 
     template <>
     template <typename... Types>
-    jboolean Call<jboolean>::invoke(JNIEnv*     env,
-                                    jobject     jobject,
-                                    const char* methodName,
-                                    const char* methodSig,
-                                    Types       ...rest)
+    jboolean Call<jboolean>::invokeImpl(JNIEnv* env,
+                                        jobject jobject,
+                                        jmethodID mid,
+                                        Types&&... rest)
     {
-      jclass cls = env->GetObjectClass(jobject);
-      jmethodID mid = env->GetMethodID(cls, methodName, methodSig);
-      env->DeleteLocalRef(cls);
-      return env->CallBooleanMethod(jobject, mid, rest...);
+      return env->CallBooleanMethod(jobject, mid, std::forward<Types>(rest)...);
     }
 
     template <>
     template <typename... Types>
-    jobject Call<jobject>::invoke(JNIEnv*     env,
-                                  jobject     jobject,
-                                  const char* methodName,
-                                  const char* methodSig,
-                                  Types       ...rest)
+    jobject Call<jobject>::invokeImpl(JNIEnv* env, jobject jobject, jmethodID mid, Types&&... rest)
     {
-      jclass cls = env->GetObjectClass(jobject);
-      jmethodID mid = env->GetMethodID(cls, methodName, methodSig);
-      env->DeleteLocalRef(cls);
-      return env->CallObjectMethod(jobject, mid, rest...);
+      return env->CallObjectMethod(jobject, mid, std::forward<Types>(rest)...);
     }
 
     template <typename R>
@@ -292,6 +302,17 @@ namespace qi {
         env->DeleteGlobalRef(globalRef);
       }};
     }
+
+    /// If a Java exception is pending, fetches it, clears its pending status and then throws a
+    /// std::runtime_error with the same error message. If no exception is pending,
+    /// returns immediately.
+    void handlePendingException(JNIEnv& env);
+
+    /// Returns a string describing the given JNI error code.
+    const char* errorToString(jint code);
+
+    /// Raises a java.lang.AssertionError with the given message if the condition is false.
+    bool assertion(JNIEnv* env, bool condition, const char* message = "");
   }// !jni
 }// !qi
 

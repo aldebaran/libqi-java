@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
+#include <boost/algorithm/string/replace.hpp>
 #include <jni.h>
+#include <ka/errorhandling.hpp>
 #include <qi/type/dynamicobjectbuilder.hpp>
 #include <qi/property.hpp>
 #include <jnitools.hpp>
@@ -10,131 +12,192 @@
 
 qiLogCategory("qimessaging.jni.test");
 
-
-int main(int argc, char** argv)
+namespace qi { namespace jni { namespace test
 {
-  // Avoid making a qi::Application. Real Java apps cannot do it.
-  qi::log::addFilter("qimessaging.jni", qi::LogLevel_Debug);
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
+
+namespace
+{
+  /// Procedure<jint()> Proc
+  /// OStreamable O
+  template<typename Proc, typename O = const char*>
+  void assertSuccess(Proc&& p, O&& errorPrefix = {})
+  {
+    const auto status = std::forward<Proc>(p)();
+    if (status != JNI_OK)
+      FAIL() << std::forward<O>(errorPrefix) << "Status: " << errorToString(status);
+  }
 }
 
-
-class QiJNI: public ::testing::Test
+class Environment : public ::testing::Environment
 {
-protected:
-  static void SetUpTestCase()
+  void SetUp() override
   {
     JavaVMOption options[1];
     JavaVMInitArgs vm_args;
-    long status;
 
     char classPathDefinition[] = "-Djava.class.path=.";
     options[0].optionString = classPathDefinition;
     memset(&vm_args, 0, sizeof(vm_args));
-    vm_args.version = JNI_VERSION_1_6;
+    vm_args.version = QI_JNI_MIN_VERSION;
     vm_args.nOptions = 1;
     vm_args.options = options;
-    status = JNI_CreateJavaVM(&jvm, (void**)&env, &vm_args);
-
-    if (status == JNI_ERR)
-      throw std::runtime_error("Failed to set a JVM up");
-    jvm->AttachCurrentThread((void**)&env, nullptr);
+    assertSuccess(
+      [&]{ return JNI_CreateJavaVM(&javaVM, reinterpret_cast<void**>(&jniEnv), &vm_args); },
+      "Failed to create the Java virtual machine.");
+    assertSuccess(
+      [&]{ return javaVM->AttachCurrentThread(reinterpret_cast<void**>(&jniEnv), nullptr); },
+      "Failed to attach current thread.");
 
     // Real Java apps will always call this when loading the library.
-    JNI_OnLoad(jvm, nullptr);
-
-    Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(env, jclass{});
+    ASSERT_NO_THROW(EXPECT_EQ(QI_JNI_MIN_VERSION, JNI_OnLoad(javaVM, nullptr)));
+    ASSERT_NO_THROW(Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(jniEnv));
   }
 
-  static void TearDownTestCase()
+  void TearDown() override
   {
-    if (jvm)
-      jvm->DestroyJavaVM();
+    ASSERT_NO_THROW(JNI_OnUnload(javaVM, nullptr));
+
+    jniEnv = nullptr;
+    if (const auto localJavaVM = ka::exchange(javaVM, nullptr))
+    {
+      assertSuccess([&]{ return localJavaVM->DetachCurrentThread(); },
+                    "Failed to detach current thread.");
+      assertSuccess([&]{ return localJavaVM->DestroyJavaVM(); },
+                    "Failed to destroy the Java virtual machine.");
+    }
   }
 
-  static JNIEnv* env;
-  static JavaVM* jvm;
+public:
+  JavaVM* javaVM = nullptr;
+  JNIEnv* jniEnv = nullptr;
 };
 
-JNIEnv* QiJNI::env = nullptr;
-JavaVM* QiJNI::jvm = nullptr;
+Environment* environment = nullptr;
+
+namespace
+{
 
 template <typename T>
-qi::AnyObject makeObjectWithProperty(const std::string& propertyName, qi::Property<T>& property)
+AnyObject makeObjectWithProperty(const std::string& propertyName, Property<T>& property)
 {
-  qi::DynamicObjectBuilder objectBuilder;
+  DynamicObjectBuilder objectBuilder;
   objectBuilder.advertiseProperty(propertyName, &property);
   return objectBuilder.object();
 }
 
-TEST_F(QiJNI, setProperty)
+} // anonymous namespace
+
+}}} // namespace jni::test
+
+using namespace qi;
+using namespace qi::jni;
+
+int main(int argc, char** argv)
+{
+  // Avoid making a qi::Application. Real Java apps cannot do it.
+  log::addFilter("qimessaging.jni", LogLevel_Debug);
+  ::testing::InitGoogleTest(&argc, argv);
+  test::environment =
+    static_cast<test::Environment*>(::testing::AddGlobalTestEnvironment(new test::Environment));
+  return RUN_ALL_TESTS();
+}
+
+TEST(QiJNI, setProperty)
 {
   const int initialValue = 12;
   const int newValue = 42;
-  qi::Property<int> property{initialValue};
+  Property<int> property{initialValue};
 
   const std::string propertyName = "serendipity";
-  auto object = makeObjectWithProperty(propertyName, property);
+  auto object = test::makeObjectWithProperty(propertyName, property);
   auto objectPtr = &object;
 
-  qi::jni::JNIAttach attach{env};
+  JNIAttach attach{test::environment->jniEnv};
   auto futureAddress = Java_com_aldebaran_qi_AnyObject_setProperty(
-        env, jobject{},
+        test::environment->jniEnv, jobject{},
         reinterpret_cast<jlong>(objectPtr),
-        qi::jni::toJstring(propertyName),
-        JObject_from_AnyValue(qi::AnyValue{newValue}.asReference()));
+        toJstring(propertyName),
+        JObject_from_AnyValue(AnyValue{newValue}.asReference()));
 
-  auto future = reinterpret_cast<qi::Future<qi::AnyValue>*>(futureAddress);
-  auto status = future->waitFor(qi::MilliSeconds{200});
-  ASSERT_EQ(qi::FutureState_FinishedWithValue, status);
+  auto future = reinterpret_cast<Future<AnyValue>*>(futureAddress);
+  auto status = future->waitFor(MilliSeconds{200});
+  ASSERT_EQ(FutureState_FinishedWithValue, status);
   ASSERT_EQ(newValue, object.property<int>(propertyName).value());
 }
 
-TEST_F(QiJNI, futureErrorIfSetPropertyThrows)
+TEST(QiJNI, futureErrorIfSetPropertyThrows)
 {
   using CustomException = std::exception;
   const int initialValue = 12;
   const int newValue = 42;
-  qi::Property<int> property{initialValue, qi::Property<int>::Getter{}, [this](int&, const int&)->bool
+  Property<int> property{initialValue, Property<int>::Getter{}, [this](int&, const int&)->bool
   {
     throw CustomException{};
   }};
 
   const std::string propertyName = "serendipity";
-  auto object = makeObjectWithProperty(propertyName, property);
+  auto object = test::makeObjectWithProperty(propertyName, property);
   auto objectPtr = &object;
 
-  qi::jni::JNIAttach attach{env};
+  JNIAttach attach{test::environment->jniEnv};
   auto futureAddress = Java_com_aldebaran_qi_AnyObject_setProperty(
-        env, jobject{},
+        test::environment->jniEnv, jobject{},
         reinterpret_cast<jlong>(objectPtr),
-        qi::jni::toJstring(propertyName),
-        JObject_from_AnyValue(qi::AnyValue{newValue}.asReference()));
+        toJstring(propertyName),
+        JObject_from_AnyValue(AnyValue{newValue}.asReference()));
 
-  auto future = reinterpret_cast<qi::Future<qi::AnyValue>*>(futureAddress);
-  auto status = future->waitFor(qi::MilliSeconds{200});
-  ASSERT_EQ(qi::FutureState_FinishedWithError, status);
+  auto future = reinterpret_cast<Future<AnyValue>*>(futureAddress);
+  auto status = future->wait();
+  ASSERT_EQ(FutureState_FinishedWithError, status);
   ASSERT_EQ(initialValue, object.property<int>(propertyName).value());
 }
 
 
-TEST_F(QiJNI, dynamicObjectBuilderAdvertiseMethodVoidVoid)
+TEST(QiJNI, dynamicObjectBuilderAdvertiseMethodVoidVoid)
 {
   // Object.notify() is a typical example of function taking and returning nothing.
   const auto javaObjectClassName = "java/lang/Object";
-  const auto javaObjectClass = env->FindClass(javaObjectClassName);
-  const auto javaObjectConstructor = env->GetMethodID(javaObjectClass, "<init>", "()V");
-  const auto javaObject = env->NewObject(javaObjectClass, javaObjectConstructor);
+  const auto javaObjectClass = test::environment->jniEnv->FindClass(javaObjectClassName);
+  const auto javaObjectConstructor =
+    test::environment->jniEnv->GetMethodID(javaObjectClass, "<init>", "()V");
+  const auto javaObject = test::environment->jniEnv->NewObject(javaObjectClass, javaObjectConstructor);
 
   // Let's make a Qi Object calling that method.
-  const auto objectBuilderAddress = Java_com_aldebaran_qi_DynamicObjectBuilder_create(env, nullptr);
-  env->ExceptionClear();
+  const auto objectBuilderAddress =
+    Java_com_aldebaran_qi_DynamicObjectBuilder_create(test::environment->jniEnv, nullptr);
+  test::environment->jniEnv->ExceptionClear();
   Java_com_aldebaran_qi_DynamicObjectBuilder_advertiseMethod(
-        env, jobject{},
+        test::environment->jniEnv, jobject{},
         objectBuilderAddress,
-        qi::jni::toJstring("notify::v()"), javaObject, // 'v' stands for "void"
-        qi::jni::toJstring(javaObjectClassName),
-        qi::jni::toJstring("Whatever"));
-  ASSERT_FALSE(env->ExceptionCheck());
+        toJstring("notify::v()"), javaObject, // 'v' stands for "void"
+        toJstring(javaObjectClassName),
+        toJstring("Whatever"));
+  ASSERT_FALSE(test::environment->jniEnv->ExceptionCheck());
+}
+
+TEST(QiJNI, className)
+{
+  const std::string className("java/lang/NullPointerException");
+  const auto clazz = test::environment->jniEnv->FindClass(className.c_str());
+  const auto actual = name(clazz);
+  ASSERT_TRUE(actual);
+  EXPECT_EQ(boost::replace_all_copy(className, "/", "."), *actual);
+}
+
+TEST(QiJNITypeConversion, NullJavaObjectToQiObjectConvertsToNullObject)
+{
+  const auto jobj = ka::scoped(test::environment->jniEnv->NewGlobalRef(nullptr), [](jobject obj) {
+    test::environment->jniEnv->DeleteGlobalRef(obj);
+  });
+  const auto ref = ka::scoped(AnyValue_from_JObject(jobj.value, typeOf<AnyObject>()->signature()),
+                              [&](std::pair<AnyReference, bool> p) {
+                                if (p.second)
+                                  p.first.destroy();
+                              });
+
+  // qi.Objects actually are of type Dynamic in the type system, not of type Object.
+  ASSERT_EQ(TypeKind_Dynamic, ref.value.first.kind());
+  AnyObject obj;
+  EXPECT_NO_THROW(obj = ref.value.first.to<AnyObject>());
+  EXPECT_FALSE(obj.isValid());
 }

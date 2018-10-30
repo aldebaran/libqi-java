@@ -163,14 +163,7 @@ struct toJObject
 
     void visitAnyObject(qi::AnyObject o)
     {
-      try
-      {
-        JNIObject obj(o);
-        *result = obj.object();
-      }
-      catch (std::exception&)
-      {
-      }
+      *result = qi::jni::createAnyObject(o);
     }
 
     void visitOptional(qi::AnyReference optionalReference)
@@ -356,23 +349,30 @@ qi::AnyReference AnyValue_from_JObject_Future(jobject val, JNIEnv* env)
   return any.clone(); // makes a copy of the content, and keeps ownership on it
 }
 
-qi::AnyReference AnyValue_from_JObject_RemoteObject(jobject val)
+qi::AnyReference AnyValue_from_JObject_RemoteObject(jobject val, JNIEnv* env)
 {
-  JNIObject obj(val);
-
-  qi::AnyObject* tmp = new qi::AnyObject();
-  *tmp = obj.objectPtr();
-  return qi::AnyReference::from(*tmp);
+  auto anyObj = qi::jni::internalQiAnyObject(val, *env);
+  return qi::AnyReference::from(std::move(anyObj)).clone();
 }
 
 qi::AnyReference _AnyValue_from_JObject(jobject val);
 
-std::pair<qi::AnyReference, bool> AnyValue_from_JObject(jobject val)
+std::pair<qi::AnyReference, bool> AnyValue_from_JObject(jobject val, qi::Signature signatureHint)
 {
-  if (!val)
-    return std::make_pair(qi::AnyReference(qi::typeOf<void>()), false);
+  qi::jni::JNIAttach attach;
+  JNIEnv *env = attach.get();
 
-  return std::make_pair(_AnyValue_from_JObject(val), true);
+  if (env->IsSameObject(val, nullptr))
+  {
+    // Converting a `null` Java object to an object results in a null `qi.Object` and to anything
+    // else it results in a invalid value.
+    if (signatureHint.isValid() && signatureHint.type() == qi::Signature::Type_Object)
+      return std::make_pair(qi::AnyReference::from(AnyObject{}).clone(), true);
+    else
+      return std::make_pair(qi::AnyReference(qi::typeOf<void>()), false);
+  }
+
+  return { _AnyValue_from_JObject(val), true };
 }
 
 qi::AnyReference _AnyValue_from_JObject(jobject val)
@@ -448,7 +448,7 @@ qi::AnyReference _AnyValue_from_JObject(jobject val)
 
   if (env->IsInstanceOf(val, cls_anyobject))
   {
-    return AnyValue_from_JObject_RemoteObject(val);
+    return AnyValue_from_JObject_RemoteObject(val, env);
   }
   qiLogError() << "Cannot serialize return value: Unable to convert JObject to AnyValue";
   throw std::runtime_error("Cannot serialize return value: Unable to convert JObject to AnyValue");
@@ -538,7 +538,7 @@ class JObjectTypeInterface: public qi::DynamicTypeInterface
       // Giving jobject* to JObject_from_AnyValue
       JObject_from_AnyValue(src, target);
 
-      if (*target)
+      if (*target && env->GetObjectRefType(*target) == JNILocalRefType)
       {
         // create a global ref to keep the object alive until we decide it may
         // die, but delete the local ref because they are limited to 512 in
