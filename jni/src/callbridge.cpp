@@ -88,7 +88,7 @@ namespace
       const auto clazzName = qi::jni::name(qi::jni::clazz(param));
       return clazzName ? *clazzName : "<unknown>";
     };
-    oss << join(transform(std::forward<Range2>(javaParams), objectClassName), ", ")
+    oss << join(transform(std::forward<Range2>(javaParams), std::cref(objectClassName)), ", ")
         << "). Candidates are: ";
 
     static const auto quotedMethodName = [](const qi::MetaMethod& method) {
@@ -98,7 +98,7 @@ namespace
     if (boost::empty(candidates))
       oss << "<no candidate found>";
     else
-      oss << join(transform(std::forward<Range1>(candidates), quotedMethodName), ", ");
+      oss << join(transform(std::forward<Range1>(candidates), std::cref(quotedMethodName)), ", ");
     oss << ".";
     return oss.str();
   }
@@ -119,7 +119,7 @@ namespace
     const auto hasExpectedArity = [&](const qi::MetaMethod& method) {
       return paramsSigs(method).size() == javaParams.size();
     };
-    const auto expectedArityCandidates = filter(candidates, hasExpectedArity);
+    const auto expectedArityCandidates = filter(candidates, std::cref(hasExpectedArity));
 
     // Convert parameters and bind them to each candidate.
     const auto convertAndBindParams = [&](const qi::MetaMethod& candidate) {
@@ -132,7 +132,8 @@ namespace
       }
       return ParamsBoundMethod{ candidate, params };
     };
-    const auto paramsBoundCandidates = transform(expectedArityCandidates, convertAndBindParams);
+    const auto paramsBoundCandidates =
+      transform(expectedArityCandidates, std::cref(convertAndBindParams));
 
     // Find the fitting candidate which is the first one for which each bound parameter is
     // convertible to the type of the respective method parameter.
@@ -145,12 +146,13 @@ namespace
     };
     const auto allBoundParametersAreConvertible = [&](const ParamsBoundMethod& candidate) {
       return !isFound(std::mismatch(begin(candidate.params), end(candidate.params),
-                                    begin(paramsSigs(candidate.method)), isConvertibleTo)
+                                    begin(paramsSigs(candidate.method)), std::cref(isConvertibleTo))
                         .first, // first is the iterator to the mismatch element in the first range,
                                 // second the one in the second range.
                       candidate.params);
     };
-    const auto fittingCandidate = find_if(paramsBoundCandidates, allBoundParametersAreConvertible);
+    const auto fittingCandidate =
+      find_if(paramsBoundCandidates, std::cref(allBoundParametersAreConvertible));
     if (isFound(fittingCandidate, paramsBoundCandidates))
       return *fittingCandidate;
     return suitableMethodNotFoundErrorMessage(env, methodNameMaybeWithSig,
@@ -170,7 +172,7 @@ namespace
     };
     const auto scopedJavaParamsGen =
       transform(counting_range<jint>(0, env.GetArrayLength(javaParamsArr)),
-                scopedObjectFromArrayAt);
+                std::cref(scopedObjectFromArrayAt));
     using ScopedJavaParam = decltype(scopedJavaParamsGen)::value_type;
     const std::vector<ScopedJavaParam> scopedJavaParams{ scopedJavaParamsGen.begin(),
                                                          scopedJavaParamsGen.end() };
@@ -193,7 +195,8 @@ namespace
       [](const qi::MetaObject::CompatibleMethod& method) -> const qi::MetaMethod& {
       return method.first;
     };
-    const auto candidatesMethods = transform(sortedCompatibleMethods, discardCompatibility);
+    const auto candidatesMethods =
+      transform(sortedCompatibleMethods, std::cref(discardCompatibility));
     const auto methodOrError =
       suitableMethodOrError(env, methodNameMaybeWithSig, candidatesMethods, javaParams);
 
@@ -205,7 +208,7 @@ namespace
     // `qi::Object<T>::metaCall` clones the parameters that are given to it, meaning we can safely
     // destroy the copies we own once the call is done.
     const auto paramsAsReferences =
-      transform(candidate.params, std::mem_fn(&qi::AnyValue::asReference));
+      transform(candidate.params, [](const qi::AnyValue& val){ return val.asReference(); });
     return object.metaCall(candidate.method.uid(),
                            qi::AnyReferenceVector{ begin(paramsAsReferences),
                                                    end(paramsAsReferences) });
