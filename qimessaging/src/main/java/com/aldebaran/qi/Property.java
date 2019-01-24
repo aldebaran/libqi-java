@@ -25,7 +25,15 @@ public final class Property<T> {
      *
      * @return Property pointer
      */
-    private native long createProperty(Class valueClass, Object value);
+    private static native long createProperty(Class valueClass);
+
+    /**
+     * Create a new property with a value.
+     * @param valueClass
+     * @return
+     */
+    private static native long createPropertyWithValue(Class valueClass,
+                                                       Object value);
 
     /**
      * Obtain a property value
@@ -77,7 +85,7 @@ public final class Property<T> {
         }
 
         this.valueClass = valueClass;
-        pointer = createProperty(this.valueClass, null);
+        pointer = createProperty(this.valueClass);
     }
 
     /**
@@ -93,7 +101,7 @@ public final class Property<T> {
 
         //noinspection unchecked
         valueClass = (Class<T>) value.getClass();
-        pointer = createProperty(valueClass, value);
+        pointer = createPropertyWithValue(valueClass, value);
     }
 
     /**

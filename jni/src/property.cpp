@@ -3,12 +3,11 @@
 #include <qi/future.hpp>
 #include "jnitools.hpp"
 
-jlong JNICALL Java_com_aldebaran_qi_Property_createProperty(JNIEnv* env,
-                                                            jobject QI_UNUSED(propertyObj),
-                                                            jclass valueClass,
-                                                            jobject value)
+namespace
 {
-  try
+  // Gets the type interface from a given property value class. If it fails to get it, throws a
+  // Java RuntimeException and returns nullptr.
+  qi::TypeInterface* getPropertyValueType(JNIEnv* env, jclass valueClass)
   {
     auto* const valueType = propertyValueClassToType(env, valueClass);
     if (!valueType)
@@ -17,11 +16,47 @@ jlong JNICALL Java_com_aldebaran_qi_Property_createProperty(JNIEnv* env,
           "Could not find the qi.TypeInterface of property value class of signature '" +
           propertyBaseSignature(env, valueClass) + "'";
       throwNewRuntimeException(env, message.c_str());
+    }
+    return valueType;
+  }
+}
+
+jlong JNICALL Java_com_aldebaran_qi_Property_createProperty(JNIEnv* env,
+                                                            jclass QI_UNUSED(propertyClass),
+                                                            jclass valueClass)
+{
+  try
+  {
+    auto* const valueType = getPropertyValueType(env, valueClass);
+    if (!valueType) return 0;
+    auto* const propertyManager = new PropertyManager(*valueType);
+    return reinterpret_cast<jlong>(propertyManager);
+  }
+  catch (std::exception& e)
+  {
+    throwNewException(env, e.what());
+  }
+  return 0;
+}
+
+jlong JNICALL
+Java_com_aldebaran_qi_Property_createPropertyWithValue(JNIEnv* env,
+                                                       jclass QI_UNUSED(propertyClass),
+                                                       jclass valueClass,
+                                                       jobject value)
+{
+  try
+  {
+    // TODO: Handle this case in the conversion between AnyValue and jobject.
+    if (env->IsSameObject(value, nullptr))
+    {
+      throwNewNullPointerException(env);
       return 0;
     }
-    auto propertyManager = env->IsSameObject(value, nullptr) ?
-                             new PropertyManager(*valueType) :
-                             new PropertyManager(*valueType, *env, value);
+
+    auto* const  valueType = getPropertyValueType(env, valueClass);
+    if (!valueType) return 0;
+    auto* const propertyManager = new PropertyManager(*valueType, *env, value);
     return reinterpret_cast<jlong>(propertyManager);
   }
   catch (std::exception& e)

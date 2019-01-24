@@ -5,15 +5,23 @@
 
 extern "C"
 {
+
   /**
-   * Creates a property with an optional initial value.
-   * @param propertyObj The Java Property object.
-   * @param value Value to initialize the property with. If it references a null Java object, the
-   *        property will be set with a default constructed value.
+   * Creates a property.
    * @return A pointer to an internal type representing the newly created property.
    */
   JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Property_createProperty(JNIEnv* env,
-                                                                        jobject propertyObj,
+                                                                        jclass propertyClass,
+                                                                        jclass valueClass);
+
+  /**
+   * Creates a property with an initial value.
+   * @param value Value to initialize the property with. If it references a null Java object, a
+   *        NullPointerException will be thrown.
+   * @return A pointer to an internal type representing the newly created property.
+   */
+  JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Property_createPropertyWithValue(JNIEnv* env,
+                                                                        jclass propertyClass,
                                                                         jclass valueClass,
                                                                         jobject value);
 
