@@ -354,7 +354,8 @@ jint throwNewSessionException(JNIEnv *env, const char *message = "");
 jint throwNewIllegalStateException(JNIEnv *env, const char *message = "");
 
 /**
- * @brief Manage property and maintain a global reference alive until ist i no more use
+ * Manages a property and maintains a global reference of the Java value to keep it alive
+ * during the lifetime of the property.
  */
 class PropertyManager
 {
@@ -366,7 +367,7 @@ public:
   std::unique_ptr<qi::GenericProperty> property;
 
   /**
-   * @brief Create the manager with a property without a default value.
+   * @brief Create the manager with a property with an unspecified default value.
    */
   explicit PropertyManager(qi::TypeInterface &valueType)
     : globalReference{ nullptr }
@@ -375,8 +376,10 @@ public:
   }
 
   /**
-   * @brief Create the manager with a property with a value.
-   * @pre `env.IsSameObject(value, nullptr) == JNI_FALSE`
+   * @brief Create the manager with a property with a given value.
+   *
+   * Passing a value that refers to a null Java object is undefined behavior.
+   * TODO: Make it defined behavior by handling it in the conversion between AnyValue and jobject.
    */
   PropertyManager(qi::TypeInterface& valueType, JNIEnv& env, jobject value)
     : globalReference{ env.NewGlobalRef(value) }
