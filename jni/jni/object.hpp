@@ -28,6 +28,7 @@ extern "C"
   JNIEXPORT jobject JNICALL Java_com_aldebaran_qi_AnyObject_decodeJSON(JNIEnv* env, jclass cls, jstring str);
   JNIEXPORT jstring JNICALL Java_com_aldebaran_qi_AnyObject_encodeJSON(JNIEnv* env, jclass cls, jobject what);
   JNIEXPORT jint JNICALL Java_com_aldebaran_qi_AnyObject_compare(JNIEnv * env, jclass cls, jlong object1, jlong object2);
+  JNIEXPORT jint JNICALL Java_com_aldebaran_qi_AnyObject_hash(JNIEnv * env, jclass cls, jlong object);
 } // ! extern "C"
 
 #endif // !_JAVA_JNI_OBJECT_HPP_
