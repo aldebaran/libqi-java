@@ -311,8 +311,14 @@ namespace qi {
     /// Returns a string describing the given JNI error code.
     const char* errorToString(jint code);
 
-    /// Raises a java.lang.AssertionError with the given message if the condition is false.
+    /// Raises a java.lang.AssertionError with the given message if the condition is false and
+    /// return the value of the condition.
     bool assertion(JNIEnv* env, bool condition, const char* message = "");
+
+    /// Raises a java.lang.NullPointerException with the given message if the object is null and
+    /// returns true if object was not null.
+    bool assertNotNull(JNIEnv* env, jobject obj, const char* message = "Object is null.");
+    bool assertNotNull(JNIEnv* env, jlong ptr, const char* message = "Pointer is null.");
   }// !jni
 }// !qi
 

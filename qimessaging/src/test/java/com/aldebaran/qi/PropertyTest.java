@@ -54,7 +54,6 @@ public class PropertyTest {
         });
     }
 
-
     @Test
     public void constructedWithNullClassThrows() {
         assertThrowsNullPointerException(new Function<Void, Void>() {
@@ -161,5 +160,17 @@ public class PropertyTest {
         //noinspection unchecked
         canBeConstructedWithAValueAndClass((Class<Tuple>)value.getClass(),
                 value);
+    }
+
+    @Test
+    public void setPropertyWithNullValueThrows() {
+        final Property<Integer> prop = new Property<Integer>(42);
+        assertThrowsNullPointerException(new Function<Void, Void>() {
+            @Override
+            public Void execute(Void v) {
+                prop.setValue(null);
+                return null;
+            }
+        });
     }
 }

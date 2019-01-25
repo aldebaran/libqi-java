@@ -778,5 +778,21 @@ namespace qi {
         throwNew(env, "java/lang/AssertionError", message);
       return condition;
     }
+
+    bool assertNotNull(JNIEnv* env, jobject obj, const char* message)
+    {
+      const auto isNull = env->IsSameObject(obj, nullptr) == JNI_TRUE;
+      if (isNull)
+        throwNewNullPointerException(env, message);
+      return !isNull;
+    }
+
+    bool assertNotNull(JNIEnv* env, jlong ptr, const char* message)
+    {
+      const auto isNull = ptr == 0;
+      if (isNull)
+        throwNewNullPointerException(env, message);
+      return !isNull;
+    }
   } // !jni
 }// !qi
