@@ -39,7 +39,7 @@ extern "C"
    * Changes the value of a property.
    * @param propertyObj The Java Property object.
    * @param pointer Pointer to the result of a previous call to `createProperty`.
-   * @return Null.
+   * @return Always 0.
    */
   JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Property_set(JNIEnv* env,
                                                              jobject propertyObj,

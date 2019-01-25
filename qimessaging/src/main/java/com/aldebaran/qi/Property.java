@@ -75,7 +75,7 @@ public final class Property<T> {
     /**
      * Create an empty property.
      *
-     * @warning The property has no value until someone set it !
+     * @warning The property has an unspecified value until a new one is set.
      * @param valueClass Property value type.
      * @throws NullPointerException if valueClass parameter is null.
      */
