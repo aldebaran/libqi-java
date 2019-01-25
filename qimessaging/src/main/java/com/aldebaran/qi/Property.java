@@ -76,16 +76,12 @@ public final class Property<T> {
      * Create an empty property.
      *
      * @warning The property has an unspecified value until a new one is set.
-     * @param valueClass Property value type.
+     * @param valueClass The property value class.
      * @throws NullPointerException if valueClass parameter is null.
      */
     public Property(Class<T> valueClass) {
-        if (valueClass == null) {
-            throw new NullPointerException("The value class of the property must not be null.");
-        }
-
         this.valueClass = valueClass;
-        pointer = createProperty(this.valueClass);
+        this.pointer = createProperty(valueClass);
     }
 
     /**
@@ -98,10 +94,20 @@ public final class Property<T> {
         if (value == null) {
             throw new NullPointerException("The value of the property must not be null.");
         }
-
         //noinspection unchecked
-        valueClass = (Class<T>) value.getClass();
-        pointer = createPropertyWithValue(valueClass, value);
+        this.valueClass = (Class<T>) value.getClass();
+        this.pointer = createPropertyWithValue(valueClass, value);
+    }
+
+    /**
+     * Create a property with a class and a value.
+     * @param valueClass The property value class.
+     * @param value Value to initialize the property with.
+     * @throws NullPointerException if either value or valueClass is null.
+     */
+    public Property(Class<T> valueClass, T value) {
+        this.valueClass = valueClass;
+        this.pointer = createPropertyWithValue(valueClass, value);
     }
 
     /**

@@ -6,6 +6,10 @@
 
 namespace
 {
+  auto* const nullValuePtrMsg = "The given value is null.";
+  auto* const nullValueClassPtrMsg = "The given value class is null.";
+  auto* const nullInternalPtrMsg = "The internal pointer of the property is null.";
+
   // Gets the type interface from a given property value class. If it fails to get it, throws a
   // Java RuntimeException and returns nullptr.
   qi::TypeInterface* getPropertyValueType(JNIEnv* env, jclass valueClass)
@@ -59,6 +63,11 @@ jlong JNICALL Java_com_aldebaran_qi_Property_createProperty(JNIEnv* env,
   return ka::invoke_catch(
     exceptionMessageHandler(ThrowNewJavaExceptionReturn0{ env }),
     [&]() -> jlong {
+      if (env->IsSameObject(valueClass, nullptr))
+      {
+        throwNewNullPointerException(env, nullValueClassPtrMsg);
+        return 0;
+      }
       auto* const valueType = getPropertyValueType(env, valueClass);
       if (!valueType)
         return 0;
@@ -79,10 +88,14 @@ Java_com_aldebaran_qi_Property_createPropertyWithValue(JNIEnv* env,
       // TODO: Handle this case in the conversion between AnyValue and jobject.
       if (env->IsSameObject(value, nullptr))
       {
-        throwNewNullPointerException(env);
+        throwNewNullPointerException(env, nullValuePtrMsg);
         return 0;
       }
-
+      if (env->IsSameObject(valueClass, nullptr))
+      {
+        throwNewNullPointerException(env, nullValueClassPtrMsg);
+        return 0;
+      }
       auto* const valueType = getPropertyValueType(env, valueClass);
       if (!valueType)
         return 0;
@@ -98,6 +111,12 @@ jlong JNICALL Java_com_aldebaran_qi_Property_get(JNIEnv* env,
   return ka::invoke_catch(
     exceptionMessageHandler(ThrowNewJavaExceptionReturn0{ env }),
      [&]() -> jlong {
+      if (!pointer)
+      {
+        throwNewNullPointerException(env, nullInternalPtrMsg);
+        return 0;
+      }
+
       auto propertyManager = reinterpret_cast<PropertyManager *>(pointer);
       const auto& propertyPointer = propertyManager->property;
       // Potential global reference issue here, due to multithreading, garbage collector and other fun.
@@ -114,6 +133,17 @@ jlong JNICALL Java_com_aldebaran_qi_Property_set(JNIEnv* env,
   return ka::invoke_catch(
     exceptionMessageHandler(ThrowNewJavaExceptionReturn0{ env }),
     [&]() -> jlong {
+      if (!pointer)
+      {
+        throwNewNullPointerException(env, nullInternalPtrMsg);
+        return 0;
+      }
+      if (env->IsSameObject(value, nullptr))
+      {
+        throwNewNullPointerException(env, nullValuePtrMsg);
+        return 0;
+      }
+
       auto propertyManager = reinterpret_cast<PropertyManager*>(pointer);
       propertyManager->setValue(env, value);
       return 0;
@@ -127,6 +157,8 @@ void JNICALL Java_com_aldebaran_qi_Property_destroy(JNIEnv* env,
   ka::invoke_catch(
     exceptionMessageHandler(ThrowNewJavaException{ env }),
     [&] {
+      if (!pointer)
+        return;
       auto propertyManager = reinterpret_cast<PropertyManager*>(pointer);
       propertyManager->destroy(env);
       delete propertyManager;
