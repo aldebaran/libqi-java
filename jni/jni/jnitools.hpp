@@ -413,6 +413,8 @@ public:
    */
   void destroy(JNIEnv *env)
   {
+    // Destroy the property before releasing the reference to the Java object as it might depend
+    // on it.
     property.reset();
     clearReference(env);
   }
@@ -424,8 +426,11 @@ public:
    */
   void setValue(JNIEnv *env, jobject value)
   {
-    clearReference(env);
+    // Keep a local reference alive until the property has been reset as the property value might
+    // depend on it.
+    auto scopedOldRef = ka::scoped(env->NewLocalRef(globalReference), &qi::jni::releaseObject);
 
+    clearReference(env);
     if(env->IsSameObject(value, nullptr) == JNI_TRUE)
     {
       globalReference = nullptr;
