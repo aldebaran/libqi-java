@@ -65,7 +65,7 @@ jlong JNICALL Java_com_aldebaran_qi_Property_createProperty(JNIEnv* env,
   return ka::invoke_catch(
     exceptionMessageHandler(ThrowNewJavaExceptionReturn0{ env }),
     [&]() -> jlong {
-      if (!assertNotNull(env, valueClass, nullValueClassPtrMsg))
+      if (throwIfNull(env, valueClass, nullValueClassPtrMsg))
         return 0;
       auto* const valueType = getPropertyValueType(env, valueClass);
       if (!valueType)
@@ -85,8 +85,8 @@ Java_com_aldebaran_qi_Property_createPropertyWithValue(JNIEnv* env,
     exceptionMessageHandler(ThrowNewJavaExceptionReturn0{ env }),
     [&]() -> jlong {
       if ( // TODO: Handle this case in the conversion between AnyValue and jobject.
-          !assertNotNull(env, value, nullValuePtrMsg) ||
-          !assertNotNull(env, valueClass, nullValueClassPtrMsg))
+          throwIfNull(env, value, nullValuePtrMsg) ||
+          throwIfNull(env, valueClass, nullValueClassPtrMsg))
         return 0;
       auto* const valueType = getPropertyValueType(env, valueClass);
       if (!valueType)
@@ -103,7 +103,7 @@ jlong JNICALL Java_com_aldebaran_qi_Property_get(JNIEnv* env,
   return ka::invoke_catch(
     exceptionMessageHandler(ThrowNewJavaExceptionReturn0{ env }),
      [&]() -> jlong {
-      if (!assertNotNull(env, pointer, nullInternalPtrMsg))
+      if (throwIfNull(env, pointer, nullInternalPtrMsg))
         return 0;
       auto propertyManager = reinterpret_cast<PropertyManager *>(pointer);
       const auto& propertyPointer = propertyManager->property;
@@ -121,8 +121,8 @@ jlong JNICALL Java_com_aldebaran_qi_Property_set(JNIEnv* env,
   return ka::invoke_catch(
     exceptionMessageHandler(ThrowNewJavaExceptionReturn0{ env }),
     [&]() -> jlong {
-      if (!assertNotNull(env, pointer, nullInternalPtrMsg) ||
-          !assertNotNull(env, value, nullValuePtrMsg))
+      if (throwIfNull(env, pointer, nullInternalPtrMsg) ||
+          throwIfNull(env, value, nullValuePtrMsg))
         return 0;
       auto propertyManager = reinterpret_cast<PropertyManager*>(pointer);
       propertyManager->setValue(env, value);

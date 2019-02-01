@@ -779,20 +779,20 @@ namespace qi {
       return condition;
     }
 
-    bool assertNotNull(JNIEnv* env, jobject obj, const char* message)
+    bool throwIfNull(JNIEnv* env, jobject obj, const char* message)
     {
       const auto isNull = env->IsSameObject(obj, nullptr) == JNI_TRUE;
       if (isNull)
         throwNewNullPointerException(env, message);
-      return !isNull;
+      return isNull;
     }
 
-    bool assertNotNull(JNIEnv* env, jlong ptr, const char* message)
+    bool throwIfNull(JNIEnv* env, jlong ptr, const char* message)
     {
       const auto isNull = ptr == 0;
       if (isNull)
         throwNewNullPointerException(env, message);
-      return !isNull;
+      return isNull;
     }
   } // !jni
 }// !qi

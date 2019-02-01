@@ -315,10 +315,10 @@ namespace qi {
     /// return the value of the condition.
     bool assertion(JNIEnv* env, bool condition, const char* message = "");
 
-    /// Raises a java.lang.NullPointerException with the given message if the object is null and
-    /// returns true if object was not null.
-    bool assertNotNull(JNIEnv* env, jobject obj, const char* message = "Object is null.");
-    bool assertNotNull(JNIEnv* env, jlong ptr, const char* message = "Pointer is null.");
+    /// Raises a java.lang.NullPointerException with the given message and return true if the object
+    /// is null.
+    bool throwIfNull(JNIEnv* env, jobject obj, const char* message = "Object is null.");
+    bool throwIfNull(JNIEnv* env, jlong ptr, const char* message = "Pointer is null.");
   }// !jni
 }// !qi
 
