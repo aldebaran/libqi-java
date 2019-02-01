@@ -435,7 +435,7 @@ public:
       globalReference = env->NewGlobalRef(value);
     }
 
-    QI_ASSERT(property);
+    QI_ASSERT_NOT_NULL(property);
     property->setValue(qi::AnyValue::from(globalReference)).wait();
   }
 };
