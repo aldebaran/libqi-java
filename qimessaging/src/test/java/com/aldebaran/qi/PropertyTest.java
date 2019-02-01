@@ -12,7 +12,7 @@ import static org.junit.Assert.fail;
 
 public class PropertyTest {
 
-    private <T> void canBeConstructedWithAValue(T value) {
+    private <T> void constructWithAValue(T value) {
         Property<T> prop = new Property<T>(value);
         try {
             assertEquals(value, prop.getValue().get());
@@ -21,7 +21,7 @@ public class PropertyTest {
         }
     }
 
-    private <T> void canBeConstructedWithAValueAndClass(Class<T> cls, T value) {
+    private <T> void constructWithAValueAndClass(Class<T> cls, T value) {
         Property<T> prop = new Property<T>(cls, value);
         try {
             assertEquals(value, prop.getValue().get());
@@ -87,78 +87,78 @@ public class PropertyTest {
     }
 
     @Test
-    public void canBeConstructedWithAStringValue() {
+    public void constructedWithAStringValueSucceeds() {
         String value = "Hello world !";
-        canBeConstructedWithAValue(value);
+        constructWithAValue(value);
         //noinspection unchecked
-        canBeConstructedWithAValueAndClass((Class<String>)value.getClass(),
+        constructWithAValueAndClass((Class<String>)value.getClass(),
                 value);
     }
 
     @Test
-    public void canBeConstructedWithAIntegerValue() {
+    public void constructedWithAIntegerValueSucceeds() {
         Integer value = 42;
-        canBeConstructedWithAValue(value);
+        constructWithAValue(value);
         //noinspection unchecked
-        canBeConstructedWithAValueAndClass((Class<Integer>)value.getClass(),
+        constructWithAValueAndClass((Class<Integer>)value.getClass(),
                 value);
     }
 
     @Test
-    public void canBeConstructedWithABooleanValue() {
+    public void constructedWithABooleanValueSucceeds() {
         Boolean value = true;
-        canBeConstructedWithAValue(value);
+        constructWithAValue(value);
         //noinspection unchecked
-        canBeConstructedWithAValueAndClass((Class<Boolean>)value.getClass(),
+        constructWithAValueAndClass((Class<Boolean>)value.getClass(),
                 value);
     }
 
     @Test
-    public void canBeConstructedWithADoubleValue() {
+    public void constructedWithADoubleValueSucceeds() {
         Double value = 3.14;
-        canBeConstructedWithAValue(value);
+        constructWithAValue(value);
         //noinspection unchecked
-        canBeConstructedWithAValueAndClass((Class<Double>)value.getClass(),
+        constructWithAValueAndClass((Class<Double>)value.getClass(),
                 value);
     }
 
     @Test
-    public void canBeConstructedWithAFloatValue() {
+    public void constructedWithAFloatValueSucceeds() {
         Float value = 3.14f;
-        canBeConstructedWithAValue(value);
+        constructWithAValue(value);
         //noinspection unchecked
-        canBeConstructedWithAValueAndClass((Class<Float>)value.getClass(),
+        constructWithAValueAndClass((Class<Float>)value.getClass(),
                 value);
     }
 
     @Test
-    public void canBeConstructedWithAListValue() {
+    public void constructedWithAListValueSucceeds() {
         List value = Arrays.asList("This is", "an array", "of values");
-        canBeConstructedWithAValue(value);
+        constructWithAValue(value);
         //noinspection unchecked
-        canBeConstructedWithAValueAndClass((Class<List>)value.getClass(),
+        constructWithAValueAndClass((Class<List>)value.getClass(),
                 value);
     }
 
     @Test
-    public void canBeConstructedWithAMapValue() {
+    public void constructedWithAMapValueSucceds() {
         HashMap<Integer, String> value = new HashMap<Integer, String>();
         value.put(42, "forty two");
         value.put(13, "thirteen");
         value.put(9000, "way too many");
-        canBeConstructedWithAValue(value);
+        constructWithAValue(value);
 
         //noinspection unchecked
-        canBeConstructedWithAValueAndClass((Class<HashMap>)value.getClass(),
+        constructWithAValueAndClass((Class<HashMap>)value.getClass(),
                 value);
     }
 
     @Test
-    public void canBeConstructedWithATupleValue() {
+    public void constructedWithATupleValueSucceeds() {
         Tuple value = Tuple.of(42, "zwei und vierzig", true, 42.0);
-        canBeConstructedWithAValue(value);
+        constructWithAValue(value);
         //noinspection unchecked
-        canBeConstructedWithAValueAndClass((Class<Tuple>)value.getClass(),
+        constructWithAValueAndClass((Class<Tuple>)value.getClass(),
                 value);
     }
 
