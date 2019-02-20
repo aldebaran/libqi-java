@@ -271,8 +271,8 @@ public class TypeTest {
         o = AnyObject.decodeJSON("1.5");
         System.out.println(o.getClass().getName());
         System.out.println(o.toString());
-        assertTrue(o instanceof java.lang.Float);
-        assertTrue(((Float) o).equals(1.5f));
+        assertTrue(o instanceof java.lang.Double);
+        assertTrue(((Double) o).equals(1.5));
         str = AnyObject.encodeJSON(o);
         assertEquals(str, "1.5");
 

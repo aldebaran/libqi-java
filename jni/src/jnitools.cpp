@@ -385,47 +385,51 @@ jint throwNewIllegalStateException(JNIEnv *env, const char *message)
 
 std::string propertyBaseSignature(JNIEnv *env, jclass propertyBase)
 {
-  std::string sig;
+  if (env->IsSameObject(propertyBase, nullptr) == JNI_TRUE)
+    return { static_cast<char>(qi::Signature::Type_Unknown) };
 
   if (env->IsAssignableFrom(propertyBase, cls_string))
-    sig = static_cast<char>(qi::Signature::Type_String);
+    return { static_cast<char>(qi::Signature::Type_String) };
   if (env->IsAssignableFrom(propertyBase, cls_integer) || env->IsAssignableFrom(propertyBase, cls_enum))
-    sig = static_cast<char>(qi::Signature::Type_Int32);
+    return { static_cast<char>(qi::Signature::Type_Int32) };
   if (env->IsAssignableFrom(propertyBase, cls_float))
-    sig = static_cast<char>(qi::Signature::Type_Float);
+    return { static_cast<char>(qi::Signature::Type_Float) };
   if (env->IsAssignableFrom(propertyBase, cls_boolean))
-    sig = static_cast<char>(qi::Signature::Type_Bool);
+    return { static_cast<char>(qi::Signature::Type_Bool) };
   if (env->IsAssignableFrom(propertyBase, cls_long))
-    sig = static_cast<char>(qi::Signature::Type_Int64);
+    return { static_cast<char>(qi::Signature::Type_Int64) };
   if (env->IsAssignableFrom(propertyBase, cls_anyobject))
-    sig = static_cast<char>(qi::Signature::Type_Object);
+    return { static_cast<char>(qi::Signature::Type_Object) };
   if (env->IsAssignableFrom(propertyBase, cls_double))
-    sig = static_cast<char>(qi::Signature::Type_Float);
+    return { static_cast<char>(qi::Signature::Type_Float) };
   if (env->IsAssignableFrom(propertyBase, cls_map))
   {
-    sig = static_cast<char>(qi::Signature::Type_Map);
-    sig += static_cast<char>(qi::Signature::Type_Dynamic);
-    sig += static_cast<char>(qi::Signature::Type_Dynamic);
-    sig += static_cast<char>(qi::Signature::Type_Map_End);
+    return std::string{} + static_cast<char>(qi::Signature::Type_Map) +
+           static_cast<char>(qi::Signature::Type_Dynamic) +
+           static_cast<char>(qi::Signature::Type_Dynamic) +
+           static_cast<char>(qi::Signature::Type_Map_End);
   }
   if (env->IsAssignableFrom(propertyBase, cls_list))
   {
-    sig = static_cast<char>(qi::Signature::Type_List);
-    sig += static_cast<char>(qi::Signature::Type_Dynamic);
-    sig += static_cast<char>(qi::Signature::Type_List_End);
+    return std::string{} + static_cast<char>(qi::Signature::Type_List) +
+           static_cast<char>(qi::Signature::Type_Dynamic) +
+           static_cast<char>(qi::Signature::Type_List_End);
   }
   if (env->IsAssignableFrom(propertyBase, cls_tuple))
   {
-    sig = static_cast<char>(qi::Signature::Type_Tuple);
-    sig += static_cast<char>(qi::Signature::Type_Dynamic);
-    sig += static_cast<char>(qi::Signature::Type_Tuple_End);
+    return std::string{} + static_cast<char>(qi::Signature::Type_Tuple) +
+           static_cast<char>(qi::Signature::Type_Dynamic) +
+           static_cast<char>(qi::Signature::Type_Tuple_End);
   }
 
-  return sig;
+  return {};
 }
 
 qi::TypeInterface *propertyValueClassToType(JNIEnv *env, jclass clazz)
 {
+  if (env->IsSameObject(clazz, nullptr) == JNI_TRUE)
+    return nullptr;
+
   if (env->IsAssignableFrom(clazz, cls_string))
     return qi::typeOf<std::string>();
   if (env->IsAssignableFrom(clazz, cls_integer) || env->IsAssignableFrom(clazz, cls_enum))
@@ -743,6 +747,22 @@ namespace qi {
       if (!condition)
         throwNew(env, "java/lang/AssertionError", message);
       return condition;
+    }
+
+    bool throwIfNull(JNIEnv* env, jobject obj, const char* message)
+    {
+      const auto isNull = env->IsSameObject(obj, nullptr) == JNI_TRUE;
+      if (isNull)
+        throwNewNullPointerException(env, message);
+      return isNull;
+    }
+
+    bool throwIfNull(JNIEnv* env, jlong ptr, const char* message)
+    {
+      const auto isNull = ptr == 0;
+      if (isNull)
+        throwNewNullPointerException(env, message);
+      return isNull;
     }
   } // !jni
 }// !qi

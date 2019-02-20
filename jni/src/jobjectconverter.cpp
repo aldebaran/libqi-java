@@ -88,20 +88,40 @@ struct toJObject
     void visitFloat(double value, int byteSize)
     {
       qiLogVerbose() << "visitFloat " << value;
+
       // Clear all remaining exceptions
       env->ExceptionClear();
 
-      // Find constructor method ID
-      jmethodID mid = env->GetMethodID(cls_float, "<init>","(F)V");
+      jclass floatClass = nullptr;
+      switch(byteSize)
+      {
+        case sizeof(jfloat):
+          // java.lang.Float is constructible from Double, so we can generalize the construction.
+          floatClass = cls_float;
+          break;
+        case sizeof(jdouble):
+          floatClass = cls_double;
+          break;
+        default:
+        {
+          const std::string err{
+            "AnyValue to Float: No Java float type corresponding to the given size"
+            " (size=" +
+            qi::os::to_string(byteSize) + ")"
+          };
+          throwNewException(env, err.c_str());
+          return;
+        }
+      }
+
+      jmethodID mid = env->GetMethodID(floatClass, "<init>", "(D)V");
       if (!mid)
       {
-        throwNewException(env, "AnyValue to Float : GetMethodID error");
+        throwNewException(env, "AnyValue to Float : could not find float type init method.");
         return;
       }
 
-      // Instanciate new Float, yeah !
-      jfloat jval = value;
-      *result = env->NewObject(cls_float, mid, jval);
+      *result = env->NewObject(floatClass, mid, static_cast<jdouble>(value));
       checkForError();
     }
 

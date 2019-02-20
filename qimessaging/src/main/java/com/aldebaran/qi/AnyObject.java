@@ -1,6 +1,7 @@
 /*
  * * Copyright (C) 2015 Softbank Robotics * See COPYING for the license
  */
+
 package com.aldebaran.qi;
 
 import java.lang.reflect.InvocationTargetException;
