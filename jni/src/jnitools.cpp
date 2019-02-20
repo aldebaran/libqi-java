@@ -53,11 +53,6 @@ jmethodID jniLog;
 
 JavaVM* javaVirtualMachine = nullptr;
 
-/**
- * @brief Instance of registered JNI log capture handler.
- * Global to maintain it alive durring all the application life
- */
-JNIlogHandler* jniLogHandler = nullptr;
 
 static void emergency()
 {
@@ -69,41 +64,22 @@ static void emergency()
 #endif
 }
 
-JNIlogHandler::JNIlogHandler()
+void forwardToJavaLogReport(const qi::LogLevel verb,
+                            const qi::Clock::time_point QI_UNUSED(date),
+                            const qi::SystemClock::time_point QI_UNUSED(systemDate),
+                            const char* QI_UNUSED(category),
+                            const char* msg,
+                            const char* QI_UNUSED(file),
+                            const char* QI_UNUSED(fct),
+                            const int QI_UNUSED(line))
 {
-}
-
-JNIlogHandler::~JNIlogHandler()
-{
-}
-
-/**
- * \brief Capture a log message and send it to Java side
- * \param verb verbosity of the log message.
- * \param date qi::Clock date at which the log message was issued.
- * \param date qi::SystemClock date at which the log message was issued.
- * \param category will be used in future for filtering
- * \param msg actual message to log.
- * \param file filename from which this log message was issued.
- * \param fct function name from which this log message was issued.
- * \param line line number in the issuer file.
- */
-void JNIlogHandler::log(const qi::LogLevel verb,
-                        const qi::Clock::time_point date,
-                        const qi::SystemClock::time_point systemDate,
-                        const char* category,
-                        const char* msg,
-                        const char* file,
-                        const char* fct,
-                        const int line)
-{
-    // Do nothing if the LogReport Java class could not be loaded.
-    if(!msg || !LogReportClass)
-       return;
-    qi::jni::JNIAttach attach;
-    auto* const env = attach.get();
-    const auto message = ka::scoped(env->NewStringUTF(msg), qi::jni::releaseString);
-    env->CallStaticVoidMethod(LogReportClass, jniLog, static_cast<jint>(verb), message.value);
+  // Do nothing if the LogReport Java class could not be loaded.
+  if(!msg || !LogReportClass)
+     return;
+  qi::jni::JNIAttach attach;
+  auto* const env = attach.get();
+  const auto message = ka::scoped(env->NewStringUTF(msg), qi::jni::releaseString);
+  env->CallStaticVoidMethod(LogReportClass, jniLog, static_cast<jint>(verb), message.value);
 }
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* virtualMachine, void* QI_UNUSED(reserved))
@@ -165,13 +141,7 @@ JNIEXPORT void JNICALL Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(JNIEnv
 {
   init_classes(env);
 
-  //Register log handler that capture logs
-  jniLogHandler = new JNIlogHandler();
-  qi::log::addHandler("jniLogHandler",
-                      boost::bind(&JNIlogHandler::log,
-                                  jniLogHandler,
-                                  _1, _2, _3, _4, _5, _6, _7, _8),
-                      qi::LogLevel_Debug);
+  qi::log::addHandler("QiJniLogHandler", forwardToJavaLogReport, qi::LogLevel_Debug);
 }
 
 /**
