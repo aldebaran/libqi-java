@@ -57,13 +57,7 @@ extern jclass cls_throwable;
 extern jmethodID method_NativeTools_callJava;
 extern JavaVM* javaVirtualMachine;
 
-/**
- * @brief Reference of Java class to report log
- */
 extern jclass LogReportClass;
-/**
- * @brief Method to call for report captured logs
- */
 extern jmethodID jniLog;
 
 // JNI utils
@@ -74,42 +68,6 @@ extern "C"
   JNIEXPORT void JNICALL Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(JNIEnv* env,
                                                                             jclass unused = nullptr);
 } // !extern C
-
-/**
- * @brief Log handler that capture logs and send them to Java side
- */
-class JNIlogHandler
-{
-public:
-    JNIlogHandler();
-    ~JNIlogHandler();
-
-    /**
-     * \brief Prints a log message on the console.
-     * \param verb verbosity of the log message.
-     * \param date qi::Clock date at which the log message was issued.
-     * \param date qi::SystemClock date at which the log message was issued.
-     * \param category will be used in future for filtering
-     * \param msg actual message to log.
-     * \param file filename from which this log message was issued.
-     * \param fct function name from which this log message was issued.
-     * \param line line number in the issuer file.
-     */
-    void log(const qi::LogLevel verb,
-             const qi::Clock::time_point date,
-             const qi::SystemClock::time_point systemDate,
-             const char* category,
-             const char* msg,
-             const char* file,
-             const char* fct,
-             const int line);
-};
-
-/**
- * @brief Instance of registered JNI log capture handler.
- * Global to maintain it alive durring all the application life
- */
-extern JNIlogHandler* jniLogHandler;
 
 namespace qi {
   class AnyReference;
@@ -137,7 +95,6 @@ namespace qi {
     void        releaseObject(jobject obj);
     // Signature
     std::string javaSignature(const std::string& qiSignature);
-    std::string qiSignature(jclass clazz);
     jobjectArray toJobjectArray(const std::vector<AnyReference> &values);
 
     template<typename R>
@@ -311,8 +268,14 @@ namespace qi {
     /// Returns a string describing the given JNI error code.
     const char* errorToString(jint code);
 
-    /// Raises a java.lang.AssertionError with the given message if the condition is false.
+    /// Raises a java.lang.AssertionError with the given message if the condition is false and
+    /// return the value of the condition.
     bool assertion(JNIEnv* env, bool condition, const char* message = "");
+
+    /// Raises a java.lang.NullPointerException with the given message and return true if the object
+    /// is null.
+    bool throwIfNull(JNIEnv* env, jobject obj, const char* message = "Object is null.");
+    bool throwIfNull(JNIEnv* env, jlong ptr, const char* message = "Pointer is null.");
   }// !jni
 }// !qi
 
@@ -354,22 +317,37 @@ jint throwNewSessionException(JNIEnv *env, const char *message = "");
 jint throwNewIllegalStateException(JNIEnv *env, const char *message = "");
 
 /**
- * @brief Manage property and maintain a global reference alive until ist i no more use
+ * Manages a property and maintains a global reference of the Java value to keep it alive
+ * during the lifetime of the property.
  */
 class PropertyManager
 {
 public:
-  /**The managed property*/
-  std::unique_ptr<qi::GenericProperty> property;
   /**Last setted global reference*/
   jobject globalReference;
 
+  /**The managed property*/
+  std::unique_ptr<qi::GenericProperty> property;
+
   /**
-   * @brief Create the manager
+   * @brief Create the manager with a property with an unspecified default value.
    */
   explicit PropertyManager(qi::TypeInterface &valueType)
-    : property{ new qi::GenericProperty{ &valueType } }
-    , globalReference{ nullptr }
+    : globalReference{ nullptr }
+    , property{ new qi::GenericProperty{ &valueType } }
+  {
+  }
+
+  /**
+   * @brief Create the manager with a property with a given value.
+   *
+   * Passing a value that refers to a null Java object is undefined behavior.
+   * TODO: Make it defined behavior by handling it in the conversion between AnyValue and jobject.
+   */
+  PropertyManager(qi::TypeInterface& valueType, JNIEnv& env, jobject value)
+    : globalReference{ env.NewGlobalRef(value) }
+    , property{ new qi::GenericProperty{
+        qi::AnyValue::from(globalReference).convertCopy(&valueType) } }
   {
   }
 
@@ -379,7 +357,7 @@ public:
    */
   void clearReference(JNIEnv *env)
   {
-    if(!env->IsSameObject(globalReference, nullptr))
+    if(env->IsSameObject(globalReference, nullptr) == JNI_FALSE)
     {
       env->DeleteGlobalRef(globalReference);
       globalReference = nullptr;
@@ -392,8 +370,10 @@ public:
    */
   void destroy(JNIEnv *env)
   {
-    clearReference(env);
+    // Destroy the property before releasing the reference to the Java object as it might depend
+    // on it.
     property.reset();
+    clearReference(env);
   }
 
   /**
@@ -403,9 +383,12 @@ public:
    */
   void setValue(JNIEnv *env, jobject value)
   {
-    clearReference(env);
+    // Keep a local reference alive until the property has been reset as the property value might
+    // depend on it.
+    auto scopedOldRef = ka::scoped(env->NewLocalRef(globalReference), &qi::jni::releaseObject);
 
-    if(env->IsSameObject(value, nullptr))
+    clearReference(env);
+    if(env->IsSameObject(value, nullptr) == JNI_TRUE)
     {
       globalReference = nullptr;
     }
@@ -413,6 +396,9 @@ public:
     {
       globalReference = env->NewGlobalRef(value);
     }
+
+    QI_ASSERT_NOT_NULL(property);
+    property->setValue(qi::AnyValue::from(globalReference)).wait();
   }
 };
 

@@ -125,50 +125,6 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_disconnect(JNIEnv *env, 
   return 0;
 }
 
-JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_connect(JNIEnv *env, jobject jobj, jlong pObject, jstring method, jobject instance, jstring service, jstring eventName)
-{
-  qi::AnyObject&             obj = *(reinterpret_cast<qi::AnyObject *>(pObject));
-  if (!qi::jni::assertion(env, obj.isValid(), "AnyObject.connect: Invalid qi.AnyObject."))
-    return 0;
-
-  std::string                signature = qi::jni::toString(method);
-  std::string                event = qi::jni::toString(eventName);
-  qi_method_info*            data;
-  std::vector<std::string>  sigInfo;
-
-  // Create a new global reference on object instance.
-  // jobject structure are local reference and are destroyed when returning to JVM
-  instance = env->NewGlobalRef(instance);
-
-  try {
-    // Remove return value
-    sigInfo = qi::signatureSplit(signature);
-    signature = sigInfo[1];
-    signature.append("::");
-    signature.append(sigInfo[2]);
-
-    // Create a struct holding a jobject instance, jmethodId id and other needed thing for callback
-    // Pass it to void * data to register_method
-    // FIXME jobj is not a global ref, it may be invalid when it will be used
-    data = new qi_method_info(instance, signature, jobj);
-    gInfoHandler.push(data);
-
-    auto eventCallbackToJava = [data](const qi::GenericFunctionParameters& params)
-    {
-      return event_callback_to_java((void*) data, params);
-    };
-
-    qi::SignalLink link = obj.connect(event,
-                        qi::SignalSubscriber(
-                          qi::AnyFunction::fromDynamicFunction(eventCallbackToJava))).value();
-    return link;
-  } catch (std::exception& e)
-  {
-    throwNewRuntimeException(env, e.what());
-    return 0;
-  }
-}
-
 JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_connectSignal(JNIEnv *env, jobject QI_UNUSED(obj), jlong pObject, jstring jSignalName, jobject listener)
 {
   qi::AnyObject *anyObject = reinterpret_cast<qi::AnyObject *>(pObject);
