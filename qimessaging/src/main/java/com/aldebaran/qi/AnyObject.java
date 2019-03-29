@@ -71,6 +71,12 @@ public class AnyObject implements Comparable<AnyObject> {
      */
     private static native int compare(long object1, long object2);
 
+    /**
+     * Hash {@link AnyObject}. <br>
+     * Returns a hash code value for this AnyObject
+     */
+    private static native int hash(long object);
+
     private final long _p;
 
     private native long property(long pObj, String property) throws DynamicCallException;
@@ -496,5 +502,13 @@ public class AnyObject implements Comparable<AnyObject> {
     @Override
     public int compareTo(AnyObject anyObject) {
         return AnyObject.compare(this._p, anyObject._p);
+    }
+
+    /**
+     * Returns a hash code value for this AnyObject.
+     */
+    @Override
+    public int hashCode() {
+        return AnyObject.hash(this._p);
     }
 }

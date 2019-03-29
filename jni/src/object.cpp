@@ -7,6 +7,9 @@
 ** See COPYING for the license
 */
 
+#include <cstdint>
+#include <type_traits>
+
 #include <qi/anyobject.hpp>
 #include <qi/jsoncodec.hpp>
 
@@ -271,5 +274,47 @@ JNIEXPORT jint JNICALL Java_com_aldebaran_qi_AnyObject_compare(JNIEnv * env, jcl
   }
 
   return 1;
+}
+
+/**
+ * @brief Converts a C++ hash to a java hash.
+ */
+static jint toJavaHash(std::size_t hash)
+{
+  static_assert(sizeof(std::uint64_t) >= sizeof(std::size_t), "uint64_t is unable to store the size_t value.");
+
+  const std::uint64_t hash64 = hash;
+
+  // Follow implementation of Long::hashCode() in oracle documentation.
+  // See https://docs.oracle.com/javase/7/docs/api/java/lang/Long.html#hashCode()
+  const auto hash32 = static_cast<std::uint32_t>((hash64 & 0x00000000ffffffff) ^ (hash64 >> 32));
+
+  static_assert(alignof(jint) == alignof(std::uint32_t), "Invalid alignment between jint and uint32_t, cannot reinterpret cast.");
+
+  static_assert(std::is_same<jint, std::int32_t>::value, "jint is not a signed 32 bit integral.");
+
+  return reinterpret_cast<const jint&>(hash32);
+}
+
+/**
+ * @brief Hashes an AnyObject.
+ * Returns a java compliant hash value.
+ * If the pointer is null or the dereferenced object is invalid, report AssertionError and return 0
+ */
+JNIEXPORT jint JNICALL Java_com_aldebaran_qi_AnyObject_hash(JNIEnv* env, jclass QI_UNUSED(cls), jlong object)
+{
+  const auto anyObjPtr = reinterpret_cast<const qi::AnyObject*>(object);
+
+  if (!qi::jni::assertion(env, anyObjPtr != nullptr,
+                          "AnyObject.hash: Null qi.AnyObject pointer."))
+    return 0;
+
+  const auto& anyObject = *anyObjPtr;
+
+  if (!qi::jni::assertion(env, anyObject.isValid(), 
+                          "AnyObject.hash: Invalid qi.AnyObject."))
+    return 0;
+
+  return toJavaHash(std::hash<qi::AnyObject>{}(anyObject));
 }
 
