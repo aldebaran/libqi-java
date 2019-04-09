@@ -264,7 +264,6 @@ qi::AnyReference call_to_java(std::string signature, void* data, const qi::Gener
   // Arguments given to Java to call NativeTools.callJava method
   // NativeTools.callJava(Object instance, String methodName, String methodSignature, Object[] methodArguments):Object
   jvalue callJavaArguments[4];
-  int                 index = 0;
   JNIEnv*             env = 0;
   qi_method_info*     info = reinterpret_cast<qi_method_info*>(data);
   std::vector<std::string>  sigInfo = qi::signatureSplit(signature);
@@ -280,39 +279,22 @@ qi::AnyReference call_to_java(std::string signature, void* data, const qi::Gener
     return qi::AnyReference();
   }
 
-  // Translate parameters from AnyValues to jobjects
-  qi::GenericFunctionParameters::const_iterator it = params.begin();
-  qi::GenericFunctionParameters::const_iterator end = params.end();
-  std::vector<qi::TypeInterface*> types;
-  jobjectArray arguments = env->NewObjectArray((jsize)params.size(), cls_object, NULL);
+  // Converts function parameters using the method signature.
+  const auto argsSig = qi::Signature(sigInfo.at(2));
+  auto convertedParams = ka::scoped(params.convert(argsSig), [](qi::GenericFunctionParameters&& params){ params.destroy(); });
 
-  for(; it != end; it++)
-  {
-    env->SetObjectArrayElement(arguments, index, JObject_from_AnyValue(*it));
+  // Translates parameters from AnyValues to Array of JObject.
+  auto argumentsArray = ka::scoped(
+    env->NewObjectArray(
+      static_cast<jsize>(convertedParams.value.size()), cls_object, nullptr),
+      qi::jni::releaseObject
+  );
 
-    if (it->kind() == qi::TypeKind_Dynamic)
-    {
-      types.push_back((**it).type());
-    }
-    else
-      types.push_back(it->type());
+  int index = 0;
+  for (const qi::AnyReference& ref: convertedParams.value)
+   env->SetObjectArrayElement(argumentsArray.value, index++, JObject_from_AnyValue(ref));
 
-    index++;
-  }
-
-  // Check if function is callable
-  qi::Signature from = qi::makeTupleSignature(types);
-  qi::Signature to = qi::Signature(sigInfo[2]);
-
-  if (from.isConvertibleTo(to) == 0)
-  {
-    std::ostringstream ss;
-    ss << "cannot convert parameters from " << from.toString() << " to " << to.toString();
-    qiLogVerbose() << ss.str();
-    throw std::runtime_error(ss.str());
-  }
-
-  // Find method class and get methodID
+  // Finds method class and get methodID.
   const auto cls = ka::scoped(qi::jni::clazz(info->instance), qi::jni::releaseClazz);
 
   if (!cls.value)
@@ -325,12 +307,12 @@ qi::AnyReference call_to_java(std::string signature, void* data, const qi::Gener
   callJavaArguments[0] = object2value(info->instance);
   callJavaArguments[1] = object2value(env->NewStringUTF(sigInfo[1].c_str()));
   callJavaArguments[2] = object2value(env->NewStringUTF(javaSignature.c_str()));
-  callJavaArguments[3] = object2value(arguments);
+  callJavaArguments[3] = object2value(argumentsArray.value);
   const auto scopedArgs = ka::scoped([&]{
-    qi::jni::releaseObject(callJavaArguments[3].l);
+    // callJavaArguments[3].l is not released by purpose: it is already scoped.
     qi::jni::releaseObject(callJavaArguments[2].l);
     qi::jni::releaseObject(callJavaArguments[1].l);
-    // callJavaArguments[0].l is not released by purpose: it is info->instance
+    // callJavaArguments[0].l is not released by purpose: it is info->instance.
   });
 
   const auto valueResult =
