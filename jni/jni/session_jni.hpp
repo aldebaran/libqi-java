@@ -11,6 +11,9 @@
 #define _JAVA_JNI_SESSION_HPP_
 
 #include <jni.h>
+#include <qi/anyvalue.hpp>
+#include <string>
+#include <map>
 
 extern "C"
 {

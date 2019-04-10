@@ -151,6 +151,16 @@ namespace qi {
 
     template <>
     template <typename... Types>
+    jint Call<jint>::invokeImpl(JNIEnv* env,
+                                jobject jobject,
+                                jmethodID mid,
+                                Types&&... rest)
+    {
+      return env->CallIntMethod(jobject, mid, std::forward<Types>(rest)...);
+    }
+
+    template <>
+    template <typename... Types>
     jobject Call<jobject>::invokeImpl(JNIEnv* env, jobject jobject, jmethodID mid, Types&&... rest)
     {
       return env->CallObjectMethod(jobject, mid, std::forward<Types>(rest)...);

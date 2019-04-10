@@ -31,4 +31,21 @@ void JObject_from_AnyValue(qi::AnyReference val, jobject* target);
 std::pair<qi::AnyReference, bool> AnyValue_from_JObject(jobject val,
                                                         qi::Signature signatureHint = {});
 
+namespace qi
+{
+namespace jni
+{
+
+using AnyValueMap = std::map<std::string, AnyValue>;
+
+// Converts a Java map of String to Object into a C++ map.
+AnyValueMap toCppStringAnyValueMap(JNIEnv& env, jobject jmap);
+
+// Returns a local reference to a Java map of String to Object. The caller is responsible for
+// releasing it.
+jobject toJavaStringObjectMap(JNIEnv& env, const AnyValueMap& map);
+
+} // namespace jni
+} // namespace qi
+
 #endif // !_JOBJECTCONVERTER_HPP_

@@ -9,7 +9,6 @@
 #include <object.hpp>
 #include <objectbuilder.hpp>
 
-
 qiLogCategory("qimessaging.jni.test");
 
 namespace qi { namespace jni { namespace test
@@ -200,4 +199,104 @@ TEST(QiJNITypeConversion, NullJavaObjectToQiObjectConvertsToNullObject)
   AnyObject obj;
   EXPECT_NO_THROW(obj = ref.value.first.to<AnyObject>());
   EXPECT_FALSE(obj.isValid());
+}
+
+namespace
+{
+  template<typename ObjectType>
+  auto validate(ObjectType obj)
+    // TODO: Remove the trailing return type when we can switch to C++14.
+    -> decltype(ka::scoped(obj, &qi::jni::releaseObject))
+  {
+    auto& env = *test::environment->jniEnv;
+    EXPECT_EQ(JNI_FALSE, env.IsSameObject(obj, nullptr));
+    return ka::scoped(obj, &qi::jni::releaseObject);
+  }
+} // anonymous namespace
+
+TEST(QiJNITypeConversion, EmptyCppMapConvertsToEmptyJavaMap)
+{
+  auto& env = *test::environment->jniEnv;
+  auto javaMap = validate(qi::jni::toJavaStringObjectMap(env, {}));
+  EXPECT_EQ(JNI_TRUE, qi::jni::Call<jboolean>::invoke(&env, javaMap.value, "isEmpty", "()Z"));
+}
+
+TEST(QiJNITypeConversion, EmptyJavaMapConversToEmptyCppMap)
+{
+  auto& env = *test::environment->jniEnv;
+  auto javaMap = qi::jni::construct(&env, "java/util/HashMap", "()V");
+  auto cppMap = qi::jni::toCppStringAnyValueMap(env, javaMap);
+  EXPECT_TRUE(cppMap.empty());
+}
+
+TEST(QiJNITypeConversion, CppMapConvertsToJavaMap)
+{
+  using namespace qi;
+  auto& env = *test::environment->jniEnv;
+
+  const auto javaMap = validate(
+    jni::toJavaStringObjectMap(env,
+                                   { { "first_key", AnyValue::from(std::string("first_value")) },
+                                     { "second_key", AnyValue::from(2) } }));
+  EXPECT_EQ(2, jni::Call<jint>::invoke(&env, javaMap.value, "size", "()I"));
+
+  const auto entrySet = validate(
+    jni::Call<jobject>::invoke(&env, javaMap.value, "entrySet", "()Ljava/util/Set;"));
+  const auto iterator = validate(jni::Call<jobject>::invoke(&env, entrySet.value, "iterator",
+                                                            "()Ljava/util/Iterator;"));
+
+  ASSERT_EQ(JNI_TRUE, jni::Call<jboolean>::invoke(&env, iterator.value, "hasNext", "()Z"));
+  const auto firstEntry = validate(
+    jni::Call<jobject>::invoke(&env, iterator.value, "next", "()Ljava/lang/Object;"));
+  const auto firstKey = validate(reinterpret_cast<jstring>(
+    jni::Call<jobject>::invoke(&env, firstEntry.value, "getKey", "()Ljava/lang/Object;")));
+  const auto firstValue = validate(reinterpret_cast<jstring>(
+    jni::Call<jobject>::invoke(&env, firstEntry.value, "getValue", "()Ljava/lang/Object;")));
+  EXPECT_EQ("first_key", jni::toString(firstKey.value));
+  EXPECT_EQ("first_value", jni::toString(firstValue.value));
+
+
+  ASSERT_EQ(JNI_TRUE, jni::Call<jboolean>::invoke(&env, iterator.value, "hasNext", "()Z"));
+  const auto secondEntry = validate(
+    jni::Call<jobject>::invoke(&env, iterator.value, "next", "()Ljava/lang/Object;"));
+  const auto secondKey = validate(reinterpret_cast<jstring>(
+    jni::Call<jobject>::invoke(&env, secondEntry.value, "getKey", "()Ljava/lang/Object;")));
+  const auto secondValue = validate(
+    jni::Call<jobject>::invoke(&env, secondEntry.value, "getValue", "()Ljava/lang/Object;"));
+  EXPECT_EQ("second_key", jni::toString(secondKey.value));
+
+  const auto mid = env.GetMethodID(cls_integer, "intValue", "()I");
+  EXPECT_EQ(2, env.CallIntMethod(secondValue.value, mid));
+}
+
+TEST(QiJNITypeConversion, JavaMapConvertsToCppMap)
+{
+  using namespace qi;
+  auto& env = *test::environment->jniEnv;
+
+  const auto javaMap = validate(jni::construct(&env, "java/util/HashMap", "()V"));
+
+  const auto firstKey = validate(jni::toJstring("Java_first_key"));
+  const auto firstValue = validate(jni::construct(&env, "java/lang/Integer", "(I)V", 42));
+  ka::scoped(
+    jni::Call<jobject>::invoke(&env, javaMap.value, "put",
+                                   "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+                                   firstKey.value, firstValue.value),
+    &jni::releaseObject);
+
+  const auto secondKey = validate(jni::toJstring("Java_second_key"));
+  const auto secondValue = validate(jni::toJstring("Java_second_value"));
+  ka::scoped(
+    jni::Call<jobject>::invoke(&env, javaMap.value, "put",
+                                   "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+                                   secondKey.value, secondValue.value),
+    &jni::releaseObject);
+
+  const auto map = jni::toCppStringAnyValueMap(env, javaMap.value);
+  const auto expected = std::map<std::string, qi::AnyValue>{
+    {"Java_first_key", AnyValue::from(42)},
+    {"Java_second_key", AnyValue::from(std::string{"Java_second_value"})}
+  };
+
+  EXPECT_EQ(expected, map);
 }

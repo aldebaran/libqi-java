@@ -614,3 +614,77 @@ class JObjectTypeInterface: public qi::DynamicTypeInterface
 /* Register jobject -> See the above comment for explanations */
 QI_TYPE_REGISTER_CUSTOM(jobject, JObjectTypeInterface);
 
+namespace qi
+{
+namespace jni
+{
+
+AnyValueMap toCppStringAnyValueMap(JNIEnv& env, jobject jmap)
+{
+  auto it = ka::scoped(
+    [&] {
+      const auto set =
+        ka::scoped(qi::jni::Call<jobject>::invoke(&env, jmap, "entrySet", "()Ljava/util/Set;"),
+                   &qi::jni::releaseObject);
+      return qi::jni::Call<jobject>::invoke(&env, set.value, "iterator", "()Ljava/util/Iterator;");
+    }(),
+    &qi::jni::releaseObject);
+
+  std::map<std::string, qi::AnyValue> result;
+  while (qi::jni::Call<jboolean>::invoke(&env, it.value, "hasNext", "()Z") == JNI_TRUE)
+  {
+    const auto entry =
+      ka::scoped(qi::jni::Call<jobject>::invoke(&env, it.value, "next", "()Ljava/lang/Object;"),
+                 &qi::jni::releaseObject);
+
+    const auto key = ka::scoped(reinterpret_cast<jstring>(
+                                  qi::jni::Call<jobject>::invoke(&env, entry.value, "getKey",
+                                                                 "()Ljava/lang/Object;")),
+                                &qi::jni::releaseString);
+    std::string k = qi::jni::toString(key.value);
+
+    const auto value = ka::scoped(qi::jni::Call<jobject>::invoke(&env, entry.value, "getValue",
+                                                                 "()Ljava/lang/Object;"),
+                                  &qi::jni::releaseObject);
+    const auto conv = AnyValue_from_JObject(value.value);
+    qi::AnyValue objVal {
+      conv.first, // the value
+      false, // do not copy the value
+      conv.second // only destroy the value if it was allocated by the conversion function
+    };
+    const auto inserted = result.insert(std::make_pair(std::move(k), std::move(objVal))).second;
+    boost::ignore_unused(inserted);
+    QI_ASSERT_TRUE(inserted);
+  }
+  return result;
+}
+
+jobject toJavaStringObjectMap(JNIEnv& env, const AnyValueMap& map)
+{
+  const auto result = ka::scoped(
+    [&] {
+      const auto mapClass =
+        ka::scoped(env.FindClass("java/util/HashMap"), &qi::jni::releaseClazz);
+      const auto init = env.GetMethodID(mapClass.value, "<init>", "()V");
+      return env.NewObject(mapClass.value, init);
+    }(),
+    &qi::jni::releaseObject);
+
+  for (const auto& keyValue : map)
+  {
+    const auto& key = keyValue.first;
+    const auto keyJString = ka::scoped(qi::jni::toJstring(key), &qi::jni::releaseString);
+
+    const auto& val = keyValue.second;
+    const auto valObj =
+      ka::scoped(JObject_from_AnyValue(val.asReference()), &qi::jni::releaseObject);
+    qi::jni::releaseObject(
+      qi::jni::Call<jobject>::invoke(&env, result.value, "put",
+                                     "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+                                     keyJString.value, valObj.value));
+  }
+  return env.NewLocalRef(result.value);
+}
+
+} // namespace jni
+} // namespace qi
