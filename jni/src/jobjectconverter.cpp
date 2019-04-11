@@ -9,6 +9,7 @@
 
 
 #include <boost/locale.hpp>
+#include <boost/core/ignore_unused.hpp>
 
 #include <qi/log.hpp>
 #include <qi/signature.hpp>
