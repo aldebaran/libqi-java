@@ -276,6 +276,9 @@ JNIEXPORT jint JNICALL Java_com_aldebaran_qi_AnyObject_compare(JNIEnv * env, jcl
   return 1;
 }
 
+template<typename T>
+using is_signed_integral = ka::Conjunction<std::is_signed<T>, std::is_integral<T>>;
+
 /**
  * @brief Converts a C++ hash to a java hash.
  */
@@ -291,7 +294,7 @@ static jint toJavaHash(std::size_t hash)
 
   static_assert(alignof(jint) == alignof(std::uint32_t), "Invalid alignment between jint and uint32_t, cannot reinterpret cast.");
 
-  static_assert(std::is_same<jint, std::int32_t>::value, "jint is not a signed 32 bit integral.");
+  static_assert(is_signed_integral<jint>::value && sizeof(jint) == sizeof(std::int32_t), "jint is not a signed 32 bit integral.");
 
   return reinterpret_cast<const jint&>(hash32);
 }
