@@ -19,6 +19,7 @@
 #include <session_jni.hpp>
 #include <object_jni.hpp>
 #include <callbridge.hpp>
+#include <jobjectconverter.hpp>
 
 #include <qi/messaging/clientauthenticator.hpp>
 #include <qi/messaging/clientauthenticatorfactory.hpp>
@@ -186,120 +187,38 @@ JNIEXPORT void JNICALL Java_com_aldebaran_qi_Session_addConnectionListener(JNIEn
 class Java_ClientAuthenticator : public qi::ClientAuthenticator
 {
 public:
-  Java_ClientAuthenticator(JNIEnv*   env, jobject object)
+  Java_ClientAuthenticator(JNIEnv* env, jobject object)
   {
     _jobjectRef = qi::jni::makeSharedGlobalRef(env, object);
   }
 
-  qi::CapabilityMap initialAuthData()
+  qi::CapabilityMap initialAuthData() override
   {
-      JNIEnv* env = nullptr;
-   #ifndef ANDROID
-       javaVirtualMachine->AttachCurrentThread(reinterpret_cast<void**>(&env), nullptr);
-   #else
-       javaVirtualMachine->AttachCurrentThread(&env, nullptr);
-   #endif
-    jobject _jobject = _jobjectRef.get();
-
-    jobject ca = qi::jni::Call<jobject>::invoke(env, _jobject, "initialAuthData", "()Ljava/util/Map;");
-    auto result = JNI_JavaMaptoMap(env, ca);
-    env->DeleteLocalRef(ca);
-    javaVirtualMachine->DetachCurrentThread();
-    return result;
+    qi::jni::JNIAttach envAttach;
+    const auto env = envAttach.get();
+    const auto obj = _jobjectRef.get();
+    const auto ca =
+      ka::scoped(qi::jni::Call<jobject>::invoke(env, obj, "initialAuthData", "()Ljava/util/Map;"),
+                 &qi::jni::releaseObject);
+    return qi::jni::toCppStringAnyValueMap(*env, ca.value);
   }
 
-  qi::CapabilityMap _processAuth(const qi::CapabilityMap &authData)
+  qi::CapabilityMap _processAuth(const qi::CapabilityMap &authData) override
   {
-    JNIEnv*   env = qi::jni::env();
-    jobject _jobject = _jobjectRef.get();
-    jobject jmap = JNI_MapToJavaMap(env, authData);
-    jobject ca = qi::jni::Call<jobject>::invoke(env, _jobject, "_processAuth", "(Ljava/util/Map;)Ljava/util/Map;", jmap);
-    env->DeleteLocalRef(jmap);
-    auto result = JNI_JavaMaptoMap(env, ca);
-    env->DeleteLocalRef(ca);
-    javaVirtualMachine->DetachCurrentThread();
-    return result;
+    qi::jni::JNIAttach envAttach;
+    const auto env = envAttach.get();
+    const auto obj = _jobjectRef.get();
+    const auto jmap =
+      ka::scoped(qi::jni::toJavaStringObjectMap(*env, authData), &qi::jni::releaseObject);
+    const auto ca =
+      ka::scoped(qi::jni::Call<jobject>::invoke(env, obj, "_processAuth",
+                                                "(Ljava/util/Map;)Ljava/util/Map;", jmap.value),
+                 &qi::jni::releaseObject);
+    return qi::jni::toCppStringAnyValueMap(*env, ca.value);
   }
 
 private:
   qi::jni::SharedGlobalRef _jobjectRef;
-
-  static qi::CapabilityMap JNI_JavaMaptoMap(JNIEnv* env, jobject jmap)
-  {
-    qi::CapabilityMap result;
-
-    jobject set = qi::jni::Call<jobject>::invoke(env, jmap, "entrySet", "()Ljava/util/Set;");
-    jobject it = qi::jni::Call<jobject>::invoke(env, set, "iterator", "()Ljava/util/Iterator;");
-    env->DeleteLocalRef(set);
-
-    while (qi::jni::Call<jboolean>::invoke(env, it, "hasNext", "()Z"))
-    {
-      jobject entry = qi::jni::Call<jobject>::invoke(env, it, "next", "()Ljava/lang/Object;");
-
-      // FIXME: should implement the fact key can be something else than a jstring
-      jstring key = (jstring) qi::jni::Call<jobject>::invoke(env, entry, "getKey", "()Ljava/lang/Object;");
-      std::string k = env->GetStringUTFChars(key, nullptr);
-
-      jobject value = qi::jni::Call<jobject>::invoke(env, entry, "getValue", "()Ljava/lang/Object;");
-      std::string v2 = env->GetStringUTFChars((jstring) value, nullptr);
-
-      env->DeleteLocalRef(entry);
-      env->DeleteLocalRef(key);
-      env->DeleteLocalRef(value);
-
-      qi::AnyValue v = qi::AnyValue::from(v2);
-
-      result[k] = v;
-    }
-
-    env->DeleteLocalRef(it);
-
-    return result;
-  }
-
-  static jobject JNI_MapToJavaMap(JNIEnv* env, qi::CapabilityMap map)
-  {
-    jclass mapClass = env->FindClass("java/util/HashMap");
-    jmethodID init = env->GetMethodID(mapClass, "<init>", "()V");
-    jobject result = env->NewObject(mapClass, init);
-    env->DeleteLocalRef(mapClass);
-
-    qi::CapabilityMap::const_iterator it;
-    for (it = map.begin(); it != map.end(); ++it)
-    {
-      std::string key = it->first;
-      jstring k = env->NewStringUTF(key.c_str());
-
-      const qi::AnyValue& val = it->second;
-      const std::string sig = val.signature().toString();
-      jobject v;
-
-      if (sig == "I")
-      {
-        jclass cls = env->FindClass("java/lang/Integer");
-        jmethodID mid = env->GetMethodID(cls, "<init>", "(I)V");
-        v = env->NewObject(cls, mid, val.toUInt());
-        env->DeleteLocalRef(cls);
-      }
-      else if (sig == "s")
-      {
-        v = (jobject) env->NewStringUTF(val.toString().c_str());
-      }
-      else
-      {
-        env->DeleteLocalRef(k);
-        qiLogError() << "sig " << sig << " not supported, skipping...";
-        continue;
-      }
-
-      qi::jni::Call<jobject>::invoke(env, result, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", k, v);
-
-      env->DeleteLocalRef(k);
-      env->DeleteLocalRef(v);
-    }
-
-    return result;
-  }
 };
 
 class Java_ClientAuthenticatorFactory : public qi::ClientAuthenticatorFactory
@@ -310,7 +229,7 @@ public:
     _jobject = env->NewGlobalRef(object);
   }
 
-  qi::ClientAuthenticatorPtr newAuthenticator()
+  qi::ClientAuthenticatorPtr newAuthenticator() override
   {
    JNIEnv* env = nullptr;
 #ifndef ANDROID

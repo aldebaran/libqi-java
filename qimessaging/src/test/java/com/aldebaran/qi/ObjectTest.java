@@ -12,11 +12,13 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
+import com.aldebaran.qi.serialization.QiSerializer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -262,6 +264,49 @@ public class ObjectTest {
             assertNull(anyObject);
         } catch (Exception e) {
             fail("Call to 'createNullObject' failed: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Utility structures for `advertiseMethodsWithComplexSignatureCanBeCalledWithSameType` test
+     * consisting of an interface and a class with a method with a "complex" signature (List of String).
+     */
+    
+    interface ComplexSignatureInterface {
+        Integer complexMethod(List<String> values);
+    }
+    
+    static class ComplexSignature implements ComplexSignatureInterface {
+        public Integer complexMethod(List<String> values) {
+            return values.hashCode();
+        }
+    }
+
+    /**
+     * The purpose of this test is to verify that generic types don't lose type parameter
+     * information when advertised.
+     * In this test case, the method waits for a `List<String>` so the test checks that
+     * it advertised as such and it can be called accordingly.
+     * See issue #41933.
+     */
+    @Test
+    public void advertiseMethodsWithComplexSignatureCanBeCalledWithSameType() {
+        DynamicObjectBuilder dynamicObjectBuilder = new DynamicObjectBuilder();
+
+        // Advertises all methods contained in ComplexSignatureInterface.
+        dynamicObjectBuilder.advertiseMethods(QiSerializer.getDefault(), ComplexSignatureInterface.class, new ComplexSignature());
+
+        try {
+            ArrayList<String> l = new ArrayList<String>();
+
+            l.add("Test");
+
+            // Tries to call complexMethod with coinciding parameters.
+            Future<Integer> f = dynamicObjectBuilder.object().<Integer>call("complexMethod", l);
+
+            assertEquals(f.get().intValue(), l.hashCode());
+        } catch (ExecutionException e) {
+            fail("Call to 'complexMethod' failed: " + e.getMessage());
         }
     }
 }
