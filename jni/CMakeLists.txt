@@ -28,6 +28,7 @@ set(SOURCE
    jni/list_jni.hpp
    jni/future_jni.hpp
    jni/tuple_jni.hpp
+   jni/optional_jni.hpp
    jni/futurehandler.hpp
    jni/object_jni.hpp
    jni/object.hpp
@@ -44,6 +45,7 @@ set(SOURCE
    src/jobjectconverter.cpp
    src/map_jni.cpp
    src/list_jni.cpp
+   src/optional_jni.cpp
    src/future_jni.cpp
    src/tuple_jni.cpp
    src/futurehandler.cpp

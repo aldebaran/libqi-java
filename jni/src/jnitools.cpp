@@ -30,6 +30,7 @@ jclass cls_future;
 jfieldID field_future_pointer;
 jclass cls_anyobject;
 jclass cls_tuple;
+jclass cls_optional;
 
 jclass cls_list;
 jclass cls_arraylist;
@@ -116,6 +117,7 @@ static void init_classes(JNIEnv *env)
   field_future_pointer = env->GetFieldID(cls_future, "_fut", "J");
   cls_anyobject = loadClass(env, "com/aldebaran/qi/AnyObject");
   cls_tuple = loadClass(env, "com/aldebaran/qi/Tuple");
+  cls_optional = loadClass(env, "com/aldebaran/qi/Optional");
 
   cls_list = loadClass(env, "java/util/List");
   cls_arraylist = loadClass(env, "java/util/ArrayList");
@@ -199,6 +201,12 @@ void getJavaSignature(std::string &javaSignature, const std::string& qiSignature
       javaSignature.append("Lcom/aldebaran/qi/Tuple;");
       while (i < qiSignature.size() && qiSignature[i] != qi::Signature::Type_Tuple_End)
         i++;
+      break;
+    }
+    case qi::Signature::Type_Optional:
+    {
+      javaSignature.append("Lcom/aldebaran/qi/Optional;");
+      i++;
       break;
     }
     case qi::Signature::Type_List:
@@ -421,6 +429,11 @@ std::string propertyBaseSignature(JNIEnv *env, jclass propertyBase)
            static_cast<char>(qi::Signature::Type_Dynamic) +
            static_cast<char>(qi::Signature::Type_Tuple_End);
   }
+  if (env->IsAssignableFrom(propertyBase, cls_optional))
+  {
+    return std::string{} + static_cast<char>(qi::Signature::Type_Optional) +
+           static_cast<char>(qi::Signature::Type_Dynamic);
+  }
 
   return {};
 }
@@ -448,6 +461,8 @@ qi::TypeInterface *propertyValueClassToType(JNIEnv *env, jclass clazz)
     return qi::typeOf<std::map<qi::AnyValue, qi::AnyValue>>();
   if (env->IsAssignableFrom(clazz, cls_list))
     return qi::typeOf<std::vector<qi::AnyValue>>();
+  if (env->IsAssignableFrom(clazz, cls_optional))
+    return qi::typeOf<boost::optional<qi::AnyValue>>();
 
   // For all other types, return a dynamic type. This includes the types that inherit the Tuple type
   // that we expose in Java because it is dynamic and the types it contains are unknown until we

@@ -43,6 +43,7 @@ extern jclass cls_future;
 extern jfieldID field_future_pointer;
 extern jclass cls_anyobject;
 extern jclass cls_tuple;
+extern jclass cls_optional;
 
 extern jclass cls_list;
 extern jclass cls_arraylist;

@@ -11,12 +11,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import com.aldebaran.qi.AnyObject;
-import com.aldebaran.qi.Future;
-import com.aldebaran.qi.QiConversionException;
-import com.aldebaran.qi.QiField;
-import com.aldebaran.qi.QiStruct;
-import com.aldebaran.qi.Tuple;
+import com.aldebaran.qi.*;
 
 /**
  * Utilities for manipulates signatures
@@ -305,7 +300,12 @@ public class SignatureUtilities {
             SignatureUtilities.computeSignature(0, (ParameterizedType) type, stringBuilder);
             SignatureUtilities.computeSignature(1, (ParameterizedType) type, stringBuilder);
             stringBuilder.append("}");
-        } else {
+        }
+        else if(Optional.class.isAssignableFrom(clazz)) {
+            stringBuilder.append("+");
+            SignatureUtilities.computeSignature(0, (ParameterizedType) type, stringBuilder);
+        }
+        else {
             final QiStruct struct = clazz.getAnnotation(QiStruct.class);
             if (struct != null) {
                 final List<QiFieldInformation> qiFieldInformations = SignatureUtilities.collectSortedQiFieldInformation(clazz);
