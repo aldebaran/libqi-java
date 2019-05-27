@@ -21,7 +21,6 @@ extern "C"
   JNIEXPORT jstring JNICALL Java_com_aldebaran_qi_AnyObject_metaObjectToString(JNIEnv* env, jobject jobj, jlong pObj);
   JNIEXPORT void JNICALL Java_com_aldebaran_qi_AnyObject_destroy(JNIEnv* env, jobject jobj, jlong pObj);
   JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_connect(JNIEnv *env, jobject obj, jlong pObject, jstring method, jobject instance, jstring service, jstring event);
-  JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_disconnect(JNIEnv *env, jobject jobj, jlong pObject, jlong subscriberId);
   JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_connectSignal(JNIEnv *env, jobject obj, jlong pObject, jstring jSignalName, jobject listener);
   JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_disconnectSignal(JNIEnv *env, jobject obj, jlong pObject, jlong subscriberId);
   JNIEXPORT void JNICALL Java_com_aldebaran_qi_AnyObject_post(JNIEnv *env, jobject obj, jlong pObject, jstring eventName, jobjectArray args);
