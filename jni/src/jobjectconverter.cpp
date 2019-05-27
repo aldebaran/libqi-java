@@ -24,6 +24,7 @@
 #include <map_jni.hpp>
 #include <list_jni.hpp>
 #include <tuple_jni.hpp>
+#include <optional_jni.hpp>
 #include <object_jni.hpp>
 #include <future_jni.hpp>
 
@@ -189,8 +190,13 @@ struct toJObject
 
     void visitOptional(qi::AnyReference optionalReference)
     {
-      qiLogFatal() << "Error in conversion: Unable to convert optional in Java";
-      throwNewException(env, "Error in conversion: Unable to convert optional in Java");
+      if(optionalReference.optionalHasValue()){
+        const auto converted = JObject_from_AnyValue(optionalReference.content());
+        *result = JNIOptional(optionalInitFromValue, converted).object();
+        
+      } else {
+        *result = JNIOptional().object();
+      }
     }
 
     void visitPointer(qi::AnyReference pointee)
@@ -353,6 +359,20 @@ qi::AnyReference AnyValue_from_JObject_Tuple(jobject val)
   return res;
 }
 
+qi::AnyReference AnyValue_from_JObject_Optional(jobject val)
+{
+  JNIOptional optional(optionalInitFromInstance, val);
+
+  std::unique_ptr<boost::optional<qi::AnyValue>> res(new boost::optional<qi::AnyValue>());
+
+  if(optional.hasValue()){
+    auto convValue = AnyValue_from_JObject(optional.value());
+    *res = qi::AnyValue(convValue.first, !convValue.second, true);
+  }
+
+  return qi::AnyReference::from(*res.release());
+}
+
 /**
  * Make AnyReference from a Java Future object.
  * Future objects have a JNI member (a qi::Future) that we can
@@ -460,6 +480,11 @@ qi::AnyReference _AnyValue_from_JObject(jobject val)
   if (env->IsInstanceOf(val, cls_tuple))
   {
     return AnyValue_from_JObject_Tuple(val);
+  }
+
+  if (env->IsInstanceOf(val, cls_optional))
+  {
+    return AnyValue_from_JObject_Optional(val);
   }
 
   if (env->IsInstanceOf(val, cls_future))

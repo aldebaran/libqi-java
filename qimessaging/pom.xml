@@ -6,7 +6,7 @@
 
     <groupId>com.aldebaran</groupId> <!-- QiMessaging Java bindings properties -->
     <artifactId>libqi-java</artifactId>
-    <version>2.7.0</version>
+    <version>3.0.0</version>
     <packaging>jar</packaging>
     <name>libqi-java</name>
 
