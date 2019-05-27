@@ -89,8 +89,6 @@ public class AnyObject implements Comparable<AnyObject> {
 
     private native void destroy(long pObj);
 
-    private native long disconnect(long pObject, long subscriberId) throws RuntimeException;
-
     private native long connectSignal(long pObject, String signalName, QiSignalListener listener);
 
     private native long disconnectSignal(long pObject, long subscriberId);
@@ -369,17 +367,6 @@ public class AnyObject implements Comparable<AnyObject> {
                 return new Future<Void>(disconnectSignal(_p, value));
             }
         });
-    }
-
-    /**
-     * Disconnect a previously registered callback.
-     *
-     * @param subscriberId
-     *            id returned by connect()
-     */
-    @Deprecated
-    public long disconnect(long subscriberId) {
-        return disconnect(_p, subscriberId);
     }
 
     /**

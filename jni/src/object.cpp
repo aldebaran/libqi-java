@@ -112,22 +112,6 @@ JNIEXPORT void JNICALL Java_com_aldebaran_qi_AnyObject_destroy(JNIEnv* QI_UNUSED
   delete obj;
 }
 
-
-JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_disconnect(JNIEnv *env, jobject QI_UNUSED(jobj), jlong pObject, jlong subscriberId)
-{
-  qi::AnyObject&             obj = *(reinterpret_cast<qi::AnyObject *>(pObject));
-  if (!qi::jni::assertion(env, obj.isValid(), "AnyObject.disconnect: Invalid qi.AnyObject."))
-    return 0;
-
-  try {
-    obj.disconnect(subscriberId);
-  } catch (std::exception& e)
-  {
-    throwNewRuntimeException(env, e.what());
-  }
-  return 0;
-}
-
 JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_connectSignal(JNIEnv *env, jobject QI_UNUSED(obj), jlong pObject, jstring jSignalName, jobject listener)
 {
   qi::AnyObject *anyObject = reinterpret_cast<qi::AnyObject *>(pObject);
