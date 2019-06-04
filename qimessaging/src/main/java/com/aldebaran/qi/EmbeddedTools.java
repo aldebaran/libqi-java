@@ -60,6 +60,7 @@ public class EmbeddedTools {
                         "boost_date_time",
                         "boost_program_options",
                         "boost_system",
+                        "boost_random",
                         "boost_regex",
                         "boost_locale",
                         "boost_filesystem",
@@ -70,18 +71,18 @@ public class EmbeddedTools {
             } else {
                 SharedLibrary.loadLib("crypto");
                 SharedLibrary.loadLib("ssl");
-                SharedLibrary.loadLib("icudata"); // deps for boost_regexp.so
+                SharedLibrary.loadLib("icudata");
                 SharedLibrary.loadLib("icuuc");
                 SharedLibrary.loadLib("icui18n");
-                SharedLibrary.loadLib("boost_atomic");
-                SharedLibrary.loadLib("boost_date_time");
                 SharedLibrary.loadLib("boost_system");
-                SharedLibrary.loadLib("boost_thread");
+                SharedLibrary.loadLib("boost_date_time");
                 SharedLibrary.loadLib("boost_chrono");
+                SharedLibrary.loadLib("boost_thread");
+                SharedLibrary.loadLib("boost_regex");
+                SharedLibrary.loadLib("boost_random");
+                SharedLibrary.loadLib("boost_program_options");
                 SharedLibrary.loadLib("boost_locale");
                 SharedLibrary.loadLib("boost_filesystem");
-                SharedLibrary.loadLib("boost_program_options");
-                SharedLibrary.loadLib("boost_regex");
             } // linux, mac
 
             // Not on android, need to load qi and qimessagingjni
