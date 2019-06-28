@@ -1,285 +1,432 @@
 package com.aldebaran.qi;
 
 import com.aldebaran.qi.serialization.*;
-import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.experimental.runners.Enclosed;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
-public class QiSerializerTest {
+@RunWith(Enclosed.class)
+class QiSerializerTest {
+    @Ignore
     @QiStruct
-    public static class Person {
+    static class Person {
         @QiField(0)
         String firstName;
-        int mustBeIgnored;
+        @SuppressWarnings("unused")
+        int mustBeIgnored = 0;
         @QiField(1)
         String lastName;
         @QiField(2)
         int age;
 
-        public Person() {
+        @SuppressWarnings("unused")
+        Person() {
+            firstName = "";
+            lastName = "";
+            age = -1;
         }
 
-        public Person(String firstName, String lastName, int age) {
+        Person(String firstName, String lastName, int age) {
             this.firstName = firstName;
             this.lastName = lastName;
             this.age = age;
         }
+
+        @Override
+        public boolean equals(Object o) {
+            try {
+                Person other = (Person) o;
+                return firstName.equals(other.firstName) &&
+                        lastName.equals(other.lastName) && age == other.age;
+            } catch (ClassCastException err) {
+                return false;
+            }
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(firstName, lastName, age);
+        }
     }
 
-    private QiSerializer serializer;
+    @Ignore
+    static abstract class TestsBase {
+        static QiSerializer serializer = QiSerializer.getDefault();
 
-    @Before
-    public void setUp() {
-        serializer = QiSerializer.getDefault();
+        interface SerializerProxy {
+            <T> T serialize(Object obj) throws QiConversionException;
+
+            <T> T deserialize(Object obj, Type target)
+                    throws QiConversionException;
+        }
+
+        static class Converter implements SerializerProxy {
+            QiSerializer.Converter converter;
+
+            Converter(QiSerializer.Converter converter) {
+                this.converter = converter;
+            }
+
+            @Override
+            public <T> T serialize(Object obj) throws QiConversionException {
+                @SuppressWarnings("unchecked") T res =
+                        (T) converter.serialize(serializer, obj);
+                return res;
+            }
+
+            @Override
+            public <T> T deserialize(Object obj, Type target)
+                    throws QiConversionException {
+                @SuppressWarnings("unchecked") T res =
+                        (T) converter.deserialize(serializer, obj, target);
+                return res;
+            }
+        }
+
+        static class Serializer implements SerializerProxy {
+            @Override
+            public <T> T serialize(Object obj) throws QiConversionException {
+                @SuppressWarnings("unchecked") T res =
+                        (T) serializer.serialize(obj);
+                return res;
+            }
+
+            @Override
+            public <T> T deserialize(Object obj, Type target)
+                    throws QiConversionException {
+                @SuppressWarnings("unchecked") T res =
+                        (T) serializer.deserialize(obj, target);
+                return res;
+            }
+        }
     }
 
-    @Test
-    public void testDeserializeTuple() throws QiConversionException {
-        Tuple tuple = Tuple.of("aaa", "bbb", 12);
-        StructConverter structConverter = new StructConverter();
-        assertTrue(structConverter.canDeserialize(tuple, Person.class));
-        Person person = (Person) structConverter.deserialize(serializer, tuple, Person.class);
-        assertEquals("aaa", person.firstName);
-        assertEquals("bbb", person.lastName);
-        assertEquals(12, person.age);
+    public static class TupleTests extends TestsBase {
+        StructConverter converter = new StructConverter();
+
+        @Test
+        public void deserializeFromConverter() throws QiConversionException {
+            Tuple tuple = Tuple.of("aaa", "bbb", 12);
+            assertTrue(converter.canDeserialize(tuple, Person.class));
+            Person person = (Person) converter
+                    .deserialize(serializer, tuple, Person.class);
+            assertEquals("aaa", person.firstName);
+            assertEquals("bbb", person.lastName);
+            assertEquals(12, person.age);
+        }
+
+        @Test
+        public void deserialize() throws QiConversionException {
+            Tuple tuple = Tuple.of("aaa", "bbb", 12);
+            Person person =
+                    (Person) serializer.deserialize(tuple, Person.class);
+            assertEquals("aaa", person.firstName);
+            assertEquals("bbb", person.lastName);
+            assertEquals(12, person.age);
+            Tuple unchanged =
+                    (Tuple) serializer.deserialize(tuple, Tuple.class);
+            assertEquals("aaa", unchanged.get(0));
+            assertEquals("bbb", unchanged.get(1));
+            assertEquals(12, unchanged.get(2));
+        }
     }
 
-    @Test
-    public void testDeserialize() throws QiConversionException {
-        Tuple tuple = Tuple.of("aaa", "bbb", 12);
-        Person person = (Person) serializer.deserialize(tuple, Person.class);
-        assertEquals("aaa", person.firstName);
-        assertEquals("bbb", person.lastName);
-        assertEquals(12, person.age);
-        Tuple unchanged = (Tuple) serializer.deserialize(tuple, Tuple.class);
-        assertEquals("aaa", unchanged.get(0));
-        assertEquals("bbb", unchanged.get(1));
-        assertEquals(12, unchanged.get(2));
+    public static class ListTests extends TestsBase {
+        ListConverter converter = new ListConverter();
+
+        static Type getListOfPersonsType() {
+            return new TypeToken<List<Person>>() {
+            }.getType();
+        }
+
+        @Test
+        public void deserializeFromConverter() throws QiConversionException {
+            List<Tuple> tuples = new ArrayList<Tuple>();
+            tuples.add(Tuple.of("aaa", "bbb", 12));
+            tuples.add(Tuple.of("ccc", "ddd", 21));
+            Type listOfPersonsType = getListOfPersonsType();
+            assertTrue(converter.canDeserialize(tuples, listOfPersonsType));
+            @SuppressWarnings("unchecked") List<Person> persons =
+                    (List<Person>) converter
+                            .deserialize(serializer, tuples, listOfPersonsType);
+            Person person = persons.get(0);
+            assertEquals("aaa", person.firstName);
+            assertEquals("bbb", person.lastName);
+            assertEquals(12, person.age);
+        }
+
+        @Test
+        public void deserialize() throws QiConversionException {
+            List<Tuple> tuples = new ArrayList<Tuple>();
+            tuples.add(Tuple.of("aaa", "bbb", 12));
+            tuples.add(Tuple.of("ccc", "ddd", 21));
+            @SuppressWarnings("unchecked") List<Person> persons =
+                    (List<Person>) serializer
+                            .deserialize(tuples, getListOfPersonsType());
+            Person person = persons.get(0);
+            assertEquals("aaa", person.firstName);
+            assertEquals("bbb", person.lastName);
+            assertEquals(12, person.age);
+            @SuppressWarnings("unchecked") List<Tuple> unchangedTuples =
+                    (List<Tuple>) serializer.deserialize(tuples, List.class);
+            Tuple unchanged = unchangedTuples.get(0);
+            assertEquals("aaa", unchanged.get(0));
+            assertEquals("bbb", unchanged.get(1));
+            assertEquals(12, unchanged.get(2));
+        }
+
+        @Test
+        public void serializeFromConverter() throws QiConversionException {
+            List<Person> persons = new ArrayList<Person>();
+            persons.add(new Person("aaa", "bbb", 12));
+            persons.add(new Person("ccc", "ddd", 21));
+            assertTrue(converter.canSerialize(persons));
+            @SuppressWarnings("unchecked") List<Tuple> tuples =
+                    (List<Tuple>) converter.serialize(serializer, persons);
+            Tuple tuple = tuples.get(0);
+            assertEquals("aaa", tuple.get(0));
+            assertEquals("bbb", tuple.get(1));
+            assertEquals(12, tuple.get(2));
+        }
+
+        @Test
+        public void serialize() throws QiConversionException {
+            List<Person> persons = new ArrayList<Person>();
+            persons.add(new Person("aaa", "bbb", 12));
+            persons.add(new Person("ccc", "ddd", 21));
+            @SuppressWarnings("unchecked") List<Tuple> tuples =
+                    (List<Tuple>) serializer.serialize(persons);
+            Tuple tuple = tuples.get(0);
+            assertEquals("aaa", tuple.get(0));
+            assertEquals("bbb", tuple.get(1));
+            assertEquals(12, tuple.get(2));
+        }
     }
 
-    @Test
-    public void testDeserializeList() throws QiConversionException {
-        List<Tuple> tuples = new ArrayList<Tuple>();
-        tuples.add(Tuple.of("aaa", "bbb", 12));
-        tuples.add(Tuple.of("ccc", "ddd", 21));
-        Type listOfPersonsType = getListOfPersonsType();
-        ListConverter listConverter = new ListConverter();
-        assertTrue(listConverter.canDeserialize(tuples, listOfPersonsType));
-        @SuppressWarnings("unchecked")
-        List<Person> persons = (List<Person>) listConverter.deserialize(serializer, tuples, listOfPersonsType);
-        Person person = persons.get(0);
-        assertEquals("aaa", person.firstName);
-        assertEquals("bbb", person.lastName);
-        assertEquals(12, person.age);
+    public static class ArrayTests extends TestsBase {
+        ArrayConverter converter = new ArrayConverter();
+
+        @Test
+        public void deserializeFromConverter() throws QiConversionException {
+            Tuple[] tuples =
+                    {Tuple.of("aaa", "bbb", 12), Tuple.of("ccc", "ddd", 21)};
+            assertTrue(converter.canDeserialize(tuples, Person[].class));
+            Person[] persons = (Person[]) converter
+                    .deserialize(serializer, tuples, Person[].class);
+            Person person = persons[0];
+            assertEquals("aaa", person.firstName);
+            assertEquals("bbb", person.lastName);
+            assertEquals(12, person.age);
+        }
+
+        @Test
+        public void deserialize() throws QiConversionException {
+            Tuple[] tuples =
+                    {Tuple.of("aaa", "bbb", 12), Tuple.of("ccc", "ddd", 21)};
+            Person[] persons =
+                    (Person[]) serializer.deserialize(tuples, Person[].class);
+            Person person = persons[0];
+            assertEquals("aaa", person.firstName);
+            assertEquals("bbb", person.lastName);
+            assertEquals(12, person.age);
+            Tuple[] unchangedTuples =
+                    (Tuple[]) serializer.deserialize(tuples, Tuple[].class);
+            Tuple unchanged = unchangedTuples[0];
+            assertEquals("aaa", unchanged.get(0));
+            assertEquals("bbb", unchanged.get(1));
+            assertEquals(12, unchanged.get(2));
+        }
+
+        @Test
+        public void serializeFromConverter() throws QiConversionException {
+            Person[] persons = {new Person("aaa", "bbb", 12),
+                    new Person("ccc", "ddd", 21)};
+            assertTrue(converter.canSerialize(persons));
+            Object[] tuples = converter.serialize(serializer, persons);
+            Tuple tuple = (Tuple) tuples[0];
+            assertEquals("aaa", tuple.get(0));
+            assertEquals("bbb", tuple.get(1));
+            assertEquals(12, tuple.get(2));
+        }
     }
 
-    @Test
-    public void testDeserializeWithList() throws QiConversionException {
-        List<Tuple> tuples = new ArrayList<Tuple>();
-        tuples.add(Tuple.of("aaa", "bbb", 12));
-        tuples.add(Tuple.of("ccc", "ddd", 21));
-        @SuppressWarnings("unchecked")
-        List<Person> persons = (List<Person>) serializer.deserialize(tuples, getListOfPersonsType());
-        Person person = persons.get(0);
-        assertEquals("aaa", person.firstName);
-        assertEquals("bbb", person.lastName);
-        assertEquals(12, person.age);
-        @SuppressWarnings("unchecked")
-        List<Tuple> unchangedTuples = (List<Tuple>) serializer.deserialize(tuples, List.class);
-        Tuple unchanged = unchangedTuples.get(0);
-        assertEquals("aaa", unchanged.get(0));
-        assertEquals("bbb", unchanged.get(1));
-        assertEquals(12, unchanged.get(2));
+    public static class MapTests extends TestsBase {
+        MapConverter converter = new MapConverter();
+
+        static Type getMapOfStringPersonsType() {
+            return new TypeToken<Map<String, Person>>() {
+            }.getType();
+        }
+
+        @Test
+        public void deserializeFromConverter() throws QiConversionException {
+            Map<String, Tuple> tuples = new HashMap<String, Tuple>();
+            tuples.put("first", Tuple.of("aaa", "bbb", 12));
+            tuples.put("second", Tuple.of("ccc", "ddd", 21));
+            Type mapOfStringPersonsType = getMapOfStringPersonsType();
+            assertTrue(
+                    converter.canDeserialize(tuples, mapOfStringPersonsType));
+            @SuppressWarnings("unchecked") Map<String, Person> persons =
+                    (Map<String, Person>) converter
+                            .deserialize(serializer, tuples,
+                                    mapOfStringPersonsType);
+            Person person = persons.get("first");
+            assertEquals("aaa", person.firstName);
+            assertEquals("bbb", person.lastName);
+            assertEquals(12, person.age);
+        }
+
+        @Test
+        public void deserialize() throws QiConversionException {
+            Map<String, Tuple> tuples = new HashMap<String, Tuple>();
+            tuples.put("first", Tuple.of("aaa", "bbb", 12));
+            tuples.put("second", Tuple.of("ccc", "ddd", 21));
+            @SuppressWarnings("unchecked") Map<String, Person> persons =
+                    (Map<String, Person>) serializer
+                            .deserialize(tuples, getMapOfStringPersonsType());
+            Person person = persons.get("first");
+            assertEquals("aaa", person.firstName);
+            assertEquals("bbb", person.lastName);
+            assertEquals(12, person.age);
+            @SuppressWarnings("unchecked") Map<String, Tuple> unchangedTuples =
+                    (Map<String, Tuple>) serializer
+                            .deserialize(tuples, Map.class);
+            Tuple unchanged = unchangedTuples.get("first");
+            assertEquals("aaa", unchanged.get(0));
+            assertEquals("bbb", unchanged.get(1));
+            assertEquals(12, unchanged.get(2));
+        }
+
+        @Test
+        public void serializeFromConverter() throws QiConversionException {
+            Map<String, Person> persons = new HashMap<String, Person>();
+            persons.put("first", new Person("aaa", "bbb", 12));
+            persons.put("second", new Person("ccc", "ddd", 21));
+            assertTrue(converter.canSerialize(persons));
+            @SuppressWarnings("unchecked") Map<String, Tuple> tuples =
+                    (Map<String, Tuple>) converter
+                            .serialize(serializer, persons);
+            Tuple tuple = tuples.get("first");
+            assertEquals("aaa", tuple.get(0));
+            assertEquals("bbb", tuple.get(1));
+            assertEquals(12, tuple.get(2));
+        }
+
+        @Test
+        public void serialize() throws QiConversionException {
+            Map<String, Person> persons = new HashMap<String, Person>();
+            persons.put("first", new Person("aaa", "bbb", 12));
+            persons.put("second", new Person("ccc", "ddd", 21));
+            @SuppressWarnings("unchecked") Map<String, Tuple> tuples =
+                    (Map<String, Tuple>) serializer.serialize(persons);
+            Tuple tuple = tuples.get("first");
+            assertEquals("aaa", tuple.get(0));
+            assertEquals("bbb", tuple.get(1));
+            assertEquals(12, tuple.get(2));
+        }
     }
 
-    @Test
-    public void testDeserializeArray() throws QiConversionException {
-        Tuple[] tuples =
-                {
-                        Tuple.of("aaa", "bbb", 12), Tuple.of("ccc", "ddd", 21)
-                };
-        ArrayConverter arrayConverter = new ArrayConverter();
-        assertTrue(arrayConverter.canDeserialize(tuples, Person[].class));
-        Person[] persons = (Person[]) arrayConverter.deserialize(serializer, tuples, Person[].class);
-        Person person = persons[0];
-        assertEquals("aaa", person.firstName);
-        assertEquals("bbb", person.lastName);
-        assertEquals(12, person.age);
-    }
-
-    @Test
-    public void testDeserializeWithArray() throws QiConversionException {
-        Tuple[] tuples =
-                {
-                        Tuple.of("aaa", "bbb", 12), Tuple.of("ccc", "ddd", 21)
-                };
-        Person[] persons = (Person[]) serializer.deserialize(tuples, Person[].class);
-        Person person = persons[0];
-        assertEquals("aaa", person.firstName);
-        assertEquals("bbb", person.lastName);
-        assertEquals(12, person.age);
-        Tuple[] unchangedTuples = (Tuple[]) serializer.deserialize(tuples, Tuple[].class);
-        Tuple unchanged = unchangedTuples[0];
-        assertEquals("aaa", unchanged.get(0));
-        assertEquals("bbb", unchanged.get(1));
-        assertEquals(12, unchanged.get(2));
-    }
-
-    @Test
-    public void testDeserializeMap() throws QiConversionException {
-        Map<String, Tuple> tuples = new HashMap<String, Tuple>();
-        tuples.put("first", Tuple.of("aaa", "bbb", 12));
-        tuples.put("second", Tuple.of("ccc", "ddd", 21));
-        Type mapOfStringPersonsType = getMapOfStringPersonsType();
-        MapConverter mapConverter = new MapConverter();
-        assertTrue(mapConverter.canDeserialize(tuples, mapOfStringPersonsType));
-        @SuppressWarnings("unchecked")
-        Map<String, Person> persons = (Map<String, Person>) mapConverter.deserialize(serializer, tuples,
-                mapOfStringPersonsType);
-        Person person = persons.get("first");
-        assertEquals("aaa", person.firstName);
-        assertEquals("bbb", person.lastName);
-        assertEquals(12, person.age);
-    }
-
-    @Test
-    public void testDeserializeWithMap() throws QiConversionException {
-        Map<String, Tuple> tuples = new HashMap<String, Tuple>();
-        tuples.put("first", Tuple.of("aaa", "bbb", 12));
-        tuples.put("second", Tuple.of("ccc", "ddd", 21));
-        @SuppressWarnings("unchecked")
-        Map<String, Person> persons = (Map<String, Person>) serializer.deserialize(tuples, getMapOfStringPersonsType());
-        Person person = persons.get("first");
-        assertEquals("aaa", person.firstName);
-        assertEquals("bbb", person.lastName);
-        assertEquals(12, person.age);
-        @SuppressWarnings("unchecked")
-        Map<String, Tuple> unchangedTuples = (Map<String, Tuple>) serializer.deserialize(tuples, Map.class);
-        Tuple unchanged = unchangedTuples.get("first");
-        assertEquals("aaa", unchanged.get(0));
-        assertEquals("bbb", unchanged.get(1));
-        assertEquals(12, unchanged.get(2));
-    }
-
-    @Test
-    public void testSerializeStruct() throws QiConversionException {
-        Person person = new Person("aaa", "bbb", 12);
-        StructConverter structConverter = new StructConverter();
-        assertTrue(structConverter.canSerialize(person));
-        Tuple tuple = structConverter.serialize(serializer, person);
-        assertEquals("aaa", tuple.get(0));
-        assertEquals("bbb", tuple.get(1));
-        assertEquals(12, tuple.get(2));
-    }
-
-    @Test
-    public void testSerialize() throws QiConversionException {
-        Person person = new Person("aaa", "bbb", 12);
-        Tuple tuple = (Tuple) serializer.serialize(person);
-        assertEquals("aaa", tuple.get(0));
-        assertEquals("bbb", tuple.get(1));
-        assertEquals(12, tuple.get(2));
-    }
-
-    @Test
-    public void testSerializeList() throws QiConversionException {
-        List<Person> persons = new ArrayList<Person>();
-        persons.add(new Person("aaa", "bbb", 12));
-        persons.add(new Person("ccc", "ddd", 21));
-        ListConverter listConverter = new ListConverter();
-        assertTrue(listConverter.canSerialize(persons));
-        @SuppressWarnings("unchecked")
-        List<Tuple> tuples = (List<Tuple>) listConverter.serialize(serializer, persons);
-        Tuple tuple = tuples.get(0);
-        assertEquals("aaa", tuple.get(0));
-        assertEquals("bbb", tuple.get(1));
-        assertEquals(12, tuple.get(2));
-    }
-
-    @Test
-    public void testSerializeWithList() throws QiConversionException {
-        List<Person> persons = new ArrayList<Person>();
-        persons.add(new Person("aaa", "bbb", 12));
-        persons.add(new Person("ccc", "ddd", 21));
-        @SuppressWarnings("unchecked")
-        List<Tuple> tuples = (List<Tuple>) serializer.serialize(persons);
-        Tuple tuple = tuples.get(0);
-        assertEquals("aaa", tuple.get(0));
-        assertEquals("bbb", tuple.get(1));
-        assertEquals(12, tuple.get(2));
-    }
-
-    @Test
-    public void testSerializeArray() throws QiConversionException {
-        Person[] persons =
-                {
-                        new Person("aaa", "bbb", 12), new Person("ccc", "ddd", 21)
-                };
-        ArrayConverter arrayConverter = new ArrayConverter();
-        assertTrue(arrayConverter.canSerialize(persons));
-        Object[] tuples = arrayConverter.serialize(serializer, persons);
-        Tuple tuple = (Tuple) tuples[0];
-        assertEquals("aaa", tuple.get(0));
-        assertEquals("bbb", tuple.get(1));
-        assertEquals(12, tuple.get(2));
-    }
-
-    @Test
-    public void testSerializeWithArray() throws QiConversionException {
-        Person[] persons =
-                {
-                        new Person("aaa", "bbb", 12), new Person("ccc", "ddd", 21)
-                };
-        Object[] tuples = (Object[]) serializer.serialize(persons);
-        Tuple tuple = (Tuple) tuples[0];
-        assertEquals("aaa", tuple.get(0));
-        assertEquals("bbb", tuple.get(1));
-        assertEquals(12, tuple.get(2));
-    }
-
-    @Test
-    public void testSerializeMap() throws QiConversionException {
-        Map<String, Person> persons = new HashMap<String, Person>();
-        persons.put("first", new Person("aaa", "bbb", 12));
-        persons.put("second", new Person("ccc", "ddd", 21));
-        MapConverter mapConverter = new MapConverter();
-        assertTrue(mapConverter.canSerialize(persons));
-        @SuppressWarnings("unchecked")
-        Map<String, Tuple> tuples = (Map<String, Tuple>) mapConverter.serialize(serializer, persons);
-        Tuple tuple = tuples.get("first");
-        assertEquals("aaa", tuple.get(0));
-        assertEquals("bbb", tuple.get(1));
-        assertEquals(12, tuple.get(2));
-    }
-
-    @Test
-    public void testSerializeWithMap() throws QiConversionException {
-        Map<String, Person> persons = new HashMap<String, Person>();
-        persons.put("first", new Person("aaa", "bbb", 12));
-        persons.put("second", new Person("ccc", "ddd", 21));
-        @SuppressWarnings("unchecked")
-        Map<String, Tuple> tuples = (Map<String, Tuple>) serializer.serialize(persons);
-        Tuple tuple = tuples.get("first");
-        assertEquals("aaa", tuple.get(0));
-        assertEquals("bbb", tuple.get(1));
-        assertEquals(12, tuple.get(2));
-    }
-
-    private static Type getListOfPersonsType() {
-        return new TypeToken<List<Person>>() {
+    @RunWith(Enclosed.class)
+    public static class OptionalTests extends TestsBase {
+        static final OptionalConverter converter = new OptionalConverter();
+        static final Tuple tuple = Tuple.of("robert", "paulson", 42);
+        static final Optional<Tuple> optTuple = Optional.of(tuple);
+        static final Person person = new Person("robert", "paulson", 42);
+        static final Optional<Person> optPerson = Optional.of(person);
+        static final Type optPersonType = new TypeToken<Optional<Person>>() {
         }.getType();
+
+        public static class WithoutProxy {
+            @Test
+            public void canDeserialize() {
+                assertTrue(converter.canDeserialize(optTuple, optPersonType));
+            }
+
+            @Test
+            public void deserializeUnchanged() throws QiConversionException {
+                @SuppressWarnings("unchecked") Optional<Tuple>
+                        optUnchangedTuple = (Optional<Tuple>) serializer
+                        .deserialize(optTuple, Optional.class);
+                assertTrue(optUnchangedTuple.isPresent());
+                Tuple unchangedTuple = optUnchangedTuple.get();
+                assertEquals(tuple, unchangedTuple);
+            }
+        }
+
+        @RunWith(Parameterized.class)
+        public static class WithProxy {
+            SerializerProxy proxy;
+
+            public WithProxy(SerializerProxy proxy) {
+                this.proxy = proxy;
+            }
+
+            @Parameterized.Parameters
+            static public Collection proxies() {
+                return Arrays.asList(new Object[][]{
+                        {new Converter(new OptionalConverter())},
+                        {new Serializer()}});
+            }
+
+            @Test
+            public void serialize() throws QiConversionException {
+                Optional<Tuple> optTuple = proxy.serialize(optPerson);
+                assertTrue(optTuple.isPresent());
+                Tuple tuple = optTuple.get();
+                assertEquals(OptionalTests.tuple, tuple);
+            }
+
+            @Test
+            public void serializeEmpty() throws QiConversionException {
+                Optional<Tuple> optTuple = proxy.serialize(Optional.empty());
+                assertFalse(optTuple.isPresent());
+            }
+
+            @Test
+            public void deserialize() throws QiConversionException {
+                Optional<Person> optPerson =
+                        proxy.deserialize(optTuple, optPersonType);
+                assertTrue(optPerson.isPresent());
+                Person person = optPerson.get();
+                assertEquals(OptionalTests.person, person);
+            }
+
+            @Test
+            public void deserializeEmpty() throws QiConversionException {
+                Optional<Person> optPerson =
+                        proxy.deserialize(Optional.empty(), optPersonType);
+                assertFalse(optPerson.isPresent());
+            }
+        }
     }
 
-    private static Type getMapOfStringPersonsType() {
-        return new TypeToken<Map<String, Person>>() {
-        }.getType();
+    public static class StructTests extends TestsBase {
+        StructConverter structConverter = new StructConverter();
+
+        @Test
+        public void serializeFromConverter() throws QiConversionException {
+            Person person = new Person("aaa", "bbb", 12);
+            assertTrue(structConverter.canSerialize(person));
+            Tuple tuple = structConverter.serialize(serializer, person);
+            assertEquals("aaa", tuple.get(0));
+            assertEquals("bbb", tuple.get(1));
+            assertEquals(12, tuple.get(2));
+        }
+
+        @Test
+        public void serialize() throws QiConversionException {
+            Person person = new Person("aaa", "bbb", 12);
+            Tuple tuple = (Tuple) serializer.serialize(person);
+            assertEquals("aaa", tuple.get(0));
+            assertEquals("bbb", tuple.get(1));
+            assertEquals(12, tuple.get(2));
+        }
     }
 }
