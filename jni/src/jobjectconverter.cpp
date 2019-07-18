@@ -517,11 +517,8 @@ class JObjectTypeInterface: public qi::DynamicTypeInterface
 
     virtual const qi::TypeInfo& info()
     {
-      static qi::TypeInfo* result = 0;
-      if (!result)
-        result = new qi::TypeInfo(typeid(jobject));
-
-      return *result;
+      static const qi::TypeInfo result(qi::typeId<jobject>());
+      return result;
     }
 
     virtual void* initializeStorage(void* ptr = 0)
