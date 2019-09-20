@@ -40,7 +40,7 @@ public class UserTokenAuthenticator implements ClientAuthenticator {
 
     @Override
     public @NotNull Map<String, Object> _processAuth(Map<String, Object> authData) {
-        return new HashMap<>();
+        return new HashMap();
     }
 
     /**
