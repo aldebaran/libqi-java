@@ -24,12 +24,9 @@ package com.aldebaran.qi;
 
 public class Promise<T> {
 
-    // Loading QiMessaging JNI layer
     static {
-        if (!EmbeddedTools.LOADED_EMBEDDED_LIBRARY) {
-            EmbeddedTools loader = new EmbeddedTools();
-            loader.loadEmbeddedLibraries();
-        }
+        // Loading native C++ libraries.
+        EmbeddedTools.loadEmbeddedLibraries();
     }
 
     /**

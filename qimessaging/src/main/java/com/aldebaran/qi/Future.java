@@ -23,6 +23,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *            The type of the result
  */
 public class Future<T> implements java.util.concurrent.Future<T> {
+
+    static {
+        // Loading native C++ libraries.
+        EmbeddedTools.loadEmbeddedLibraries();
+    }
+
     /**
      * Consumer caller to report an error
      */
@@ -36,14 +42,6 @@ public class Future<T> implements java.util.concurrent.Future<T> {
                 System.err.println("Uncaught exception on Future: " + future.getErrorMessage());
                 future.getError().printStackTrace();
             }
-        }
-    }
-
-    // Loading QiMessaging JNI layer
-    static {
-        if (!EmbeddedTools.LOADED_EMBEDDED_LIBRARY) {
-            EmbeddedTools loader = new EmbeddedTools();
-            loader.loadEmbeddedLibraries();
         }
     }
 
