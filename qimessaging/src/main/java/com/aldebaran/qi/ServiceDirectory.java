@@ -18,10 +18,7 @@ public class ServiceDirectory {
 
     static {
         // Loading native C++ libraries.
-        if (!EmbeddedTools.LOADED_EMBEDDED_LIBRARY) {
-            EmbeddedTools loader = new EmbeddedTools();
-            loader.loadEmbeddedLibraries();
-        }
+        EmbeddedTools.loadEmbeddedLibraries();
     }
 
     // Native function

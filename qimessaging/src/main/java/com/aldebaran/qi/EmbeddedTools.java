@@ -4,7 +4,11 @@
 */
 package com.aldebaran.qi;
 
-import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
 
 /**
  * Class that provides the tools for loading the system's necessary
@@ -12,34 +16,135 @@ import java.io.File;
  *
  * @author proullon
  */
-public class EmbeddedTools {
+class EmbeddedTools {
 
-    private File tmpDir = null;
-
-    public static boolean LOADED_EMBEDDED_LIBRARY = false;
-
-    private static native void initTypeSystem();
+    /// Native method definition
 
     /**
-     * Override directory where native libraries are extracted.
+     * Libqi-java jni library type system initialisation.
      */
-    public void overrideTempDirectory(File newValue) {
-        SharedLibrary.overrideTempDirectory(newValue);
+    static native void initTypeSystem();
 
+    /// Static instance definition
+    private static AtomicBoolean embeddedLibrariesLoaded = new AtomicBoolean();
+
+    /**
+     * Finds the resource directory name depending the on the os type.
+     */
+    private static String getResourceDirectoryName() {
+        switch (SystemUtil.osType) {
+            case Linux :
+                return "linux64";
+            case Mac:
+                return "mac64";
+            case Windows:
+                return "win64";
+            default:
+                return null;
+        }
     }
 
     /**
-     * Native C++ libraries are packaged with java sources.
-     * This way, we are able to load them anywhere, anytime.
+     * Produce a regex that matches library names depending on the operating system library name convention.
      */
-    public boolean loadEmbeddedLibraries() {
-        if (LOADED_EMBEDDED_LIBRARY == true) {
-            System.out.print("Native libraries already loaded");
-            return true;
+    private static String defaultRegex(String name) {
+        return Pattern.quote(System.mapLibraryName(name));
+    }
+
+    /**
+     * Produce a regex that matches Windows shared libraries name.
+     * This regex will reject libraries containing "_d" between name and extension.
+     */
+    static String winSystemRegex(String name) {
+        return Pattern.quote(name) + "((?!_d).)*" + Pattern.quote(".dll");
+    }
+
+    /**
+     * Produce a regex that matches UNIX shared libraries name.
+     */
+    static String unixSystemRegex(String name) {
+        return Pattern.quote(System.mapLibraryName(name)) + ".*";
+    }
+
+    /**
+     * Produce a platform agnostic regex that maches boost libraries name.
+     */
+    static String boostRegex(String name) {
+        if (SystemUtil.IS_OS_WINDOWS)
+            return Pattern.quote(name) + "((?!gd).)*" + Pattern.quote(".dll");
+        else
+            return unixSystemRegex(name);
+    }
+
+    /**
+     * Generate libqi-java dependency regex list.
+     */
+    static List<String> getDependencyRegexList() {
+        List<String> libs = new ArrayList<String>();
+
+        if (SystemUtil.IS_OS_WINDOWS) {
+            libs.addAll(Algorithm.transform(Arrays.asList(
+                    "vcruntime",
+                    "libeay",
+                    "concrt",
+                    "msvcp",
+                    "ssleay"
+            ), new Function<String, String>() {
+                @Override
+                public String execute(String name) {
+                    return winSystemRegex(name);
+                }
+            }));
+
+        } else if (SystemUtil.IS_OS_MAC || SystemUtil.IS_OS_LINUX) {
+            libs.addAll(Algorithm.transform(Arrays.asList(
+                    "crypto",
+                    "ssl",
+                    "icudata",
+                    "icuuc",
+                    "icui18n"
+            ), new Function<String, String>() {
+                @Override
+                public String execute(String name) {
+                    return unixSystemRegex(name);
+                }
+            }));
         }
 
-        String osName = System.getProperty("os.name");
+        libs.addAll(Algorithm.transform(Arrays.asList(
+                "boost_system",
+                "boost_random",
+                "boost_chrono",
+                "boost_thread",
+                "boost_regex",
+                "boost_program_options",
+                "boost_locale",
+                "boost_filesystem",
+                "boost_date_time"
+        ), new Function<String, String>() {
+            @Override
+            public String execute(String name) {
+                return boostRegex(name);
+            }
+        }));
 
+        libs.addAll(Algorithm.transform(Arrays.asList(
+                "qi",
+                "qimessagingjni"
+        ), new Function<String, String>() {
+            @Override
+            public String execute(String name) {
+                return defaultRegex(name);
+            }
+        }));
+
+        return libs;
+    }
+
+    /**
+     * Loads native libraries.
+     */
+    static void tryLoadLibraries() {
         String javaVendor = System.getProperty("java.vendor");
         if (javaVendor.contains("Android")) {
             // Using System.loadLibrary will find the libraries automatically depending on the platform,
@@ -48,56 +153,17 @@ public class EmbeddedTools {
             System.loadLibrary("qi");
             System.loadLibrary("qimessagingjni");
         } else {
-            // Windows is built with static boost libs,
-            // but the name of the SSL dlls are different
-            if (osName.contains("Windows")) {
-                // Load vcredist libs
-                String[] libs = new String[]{
-                        "msvcr120",
-                        "msvcp120",
-                        "libeay32",
-                        "ssleay32",
-                        "boost_date_time",
-                        "boost_program_options",
-                        "boost_system",
-                        "boost_random",
-                        "boost_regex",
-                        "boost_locale",
-                        "boost_filesystem",
-                        "boost_chrono",
-                        "boost_thread"};
-                SharedLibrary.loadLibs(libs);
-
-            } else {
-                SharedLibrary.loadLib("crypto");
-                SharedLibrary.loadLib("ssl");
-                SharedLibrary.loadLib("icudata");
-                SharedLibrary.loadLib("icuuc");
-                SharedLibrary.loadLib("icui18n");
-                SharedLibrary.loadLib("boost_system");
-                SharedLibrary.loadLib("boost_date_time");
-                SharedLibrary.loadLib("boost_chrono");
-                SharedLibrary.loadLib("boost_thread");
-                SharedLibrary.loadLib("boost_regex");
-                SharedLibrary.loadLib("boost_random");
-                SharedLibrary.loadLib("boost_program_options");
-                SharedLibrary.loadLib("boost_locale");
-                SharedLibrary.loadLib("boost_filesystem");
-            } // linux, mac
-
-            // Not on android, need to load qi and qimessagingjni
-            if (SharedLibrary.loadLib("qi") == false
-                    || SharedLibrary.loadLib("qimessagingjni") == false) {
-                LOADED_EMBEDDED_LIBRARY = false;
-                return false;
-            }
+            NativeLibrariesLoader.findAndLoadLibraries(getDependencyRegexList(), getResourceDirectoryName());
         }
+    }
 
-        System.out.printf("Libraries loaded. Initializing type system...\n");
-        LOADED_EMBEDDED_LIBRARY = true;
-        initTypeSystem();
+    static void loadEmbeddedLibraries() {
+        if (embeddedLibrariesLoaded.compareAndSet(false, true)) {
+            tryLoadLibraries();
 
-        return true;
+            System.out.println("Libraries loaded. Initializing type system...");
+            initTypeSystem();
+        }
     }
 
 }
