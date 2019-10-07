@@ -1,7 +1,5 @@
 package com.aldebaran.qi;
 
-import com.sun.istack.internal.NotNull;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,7 +13,7 @@ public class UserTokenAuthenticator implements ClientAuthenticator {
     /**
      * Constructs an authenticator with the specified user and token.
      */
-    public UserTokenAuthenticator(@NotNull String user,@NotNull String token) {
+    public UserTokenAuthenticator(String user, String token) {
         this.user = Objects.requireNonNull(user);
         this.token = Objects.requireNonNull(token);
     }
@@ -26,12 +24,12 @@ public class UserTokenAuthenticator implements ClientAuthenticator {
      * @deprecated since 3.1.1, use the constructor that takes both user and token arguments
      */
     @Deprecated
-    public UserTokenAuthenticator(@NotNull String user) {
+    public UserTokenAuthenticator(String user) {
         this(user, "");
     }
 
     @Override
-    public @NotNull Map<String, Object> initialAuthData() {
+    public Map<String, Object> initialAuthData() {
         return new HashMap<String, Object>(){{
             put("user", user);
             put("token", token);
@@ -39,7 +37,7 @@ public class UserTokenAuthenticator implements ClientAuthenticator {
     }
 
     @Override
-    public @NotNull Map<String, Object> _processAuth(Map<String, Object> authData) {
+    public Map<String, Object> _processAuth(Map<String, Object> authData) {
         return new HashMap();
     }
 
@@ -55,7 +53,7 @@ public class UserTokenAuthenticator implements ClientAuthenticator {
         return false;
     }
 
-    public @NotNull String getToken() {
+    public String getToken() {
         return token;
     }
 }
