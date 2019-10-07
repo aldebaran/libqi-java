@@ -5,6 +5,8 @@
 
 package com.aldebaran.qi;
 
+import com.aldebaran.qi.log.LogReport;
+
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -64,7 +66,7 @@ abstract class NativeLibrariesLoader {
             String path = url.getPath();
 
             System.load(path);
-            System.out.format("%s loaded.\n", NativeLibrariesLoader.resourceName(url));
+            LogReport.information(String.format("%s loaded.\n", NativeLibrariesLoader.resourceName(url)));
         }
     }
 

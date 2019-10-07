@@ -4,6 +4,8 @@
 */
 package com.aldebaran.qi;
 
+import com.aldebaran.qi.log.LogReport;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -160,8 +162,7 @@ class EmbeddedTools {
     static void loadEmbeddedLibraries() {
         if (embeddedLibrariesLoaded.compareAndSet(false, true)) {
             tryLoadLibraries();
-
-            System.out.println("Libraries loaded. Initializing type system...");
+            LogReport.information("Libraries loaded. Initializing type system...");
             initTypeSystem();
         }
     }
