@@ -9,9 +9,6 @@ import com.aldebaran.qi.serialization.QiSerializer;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
-import com.aldebaran.qi.serialization.QiSerializer;
-import com.aldebaran.qi.serialization.SignatureUtilities;
-
 /**
  * Class that exposes directly an {@link AnyObject} that can be manipulated.
  * <p>
@@ -26,10 +23,7 @@ public class DynamicObjectBuilder {
 
     static {
         // Loading native C++ libraries.
-        if (!EmbeddedTools.LOADED_EMBEDDED_LIBRARY) {
-            EmbeddedTools loader = new EmbeddedTools();
-            loader.loadEmbeddedLibraries();
-        }
+        EmbeddedTools.loadEmbeddedLibraries();
     }
 
     private final long _p;

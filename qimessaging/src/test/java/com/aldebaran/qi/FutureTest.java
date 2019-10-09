@@ -24,8 +24,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.aldebaran.qi.serialization.QiSerializer;
-
 /**
  * Integration test for QiMessaging java bindings.
  */
