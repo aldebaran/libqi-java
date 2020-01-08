@@ -69,4 +69,9 @@ class Objects {
         return obj;
     }
 
+    @SuppressWarnings("unchecked")
+    static <Out, In> Out uncheckedCast(In input) {
+        return (Out)input;
+    }
+
 }

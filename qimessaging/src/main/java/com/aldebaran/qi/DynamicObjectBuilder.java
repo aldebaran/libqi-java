@@ -302,7 +302,6 @@ public class DynamicObjectBuilder {
      *            Instance of interface implementation.
      * @return Interface implementation to use for call methods.
      */
-    @SuppressWarnings("unchecked")
     public <INTERFACE, INSTANCE extends INTERFACE> INTERFACE advertiseMethods(final QiSerializer serializer,
                                                                               final Class<INTERFACE> interfaceClass,
                                                                               final INSTANCE instance) {
@@ -334,7 +333,7 @@ public class DynamicObjectBuilder {
                     interfaceClass.getName(), description);
         }
 
-        return (INTERFACE) Proxy.newProxyInstance(interfaceClass.getClassLoader(), new Class<?>[] { interfaceClass },
-                new AdvertisedMethodCaller<INTERFACE>(serializer, this, advertisedMethodMonitor));
+        return Objects.uncheckedCast(Proxy.newProxyInstance(interfaceClass.getClassLoader(), new Class<?>[] { interfaceClass },
+                new AdvertisedMethodCaller<INTERFACE>(serializer, this, advertisedMethodMonitor)));
     }
 }

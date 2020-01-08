@@ -17,9 +17,7 @@ public final class Optional<T> {
     }
 
     public static <T> Optional<T> empty(){
-        @SuppressWarnings("unchecked")
-        Optional<T> t = (Optional<T>) EMPTY;
-        return t;
+        return Objects.uncheckedCast(EMPTY);
     }
 
     private Optional(T value) {
@@ -80,8 +78,7 @@ public final class Optional<T> {
     public <U> Optional<U> flatMap(Function<? super T, ? extends Optional<? extends U>> mapper) throws Throwable {
         Objects.requireNonNull(mapper);
         if (isPresent()) {
-            @SuppressWarnings("unchecked")
-            Optional<U> r = (Optional<U>) mapper.execute(value);
+            Optional<U> r = Objects.uncheckedCast(mapper.execute(value));
             return Objects.requireNonNull(r);
         } else {
             return empty();
@@ -93,8 +90,7 @@ public final class Optional<T> {
         if (isPresent()) {
             return this;
         } else {
-            @SuppressWarnings("unchecked")
-            Optional<T> r = (Optional<T>) supplier.get();
+            Optional<T> r = Objects.uncheckedCast(supplier.get());
             return Objects.requireNonNull(r);
         }
     }
@@ -134,7 +130,7 @@ public final class Optional<T> {
             return false;
         }
 
-        Optional<?> other = (Optional<?>) obj;
+        Optional<?> other = Objects.uncheckedCast(obj);
         return Objects.equals(value, other.value);
     }
 
