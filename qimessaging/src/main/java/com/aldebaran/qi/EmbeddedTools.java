@@ -4,6 +4,7 @@
 */
 package com.aldebaran.qi;
 
+import com.aldebaran.qi.log.LogLevel;
 import com.aldebaran.qi.log.LogReport;
 
 import java.util.ArrayList;
@@ -19,6 +20,12 @@ import java.util.regex.Pattern;
  * @author proullon
  */
 class EmbeddedTools {
+    /// Static constant definition
+
+    /**
+     * Loader log prefix message.
+     */
+    private static final String LOADER_LOG_PREFIX = "qi native libraries";
 
     /// Native method definition
 
@@ -29,6 +36,10 @@ class EmbeddedTools {
 
     /// Static instance definition
     private static AtomicBoolean embeddedLibrariesLoaded = new AtomicBoolean();
+
+    private static void log(LogLevel level, String message) {
+        LogReport.log(level, String.format("{}: {}", LOADER_LOG_PREFIX, message));
+    }
 
     /**
      * Finds the resource directory name depending the on the os type.
@@ -143,17 +154,66 @@ class EmbeddedTools {
         return libs;
     }
 
+    static Result<Unit, Throwable> tryLoadLibrary(String libraryName) {
+        try {
+            System.loadLibrary(libraryName);
+            return Result.of(Unit.value());
+        } catch (Throwable e) {
+            return Result.error(e);
+        }
+    }
+
     /**
-     * Loads native libraries.
+     * Loads native android libraries.
+     */
+    static void tryLoadAndroidLibraries() {
+        log(LogLevel.VERBOSE, "attempting to load c++ standard library.");
+
+        // Using System.loadLibrary will find the libraries automatically depending on the platform,
+        // but we still need to load the dependencies manually and in the correct order.
+
+        try {
+            tryLoadLibrary("c++_shared")
+                .ifErrPresent(new Consumer<Throwable>() {
+                @Override
+                public void consume(final Throwable cppLoadError) throws Throwable {
+                    tryLoadLibrary("gnustl_shared")
+                        .ifErrPresent(new Consumer<Throwable>() {
+                        @Override
+                        public void consume(Throwable gnuLoadError) {
+                            throw new UnsatisfiedLinkError(String.format(
+                                    "{}: unable to load c++ standard library, c++_shared reason: {}, gnustl_shared reason: {}",
+                                    LOADER_LOG_PREFIX, cppLoadError.getMessage(), gnuLoadError.getMessage()
+                            ));
+                        }
+                    });
+                }
+            });
+        // Catch checked exceptions (`Throwable`) in order to avoid making `tryLoadAndroidLibraries` throwable
+        // but rethrow all unchecked exceptions.
+        }
+        catch (Error error) {
+            throw error;
+        }
+        catch (RuntimeException exception) {
+            throw  exception;
+        }
+        catch (Throwable throwable) {
+            // If the exception is checked, rethrow it as a RunTimeException which is unchecked.
+            throw new RuntimeException(throwable);
+        }
+
+        System.loadLibrary("qi");
+        System.loadLibrary("qimessagingjni");
+    }
+
+    /**
+     * Detects current system and loads matching native libraries.
      */
     static void tryLoadLibraries() {
         String javaVendor = System.getProperty("java.vendor");
         if (javaVendor.contains("Android")) {
-            // Using System.loadLibrary will find the libraries automatically depending on the platform,
-            // but we still need to load the dependencies manually and in the correct order.
-            System.loadLibrary("gnustl_shared");
-            System.loadLibrary("qi");
-            System.loadLibrary("qimessagingjni");
+            tryLoadAndroidLibraries();
         } else {
             NativeLibrariesLoader.findAndLoadLibraries(getDependencyRegexList(), getResourceDirectoryName());
         }
@@ -161,9 +221,11 @@ class EmbeddedTools {
 
     static void loadEmbeddedLibraries() {
         if (embeddedLibrariesLoaded.compareAndSet(false, true)) {
+            log(LogLevel.INFORMATION, "starting native libraries loading.");
             tryLoadLibraries();
-            LogReport.information("Libraries loaded. Initializing type system...");
+            log(LogLevel.INFORMATION, "starting type system initialization.");
             initTypeSystem();
+            log(LogLevel.INFORMATION, "type system initialized.");
         }
     }
 

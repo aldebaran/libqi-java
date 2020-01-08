@@ -232,10 +232,9 @@ public class Future<T> implements java.util.concurrent.Future<T> {
         return qiFutureCallCancel(_fut);
     }
 
-    @SuppressWarnings("unchecked")
     private T get(int msecs) throws ExecutionException, TimeoutException {
         try {
-            return (T) qiFutureCallGet(_fut, msecs);
+            return Objects.uncheckedCast(qiFutureCallGet(_fut, msecs));
         }
         catch (Exception exception) {
             Throwable throwable = exception;

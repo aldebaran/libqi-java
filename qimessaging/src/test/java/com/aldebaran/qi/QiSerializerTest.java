@@ -76,34 +76,26 @@ class QiSerializerTest {
 
             @Override
             public <T> T serialize(Object obj) throws QiConversionException {
-                @SuppressWarnings("unchecked") T res =
-                        (T) converter.serialize(serializer, obj);
-                return res;
+                return Objects.uncheckedCast(converter.serialize(serializer, obj));
             }
 
             @Override
             public <T> T deserialize(Object obj, Type target)
                     throws QiConversionException {
-                @SuppressWarnings("unchecked") T res =
-                        (T) converter.deserialize(serializer, obj, target);
-                return res;
+                return Objects.uncheckedCast(converter.deserialize(serializer, obj, target));
             }
         }
 
         static class Serializer implements SerializerProxy {
             @Override
             public <T> T serialize(Object obj) throws QiConversionException {
-                @SuppressWarnings("unchecked") T res =
-                        (T) serializer.serialize(obj);
-                return res;
+                return Objects.uncheckedCast(serializer.serialize(obj));
             }
 
             @Override
             public <T> T deserialize(Object obj, Type target)
                     throws QiConversionException {
-                @SuppressWarnings("unchecked") T res =
-                        (T) serializer.deserialize(obj, target);
-                return res;
+                return Objects.uncheckedCast(serializer.deserialize(obj, target));
             }
         }
     }
@@ -153,9 +145,8 @@ class QiSerializerTest {
             tuples.add(Tuple.of("ccc", "ddd", 21));
             Type listOfPersonsType = getListOfPersonsType();
             assertTrue(converter.canDeserialize(tuples, listOfPersonsType));
-            @SuppressWarnings("unchecked") List<Person> persons =
-                    (List<Person>) converter
-                            .deserialize(serializer, tuples, listOfPersonsType);
+            List<Person> persons = Objects.uncheckedCast(converter
+                            .deserialize(serializer, tuples, listOfPersonsType));
             Person person = persons.get(0);
             assertEquals("aaa", person.firstName);
             assertEquals("bbb", person.lastName);
@@ -167,15 +158,14 @@ class QiSerializerTest {
             List<Tuple> tuples = new ArrayList<Tuple>();
             tuples.add(Tuple.of("aaa", "bbb", 12));
             tuples.add(Tuple.of("ccc", "ddd", 21));
-            @SuppressWarnings("unchecked") List<Person> persons =
-                    (List<Person>) serializer
-                            .deserialize(tuples, getListOfPersonsType());
+            List<Person> persons = Objects.uncheckedCast(serializer
+                            .deserialize(tuples, getListOfPersonsType()));
             Person person = persons.get(0);
             assertEquals("aaa", person.firstName);
             assertEquals("bbb", person.lastName);
             assertEquals(12, person.age);
-            @SuppressWarnings("unchecked") List<Tuple> unchangedTuples =
-                    (List<Tuple>) serializer.deserialize(tuples, List.class);
+            List<Tuple> unchangedTuples =
+                    Objects.uncheckedCast(serializer.deserialize(tuples, List.class));
             Tuple unchanged = unchangedTuples.get(0);
             assertEquals("aaa", unchanged.get(0));
             assertEquals("bbb", unchanged.get(1));
@@ -188,8 +178,8 @@ class QiSerializerTest {
             persons.add(new Person("aaa", "bbb", 12));
             persons.add(new Person("ccc", "ddd", 21));
             assertTrue(converter.canSerialize(persons));
-            @SuppressWarnings("unchecked") List<Tuple> tuples =
-                    (List<Tuple>) converter.serialize(serializer, persons);
+            List<Tuple> tuples =
+                    Objects.uncheckedCast(converter.serialize(serializer, persons));
             Tuple tuple = tuples.get(0);
             assertEquals("aaa", tuple.get(0));
             assertEquals("bbb", tuple.get(1));
@@ -201,8 +191,8 @@ class QiSerializerTest {
             List<Person> persons = new ArrayList<Person>();
             persons.add(new Person("aaa", "bbb", 12));
             persons.add(new Person("ccc", "ddd", 21));
-            @SuppressWarnings("unchecked") List<Tuple> tuples =
-                    (List<Tuple>) serializer.serialize(persons);
+            List<Tuple> tuples =
+                    Objects.uncheckedCast(serializer.serialize(persons));
             Tuple tuple = tuples.get(0);
             assertEquals("aaa", tuple.get(0));
             assertEquals("bbb", tuple.get(1));
@@ -273,10 +263,10 @@ class QiSerializerTest {
             Type mapOfStringPersonsType = getMapOfStringPersonsType();
             assertTrue(
                     converter.canDeserialize(tuples, mapOfStringPersonsType));
-            @SuppressWarnings("unchecked") Map<String, Person> persons =
-                    (Map<String, Person>) converter
+            Map<String, Person> persons =
+                    Objects.uncheckedCast(converter
                             .deserialize(serializer, tuples,
-                                    mapOfStringPersonsType);
+                                    mapOfStringPersonsType));
             Person person = persons.get("first");
             assertEquals("aaa", person.firstName);
             assertEquals("bbb", person.lastName);
@@ -288,16 +278,16 @@ class QiSerializerTest {
             Map<String, Tuple> tuples = new HashMap<String, Tuple>();
             tuples.put("first", Tuple.of("aaa", "bbb", 12));
             tuples.put("second", Tuple.of("ccc", "ddd", 21));
-            @SuppressWarnings("unchecked") Map<String, Person> persons =
-                    (Map<String, Person>) serializer
-                            .deserialize(tuples, getMapOfStringPersonsType());
+            Map<String, Person> persons =
+                    Objects.uncheckedCast(serializer
+                            .deserialize(tuples, getMapOfStringPersonsType()));
             Person person = persons.get("first");
             assertEquals("aaa", person.firstName);
             assertEquals("bbb", person.lastName);
             assertEquals(12, person.age);
-            @SuppressWarnings("unchecked") Map<String, Tuple> unchangedTuples =
-                    (Map<String, Tuple>) serializer
-                            .deserialize(tuples, Map.class);
+            Map<String, Tuple> unchangedTuples =
+                    Objects.uncheckedCast(serializer
+                            .deserialize(tuples, Map.class));
             Tuple unchanged = unchangedTuples.get("first");
             assertEquals("aaa", unchanged.get(0));
             assertEquals("bbb", unchanged.get(1));
@@ -310,9 +300,9 @@ class QiSerializerTest {
             persons.put("first", new Person("aaa", "bbb", 12));
             persons.put("second", new Person("ccc", "ddd", 21));
             assertTrue(converter.canSerialize(persons));
-            @SuppressWarnings("unchecked") Map<String, Tuple> tuples =
-                    (Map<String, Tuple>) converter
-                            .serialize(serializer, persons);
+            Map<String, Tuple> tuples =
+                    Objects.uncheckedCast(converter
+                            .serialize(serializer, persons));
             Tuple tuple = tuples.get("first");
             assertEquals("aaa", tuple.get(0));
             assertEquals("bbb", tuple.get(1));
@@ -324,8 +314,8 @@ class QiSerializerTest {
             Map<String, Person> persons = new HashMap<String, Person>();
             persons.put("first", new Person("aaa", "bbb", 12));
             persons.put("second", new Person("ccc", "ddd", 21));
-            @SuppressWarnings("unchecked") Map<String, Tuple> tuples =
-                    (Map<String, Tuple>) serializer.serialize(persons);
+            Map<String, Tuple> tuples =
+                    Objects.uncheckedCast(serializer.serialize(persons));
             Tuple tuple = tuples.get("first");
             assertEquals("aaa", tuple.get(0));
             assertEquals("bbb", tuple.get(1));
@@ -351,9 +341,8 @@ class QiSerializerTest {
 
             @Test
             public void deserializeUnchanged() throws QiConversionException {
-                @SuppressWarnings("unchecked") Optional<Tuple>
-                        optUnchangedTuple = (Optional<Tuple>) serializer
-                        .deserialize(optTuple, Optional.class);
+                Optional<Tuple> optUnchangedTuple = Objects.uncheckedCast(serializer
+                        .deserialize(optTuple, Optional.class));
                 assertTrue(optUnchangedTuple.isPresent());
                 Tuple unchangedTuple = optUnchangedTuple.get();
                 assertEquals(tuple, unchangedTuple);
