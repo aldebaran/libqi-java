@@ -69,67 +69,110 @@ public final class Property<T> {
     /** Last set value, to keep the reference alive, don't use it for get */
     private T lastSettedValue;
 
+    /** The serializer used to extract the Property's value */
+    private final QiSerializer serializer;
+
     /**
-     * Create an empty property.
+     * Create a property with a class and a serializer.
+     * @param valueClass The property value class. Must not be null.
+     * @param serializer Serializer to use for the conversion of the property value. Must not be null.
+     */
+    public Property(Class<T> valueClass, QiSerializer serializer) {
+        Objects.requireNonNull(valueClass, "The class of the property must not be null.");
+        Objects.requireNonNull(serializer, "The serializer of the property must not be null.");
+
+        this.valueClass = valueClass;
+        this.pointer = createProperty(valueClass);
+        this.serializer = serializer;
+    }
+
+    /**
+     * Create an empty property with a class and the default serializer.
      *
      * @warning The property has an unspecified value until a new one is set.
      * @param valueClass The property value class.
      * @throws NullPointerException if valueClass parameter is null.
      */
     public Property(Class<T> valueClass) {
-        this.valueClass = valueClass;
-        this.pointer = createProperty(valueClass);
+        this(valueClass, QiSerializer.getDefault());
     }
 
     /**
-     * Create a property with a value.
+     * Create a property with a class, a value and a serializer.
+     * @param valueClass The property value class. Must not be null.
+     * @param value Value to initialize the property with. Must not be null.
+     * @param serializer Serializer to use for the conversion of the property value. Must not be null.
+     * @throws a customized NullPointerException if a parameter is null.
+     */
+    public Property(Class<T> valueClass, T value, QiSerializer serializer) {
+        Objects.requireNonNull(valueClass, "The class of the property must not be null.");
+        Objects.requireNonNull(value, "The value of the property must not be null.");
+        Objects.requireNonNull(serializer, "The serializer of the property must not be null.");
+
+        this.valueClass = valueClass;
+        try {
+            this.pointer = createPropertyWithValue(valueClass, serializer.serialize(value));
+        } catch (QiConversionException e) {
+            throw new RuntimeException(e);
+        }
+        this.serializer = serializer;
+    }
+
+    /**
+     * Create a property with a value and a serializer.
      *
-     * @param value Value to initialize the property with.
-     * @throws NullPointerException if value parameter is null.
+     * @param value Value to initialize the property with. Must not be null.
+     * @param serializer Serializer to use for the conversion of the property value. Must not be null.
+     * @throws a customized NullPointerException if a parameter is null.
+     */
+    public Property(T value, QiSerializer serializer) {
+        this(Objects.<Class<T>, Class>uncheckedCast(value.getClass()), value, serializer);
+    }
+
+    /**
+     * Create a property with a value and the default serializer.
+     * @param value Value to initialize the property with. Must not be null
+     * @throws a customized NullPointerException if a parameter is null.
      */
     public Property(T value) {
-        if (value == null) {
-            throw new NullPointerException("The value of the property must not be null.");
-        }
-        //noinspection unchecked
-        this.valueClass = (Class<T>) value.getClass();
-        this.pointer = createPropertyWithValue(valueClass, value);
+        this(value, QiSerializer.getDefault());
     }
 
     /**
-     * Create a property with a class and a value.
-     * @param valueClass The property value class.
-     * @param value Value to initialize the property with.
-     * @throws NullPointerException if either value or valueClass is null.
+     * Create a property with a class and a value and the default serializer.
+     * @param valueClass The property value class. Must not be null.
+     * @param value Value to initialize the property with. Must not be null.
+     * @throws a customized NullPointerException if a parameter is null.
      */
     public Property(Class<T> valueClass, T value) {
-        this.valueClass = valueClass;
-        this.pointer = createPropertyWithValue(valueClass, value);
+        this(valueClass, value, QiSerializer.getDefault());
     }
+
+    /**
+     * Current serializer.
+     * @return
+     */
+    public QiSerializer getSerializer() { return this.serializer; }
 
     /**
      * Current property value.
-     * Here it used the default serializer, so it suppose that the property type
-     * is managed by it.
+     * It will use the property serializer.
      * For custom type use {@link #getValue(QiSerializer)}
      *
      * @return Future to get the value
      */
     public Future<T> getValue() {
-        return this.getValue(QiSerializer.getDefault());
+        return this.getValue(this.serializer);
     }
 
     /**
      * Current property value.
      *
-     * @param qiSerializer
-     *            Serializer to use for deserialize the value. Must not be null
+     * @param qiSerializer Serializer to use for deserialize the value. Must not be null
      * @return Future to get the value
      */
     public Future<T> getValue(final QiSerializer qiSerializer) {
-        if (qiSerializer == null) {
-            throw new NullPointerException("qiSerializer must not be null");
-        }
+        Objects.requireNonNull(serializer, "The serializer of the property getValue must not be null.");
 
         final Future<Object> future = new Future<Object>(this.get(this.pointer));
         return future.thenApply(new Function<Future<Object>, T>() {
@@ -142,8 +185,7 @@ public final class Property<T> {
 
     /**
      * Change property value
-     * Here it used the default serializer, so it suppose that the property type
-     * is managed by it.
+     * It will use the property serializer.
      * For custom type use {@link #setValue(QiSerializer, Object)}
      *
      * @param value
@@ -151,7 +193,7 @@ public final class Property<T> {
      * @return Future to know when value effectively set
      */
     public Future<Void> setValue(final T value) {
-        return this.setValue(QiSerializer.getDefault(), value);
+        return this.setValue(this.serializer, value);
     }
 
     /**
@@ -164,9 +206,7 @@ public final class Property<T> {
      * @return Future to know when value effectively set
      */
     public Future<Void> setValue(final QiSerializer qiSerializer, final T value) {
-        if (qiSerializer == null) {
-            throw new NullPointerException("qiSerializer must not be null");
-        }
+        Objects.requireNonNull(serializer, "The serializer of the property getValue must not be null.");
 
         try {
             this.lastSettedValue = value;

@@ -1,5 +1,7 @@
 package com.aldebaran.qi;
 
+import com.aldebaran.qi.serialization.QiSerializer;
+import com.aldebaran.qi.serialization.StructConverter;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
@@ -9,6 +11,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 public class PropertyTest {
 
@@ -42,11 +45,9 @@ public class PropertyTest {
     private void assertThrowsNullPointerException(Function<Void, Void> function) {
         try {
             function.execute(null);
-        }
-        catch (NullPointerException ex) {
+        } catch (NullPointerException ex) {
             // Success.
-        }
-        catch (Throwable throwable) {
+        } catch (Throwable throwable) {
             fail("The call threw an exception that was not " +
                     "NullPointerException: " + throwable.getMessage());
         }
@@ -57,7 +58,7 @@ public class PropertyTest {
         assertThrowsNullPointerException(new Function<Void, Void>() {
             @Override
             public Void execute(Void v) throws Throwable {
-                new Property<Integer>((Integer)null);
+                new Property<Integer>((Integer) null);
                 return null;
             }
         });
@@ -77,7 +78,7 @@ public class PropertyTest {
     @Test
     public void constructedWithNullValueOrClassThrows() {
         final Integer value = 42;
-        final Class<Integer> cls = (Class<Integer>)value.getClass();
+        final Class<Integer> cls = (Class<Integer>) value.getClass();
 
         assertThrowsNullPointerException(new Function<Void, Void>() {
             @Override
@@ -88,8 +89,8 @@ public class PropertyTest {
         });
         assertThrowsNullPointerException(new Function<Void, Void>() {
             @Override
-            public Void execute(Void v) {
-                new Property<Integer>(cls, null);
+            public Void execute(Void v) throws QiConversionException {
+                new Property<Integer>(cls, (Integer) null);
                 return null;
             }
         });
@@ -100,7 +101,7 @@ public class PropertyTest {
         String value = "Hello world !";
         constructWithAValue(value);
         //noinspection unchecked
-        constructWithAValueAndClass((Class<String>)value.getClass(),
+        constructWithAValueAndClass((Class<String>) value.getClass(),
                 value);
     }
 
@@ -109,7 +110,7 @@ public class PropertyTest {
         Integer value = 42;
         constructWithAValue(value);
         //noinspection unchecked
-        constructWithAValueAndClass((Class<Integer>)value.getClass(),
+        constructWithAValueAndClass((Class<Integer>) value.getClass(),
                 value);
     }
 
@@ -118,7 +119,7 @@ public class PropertyTest {
         Boolean value = true;
         constructWithAValue(value);
         //noinspection unchecked
-        constructWithAValueAndClass((Class<Boolean>)value.getClass(),
+        constructWithAValueAndClass((Class<Boolean>) value.getClass(),
                 value);
     }
 
@@ -127,7 +128,7 @@ public class PropertyTest {
         Double value = 3.14;
         constructWithAValue(value);
         //noinspection unchecked
-        constructWithAValueAndClass((Class<Double>)value.getClass(),
+        constructWithAValueAndClass((Class<Double>) value.getClass(),
                 value);
     }
 
@@ -136,7 +137,7 @@ public class PropertyTest {
         Float value = 3.14f;
         constructWithAValue(value);
         //noinspection unchecked
-        constructWithAValueAndClass((Class<Float>)value.getClass(),
+        constructWithAValueAndClass((Class<Float>) value.getClass(),
                 value);
     }
 
@@ -145,7 +146,7 @@ public class PropertyTest {
         List value = Arrays.asList("This is", "an array", "of values");
         constructWithAValue(value);
         //noinspection unchecked
-        constructWithAValueAndClass((Class<List>)value.getClass(),
+        constructWithAValueAndClass((Class<List>) value.getClass(),
                 value);
     }
 
@@ -158,7 +159,7 @@ public class PropertyTest {
         constructWithAValue(value);
 
         //noinspection unchecked
-        constructWithAValueAndClass((Class<HashMap>)value.getClass(),
+        constructWithAValueAndClass((Class<HashMap>) value.getClass(),
                 value);
     }
 
@@ -167,7 +168,7 @@ public class PropertyTest {
         Tuple value = Tuple.of(42, "zwei und vierzig", true, 42.0);
         constructWithAValue(value);
         //noinspection unchecked
-        constructWithAValueAndClass((Class<Tuple>)value.getClass(),
+        constructWithAValueAndClass((Class<Tuple>) value.getClass(),
                 value);
     }
 
@@ -201,7 +202,7 @@ public class PropertyTest {
         byte[] value = "Coucou les amis".getBytes();
         Property<byte[]> prop = new Property<byte[]>(value);
 
-        constructWithAValueAndClass((Class<byte[]>)value.getClass(), value);
+        constructWithAValueAndClass((Class<byte[]>) value.getClass(), value);
     }
 
     @Test
@@ -209,7 +210,7 @@ public class PropertyTest {
         byte[] value = new byte[0];
         Property<byte[]> prop = new Property<byte[]>(value);
 
-        constructWithAValueAndClass((Class<byte[]>)value.getClass(), value);
+        constructWithAValueAndClass((Class<byte[]>) value.getClass(), value);
     }
 
     @Test
@@ -222,5 +223,68 @@ public class PropertyTest {
                 return null;
             }
         });
+    }
+
+    @QiStruct
+    static class QiStructForTest {
+        @QiField(0)
+        int i;
+        @QiField(1)
+        String s;
+
+        QiStructForTest() {
+        }
+
+        QiStructForTest(int i, String s) {
+            this.i = i;
+            this.s = s;
+        }
+
+        /**
+         * Customized equality operator to make assertion work.
+         *
+         * @param obj
+         * @return
+         */
+        public boolean equals(Object obj) {
+            if (!(obj instanceof QiStructForTest))
+                return false;
+
+            QiStructForTest casted = (QiStructForTest) obj;
+            return casted.i == i && casted.s.equals(s);
+        }
+    }
+
+    @Test
+    public void constructedWithAStructValueSucceeds() {
+        QiStructForTest value = new QiStructForTest(42, "toto");
+        constructWithAValue(value);
+        //noinspection unchecked
+        constructWithAValueAndClass((Class<QiStructForTest>) value.getClass(), value);
+    }
+
+
+    @Test
+    public void constructedWithValueDefaultSerializer() throws ExecutionException {
+        Property<Integer> property = new Property<Integer>(42);
+        assertEquals(property.getValue().get(), new Integer(42));
+
+        property.setValue(0);
+        assertEquals(property.getValue().get(), new Integer(0));
+    }
+
+    @Test
+    public void constructedWithValueMockedSerializer() throws ExecutionException {
+        QiSerializer mockedSerializer = mock(QiSerializer.class);
+        when(mockedSerializer.serialize(42)).thenReturn(42);
+        when(mockedSerializer.serialize(0)).thenReturn(0);
+        when(mockedSerializer.deserialize(42, Integer.class)).thenReturn(0);
+        when(mockedSerializer.deserialize(0, Integer.class)).thenReturn(-1);
+
+        Property<Integer> property = new Property<Integer>(42, mockedSerializer);
+        assertEquals(property.getValue().get(), new Integer(0));
+
+        property.setValue(0);
+        assertEquals(property.getValue().get(), new Integer(-1));
     }
 }
