@@ -4,14 +4,8 @@
 */
 package com.aldebaran.qi;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import java.lang.reflect.Type;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,6 +17,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.junit.Assert.*;
+
 public class ObjectTest {
     public AnyObject proxy = null;
     public AnyObject proxyts = null;
@@ -31,6 +27,7 @@ public class ObjectTest {
     public Session s = null;
     public Session client = null;
     public ServiceDirectory sd = null;
+    public DynamicObjectBuilder ob = null;
 
     @Before
     public void setUp() throws Exception {
@@ -42,7 +39,7 @@ public class ObjectTest {
         String url = sd.listenUrl();
 
         // Create new QiMessaging generic object
-        DynamicObjectBuilder ob = new DynamicObjectBuilder();
+        ob = new DynamicObjectBuilder();
 
         // Get instance of ReplyService
         QiService reply = new ReplyService();
@@ -65,6 +62,8 @@ public class ObjectTest {
         ob.advertiseMethod("genTuple::(is)()", reply, "Return a tuple");
         ob.advertiseMethod("genTuples::[(is)]()", reply, "Return a tuple list");
         ob.advertiseMethod("getFirstFieldValue::i((is))", reply, "Return the first field value as int");
+
+        ob.advertiseMethods(QiSerializer.getDefault(), TestInterface.class, new TestClass());
 
         QiService replyts = new ReplyService();
         DynamicObjectBuilder obts = new DynamicObjectBuilder();
@@ -271,14 +270,24 @@ public class ObjectTest {
      * Utility structures for `advertiseMethodsWithComplexSignatureCanBeCalledWithSameType` test
      * consisting of an interface and a class with a method with a "complex" signature (List of String).
      */
-    
-    interface ComplexSignatureInterface {
-        Integer complexMethod(List<String> values);
+
+    interface TestInterface {
+        Integer stringListMethod(List<String> values);
+        byte[] byteArrayMethod(byte[] buffer);
+        ByteBuffer byteBufferMethod(ByteBuffer buffer);
     }
-    
-    static class ComplexSignature implements ComplexSignatureInterface {
-        public Integer complexMethod(List<String> values) {
+
+    static class TestClass implements TestInterface {
+        public Integer stringListMethod(List<String> values) {
             return values.hashCode();
+        }
+
+        public byte[] byteArrayMethod(byte[] buffer) {
+            return buffer;
+        }
+
+        public ByteBuffer byteBufferMethod(ByteBuffer buffer) {
+            return buffer;
         }
     }
 
@@ -291,22 +300,141 @@ public class ObjectTest {
      */
     @Test
     public void advertiseMethodsWithComplexSignatureCanBeCalledWithSameType() {
-        DynamicObjectBuilder dynamicObjectBuilder = new DynamicObjectBuilder();
-
-        // Advertises all methods contained in ComplexSignatureInterface.
-        dynamicObjectBuilder.advertiseMethods(QiSerializer.getDefault(), ComplexSignatureInterface.class, new ComplexSignature());
-
         try {
             ArrayList<String> l = new ArrayList<String>();
 
             l.add("Test");
 
             // Tries to call complexMethod with coinciding parameters.
-            Future<Integer> f = dynamicObjectBuilder.object().<Integer>call("complexMethod", l);
+            Future<Integer> f = ob.object().<Integer>call("stringListMethod", l);
 
             assertEquals(f.get().intValue(), l.hashCode());
         } catch (ExecutionException e) {
-            fail("Call to 'complexMethod' failed: " + e.getMessage());
+            fail("Call to 'stringListMethod' failed: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void advertiseMethodWithByteArray() {
+        try {
+            byte[] bytes = "Coucou les amis".getBytes();
+
+            Future<byte[]> f = ob.object().call("byteArrayMethod", bytes);
+
+            assertArrayEquals(f.<byte[]>get(), bytes);
+        } catch (ExecutionException e) {
+            fail("Call to 'byteArrayMethod' failed: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void advertiseMethodWithEmptyByteArray() {
+        try {
+            byte[] bytes = new byte[0];
+
+            Future<byte[]> f = ob.object().call("byteArrayMethod", bytes);
+
+            assertArrayEquals(f.<byte[]>get(), bytes);
+        } catch (ExecutionException e) {
+            fail("Call to 'byteArrayMethod' failed: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void advertiseMethodWithEmptyByteBuffer() {
+        try {
+            ByteBuffer buffer = ByteBuffer.allocate(0);
+
+            Future<ByteBuffer> f = ob.object().call(ByteBuffer.class, "byteBufferMethod", buffer);
+
+            assertEquals(buffer, f.<ByteBuffer>get());
+        } catch (ExecutionException e) {
+            fail("Call to 'byteBufferMethod' failed: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void advertiseMethodWithDirectByteBuffer() {
+        try {
+            ByteBuffer originalBuffer = ByteBuffer.allocateDirect(10);
+
+            // Need to duplicate the buffer in order to compare remaining elements.
+            ByteBuffer consumedBuffer = originalBuffer.duplicate();
+
+            Future<ByteBuffer> f = ob.object().call(ByteBuffer.class, "byteBufferMethod", consumedBuffer);
+
+            ByteBuffer result = f.get();
+
+            assertEquals(originalBuffer, result);
+        } catch (ExecutionException e) {
+            fail("Call to 'byteBufferMethod' failed: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void advertiseMethodWithValuesInByteBuffer() {
+        try {
+            // TODO: Replace the following capacity expression when switching to java 8 by
+            //  `Byte.BYTES + Character.BYTES + Integer.BYTES + Double.BYTES`.
+            ByteBuffer buffer = ByteBuffer.allocate(1 + 2 + 4 + 8);
+
+            byte   v1 = 24;
+            char   v2 = 'x';
+            int    v3 = 42;
+            double v4 = 3.14;
+
+            buffer.put(v1);
+            buffer.putChar(v2);
+            buffer.putInt(v3);
+            buffer.putDouble(v4);
+            buffer.rewind();
+
+            Future<ByteBuffer> f = ob.object().call(ByteBuffer.class, "byteBufferMethod", buffer);
+            ByteBuffer result = f.get();
+            assertEquals(v1, result.get());
+            assertEquals(v2, result.getChar());
+            assertEquals(v3, result.getInt());
+            assertEquals(v4, result.getDouble(), 0.1);
+
+        } catch (ExecutionException e) {
+            fail("Call to 'byteBufferMethod' failed: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void advertiseMethodWithByteBuffer() {
+        try {
+            byte[] array = "Coucou les amis".getBytes();
+            ByteBuffer originalBuffer = ByteBuffer.wrap(array);
+
+            // Need to duplicate the buffer in order to compare remaining elements.
+            ByteBuffer consumedBuffer = originalBuffer.duplicate();
+
+            Future<ByteBuffer> f = ob.object().call(ByteBuffer.class, "byteBufferMethod", consumedBuffer);
+
+            ByteBuffer result = f.get();
+
+            assertEquals(originalBuffer, result);
+            // None of the two buffers should be sliced. Underling array can be compared.
+            assertArrayEquals(originalBuffer.array(), result.array());
+        } catch (ExecutionException e) {
+            fail("Call to 'byteBufferMethod' failed: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void advertiseMethodWithSlicedByteBuffer() {
+        try {
+            ByteBuffer originalBuffer = ByteBuffer.wrap("Coucou les amis".getBytes(), 2, 5);
+
+            // Need to duplicate the buffer in order to compare remaining elements.
+            ByteBuffer consumedBuffer = originalBuffer.duplicate();
+
+            Future<ByteBuffer> f = ob.object().call(ByteBuffer.class, "byteBufferMethod", consumedBuffer);
+
+            assertEquals(originalBuffer, f.<ByteBuffer>get());
+        } catch (ExecutionException e) {
+            fail("Call to 'byteBufferMethod' failed: " + e.getMessage());
         }
     }
 }

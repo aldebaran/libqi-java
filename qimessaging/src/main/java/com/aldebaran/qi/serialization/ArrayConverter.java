@@ -29,8 +29,7 @@ public class ArrayConverter implements QiSerializer.Converter {
         if (!(targetType instanceof Class))
             return false;
 
-        Class<?> cls = (Class<?>) targetType;
-        return cls.isArray();
+        return object instanceof Object[];
     }
 
     @Override

@@ -45,6 +45,8 @@ public class SignatureUtilitiesTest {
         public void triplet(Triplet triplet);
 
         public void triplet2(Triplet2 triplet);
+
+        public byte[] byteArrayByteArray(byte[] array);
     }
 
     /**
@@ -132,6 +134,7 @@ public class SignatureUtilitiesTest {
                 "mapStringListString");
         this.assertSignature("void triplet(Triplet)", "triplet::v((is[s]))", "triplet");
         this.assertSignature("void triplet2(Triplet2)", "triplet2::v((is[s]))", "triplet2");
+        this.assertSignature("byte[] byteArrayByteArray(byte[])", "byteArrayByteArray::r(r)", "byteArrayByteArray");
     }
 
     @Test

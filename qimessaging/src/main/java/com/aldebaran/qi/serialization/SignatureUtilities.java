@@ -6,12 +6,14 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import com.aldebaran.qi.*;
+import com.aldebaran.qi.log.LogReport;
 
 /**
  * Utilities for manipulates signatures
@@ -49,6 +51,10 @@ public class SignatureUtilities {
      * Libqi String signature
      */
     public static final String STRING = "s";
+    /**
+     * Libqi Raw signature
+     */
+    public static final String RAW = "r";
     /**
      * Libqi Object signature
      */
@@ -289,6 +295,9 @@ public class SignatureUtilities {
         }
         else if (String.class.equals(clazz)) {
             stringBuilder.append(SignatureUtilities.STRING);
+        }
+        else if(byte[].class.isAssignableFrom(clazz) || ByteBuffer.class.isAssignableFrom(clazz)) {
+            stringBuilder.append(SignatureUtilities.RAW);
         }
         else if (List.class.isAssignableFrom(clazz)) {
             stringBuilder.append("[");
@@ -608,14 +617,10 @@ public class SignatureUtilities {
             }
         }
 
-        if (AnyObject.class.equals(from)) {
-            try {
-                return QiSerializer.getDefault().deserialize(value, to);
-            }
-            catch (QiConversionException e) {
-                System.err.println("Issue while embed any object");
-                e.printStackTrace();
-            }
+        try {
+            return QiSerializer.getDefault().deserialize(value, to);
+        } catch (QiConversionException e) {
+            LogReport.warning("Fail to deserialize value");
         }
 
         return value;
