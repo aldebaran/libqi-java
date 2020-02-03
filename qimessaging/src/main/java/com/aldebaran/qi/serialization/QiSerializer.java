@@ -94,6 +94,7 @@ public class QiSerializer {
         result.add(new MapConverter());
         result.add(new StructConverter());
         result.add(new OptionalConverter());
+        result.add(new ByteBufferConverter());
         return result;
     }
 }

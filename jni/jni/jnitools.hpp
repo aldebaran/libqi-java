@@ -12,6 +12,8 @@
 
 #include <iostream>
 #include <jni.h>
+#include <qi/buffer.hpp>
+#include <ka/opt.hpp>
 
 #ifdef ANDROID
 # include <android/log.h>
@@ -47,6 +49,8 @@ extern jclass cls_optional;
 
 extern jclass cls_list;
 extern jclass cls_arraylist;
+extern jclass cls_bytebuffer;
+extern jclass cls_byte_array;
 
 extern jclass cls_map;
 extern jclass cls_hashmap;
@@ -83,6 +87,9 @@ namespace qi {
         JNIEnv* get();
     };
 
+    ka::opt_t<qi::Buffer> toBuffer(jbyteArray inputBuffer);
+    ka::opt_t<qi::Buffer> toBuffer(jobject byteBuffer);
+
     // String conversion
     std::string toString(jstring input);
     jstring     toJstring(const std::string& input);
@@ -94,6 +101,16 @@ namespace qi {
     // JVM Environment management
     JNIEnv*     env();
     void        releaseObject(jobject obj);
+
+    template<typename JObject>
+    auto scopeJObject(JObject object) -> decltype(ka::scoped(object, releaseObject))
+    {
+      return ka::scoped(object, releaseObject);
+    }
+
+    template<typename JObject>
+    using ScopedJObject = decltype(scopeJObject(std::declval<JObject>()));
+
     // Signature
     std::string javaSignature(const std::string& qiSignature);
     jobjectArray toJobjectArray(const std::vector<AnyReference> &values);
@@ -270,6 +287,12 @@ namespace qi {
         env->DeleteGlobalRef(globalRef);
       }};
     }
+
+    /// If a Java exception is pending, fetches it, clears its pending status and then return an
+    /// optional with the jthrowable. If no exception is pending, returns immediately with an empty
+    /// optional.
+    /// @post `env()->ExceptionCheck() == JNI_FALSE`.
+    ka::opt_t<ScopedJObject<jthrowable>> getPendingException(JNIEnv& env);
 
     /// If a Java exception is pending, fetches it, clears its pending status and then throws a
     /// std::runtime_error with the same error message. If no exception is pending,

@@ -34,6 +34,8 @@ jclass cls_optional;
 
 jclass cls_list;
 jclass cls_arraylist;
+jclass cls_bytebuffer;
+jclass cls_byte_array;
 
 jclass cls_map;
 jclass cls_hashmap;
@@ -121,6 +123,8 @@ static void init_classes(JNIEnv *env)
 
   cls_list = loadClass(env, "java/util/List");
   cls_arraylist = loadClass(env, "java/util/ArrayList");
+  cls_bytebuffer = loadClass(env, "java/nio/ByteBuffer");
+  cls_byte_array = loadClass(env, "[B");
 
   cls_map = loadClass(env, "java/util/Map");
   cls_hashmap = loadClass(env, "java/util/HashMap");
@@ -182,6 +186,9 @@ void getJavaSignature(std::string &javaSignature, const std::string& qiSignature
       break;
     case qi::Signature::Type_String:
       javaSignature.append("Ljava/lang/String;");
+      break;
+    case qi::Signature::Type_Raw:
+      javaSignature.append("[B");
       break;
     case qi::Signature::Type_Void:
       javaSignature.append("V");
@@ -410,6 +417,8 @@ std::string propertyBaseSignature(JNIEnv *env, jclass propertyBase)
     return { static_cast<char>(qi::Signature::Type_Object) };
   if (env->IsAssignableFrom(propertyBase, cls_double))
     return { static_cast<char>(qi::Signature::Type_Float) };
+  if (env->IsAssignableFrom(propertyBase, cls_byte_array) || env->IsAssignableFrom(propertyBase, cls_bytebuffer))
+    return { static_cast<char>(qi::Signature::Type_Raw) };
   if (env->IsAssignableFrom(propertyBase, cls_map))
   {
     return std::string{} + static_cast<char>(qi::Signature::Type_Map) +
@@ -457,6 +466,8 @@ qi::TypeInterface *propertyValueClassToType(JNIEnv *env, jclass clazz)
     return qi::typeOf<qi::AnyObject>();
   if (env->IsAssignableFrom(clazz, cls_double))
     return qi::typeOf<double>();
+  if (env->IsAssignableFrom(clazz, cls_byte_array) || env->IsAssignableFrom(clazz, cls_bytebuffer))
+    return qi::typeOf<qi::Buffer>();
   if (env->IsAssignableFrom(clazz, cls_map))
     return qi::typeOf<std::map<qi::AnyValue, qi::AnyValue>>();
   if (env->IsAssignableFrom(clazz, cls_list))
@@ -620,6 +631,154 @@ namespace qi {
       return toString(nameJavaStr);
     }
 
+    namespace
+    {
+      jstring throwableMessage(JNIEnv& env, jthrowable throwable)
+      {
+        const auto message = static_cast<jstring>(
+          Call<jobject>::invoke(&env, cls_throwable, throwable, "getMessage", "()Ljava/lang/String;"));
+        if (!env.IsSameObject(message, nullptr))
+          return message;
+        // Fallback to `Object.toString` that never returns null.
+        return static_cast<jstring>(
+          Call<jobject>::invoke(&env, cls_throwable, throwable, "toString", "()Ljava/lang/String;"));
+      }
+    }
+
+    ka::opt_t<ScopedJObject<jthrowable>> getPendingException(JNIEnv& env)
+    {
+      if (env.ExceptionCheck() == JNI_FALSE)
+        return {};
+
+      ka::opt_t<ScopedJObject<jthrowable>> exception;
+      exception.emplace_front(scopeJObject(env.ExceptionOccurred()));
+      env.ExceptionClear();
+
+      return exception;
+    }
+
+    void handlePendingException(JNIEnv& env)
+    {
+      auto exception = getPendingException(env);
+      if (!exception.empty())
+        throw std::runtime_error(toString(throwableMessage(env, src(exception).value)));
+    }
+
+    const char* errorToString(jint code)
+    {
+      switch (code)
+      {
+        default:            return "unhandled error code";
+        case JNI_OK:        return "success";
+        case JNI_EDETACHED: return "thread is detached from the virtual machine";
+        case JNI_EVERSION:  return "jni version error";
+        case JNI_ERR:       return "unknown error";
+
+        // Android NDK JNI header does not define the JNI_ENOMEM, JNI_EEXIST and JNI_EINVAL error
+        // codes (probably because they seem to be related to the instantiation of the Java
+        // virtual machine). We have to enable each case only if the corresponding code is
+        // defined.
+#ifdef JNI_ENOMEM
+        case JNI_ENOMEM:    return "not enough memory";
+#endif
+#ifdef JNI_EEXIST
+        case JNI_EEXIST:    return "virtual machine has already been created";
+#endif
+#ifdef JNI_EINVAL
+        case JNI_EINVAL:    return "invalid arguments";
+#endif
+      }
+    }
+
+    bool assertion(JNIEnv* env, bool condition, const char* message)
+    {
+      if (!condition)
+        throwNew(env, "java/lang/AssertionError", message);
+      return condition;
+    }
+
+    bool throwIfNull(JNIEnv* env, jobject obj, const char* message)
+    {
+      const auto isNull = env->IsSameObject(obj, nullptr) == JNI_TRUE;
+      if (isNull)
+        throwNewNullPointerException(env, message);
+      return isNull;
+    }
+
+    bool throwIfNull(JNIEnv* env, jlong ptr, const char* message)
+    {
+      const auto isNull = ptr == 0;
+      if (isNull)
+        throwNewNullPointerException(env, message);
+      return isNull;
+    }
+
+    ka::opt_t<qi::Buffer> toBuffer(jbyteArray array)
+    {
+      JNIEnv* env = qi::jni::env();
+      QI_ASSERT_NOT_NULL(env);
+
+      const auto elements = ka::scoped(env->GetByteArrayElements(array, 0),
+        [&](jbyte* elements)
+        {
+          if (elements)
+            // Using JNI_ABORT will free elements without copying them back to array.
+            env->ReleaseByteArrayElements(array, elements, JNI_ABORT);
+        });
+
+      if (!elements.value)
+        return {};
+
+      qi::Buffer res;
+      const auto size = static_cast<std::size_t>(env->GetArrayLength(array));
+      res.write(elements.value, size);
+
+      return {std::move(res)};
+    }
+
+    //TODO Return `ka::result_t<qi::Buffer, ScopedJObject<jthrowable>>` when available.
+    ka::opt_t<qi::Buffer> toBuffer(jobject inputByteBuffer)
+    {
+      JNIEnv* env = qi::jni::env();
+      QI_ASSERT_NOT_NULL(env);
+
+      // Since `inputByteBuffer` is an input/output parameter, we duplicate it
+      // to limit side-effects.
+      const auto duplicatedInputBuffer = ka::scoped(Call<jobject>::invoke(env, cls_bytebuffer, inputByteBuffer,
+        "duplicate", "()Ljava/nio/ByteBuffer;"),
+        releaseObject);
+
+      // A byte buffer is a chunk of memory, whose readable part is named
+      // "remaining segment".
+      const auto size = static_cast<int>(Call<jint>::invoke(
+          env, cls_bytebuffer, duplicatedInputBuffer.value, "remaining", "()I"
+      ));
+
+      qi::Buffer buffer;
+      buffer.reserve(size);
+
+      // Create a new buffer that directly uses the qi::Buffer memory.
+      auto outputByteBuffer = ka::scoped(
+        env->NewDirectByteBuffer(buffer.data(), size),
+        releaseObject);
+
+      // We put the remaining bytes of input buffer into the qi buffer.
+      // The result of the put method is this object, we release it immediately.
+      releaseObject(Call<jobject>::invoke(env, cls_bytebuffer, outputByteBuffer.value,
+        "put", "(Ljava/nio/ByteBuffer;)Ljava/nio/ByteBuffer;", duplicatedInputBuffer.value));
+
+      auto exception = getPendingException(*env);
+      if (!exception.empty())
+      {
+        //TODO do not log here, instead return the jthrowable inside the ka::result_t when available.
+        qiLogWarning() << "Failed to convert Java ByteBuffer to qi::Buffer: "
+                        << toString(throwableMessage(*env, src(std::move(exception)).value));
+        return {};
+      }
+
+      return {std::move(buffer)};
+    }
+
     // Convert jstring into std::string
     // Use of std::string ensures ref leak safety.
     std::string toString(jstring inputString)
@@ -663,8 +822,7 @@ namespace qi {
     {
       JNIEnv*   env = qi::jni::env();
 
-      if (!env)
-        return;
+      QI_ASSERT_NOT_NULL(env);
 
       env->DeleteLocalRef(input);
     }
@@ -674,10 +832,10 @@ namespace qi {
     {
       JNIEnv*   env = qi::jni::env();
 
-      if (!env)
-        return;
+      QI_ASSERT_NOT_NULL(env);
 
-      env->DeleteLocalRef(obj);
+      if (env->IsSameObject(obj, nullptr) == JNI_FALSE)
+        env->DeleteLocalRef(obj);
     }
 
     jobjectArray toJobjectArray(const std::vector<AnyReference> &values)
@@ -706,78 +864,6 @@ namespace qi {
         env->SetObjectArrayElement(array, i++, value);
       }
       return array;
-    }
-
-    namespace
-    {
-      jstring throwableMessage(JNIEnv& env, jthrowable throwable)
-      {
-        const auto message = static_cast<jstring>(
-          Call<jobject>::invoke(&env, cls_throwable, throwable, "getMessage", "()Ljava/lang/String;"));
-        if (!env.IsSameObject(message, nullptr))
-          return message;
-        // Fallback to `Object.toString` that never returns null.
-        return static_cast<jstring>(
-          Call<jobject>::invoke(&env, cls_throwable, throwable, "toString", "()Ljava/lang/String;"));
-      }
-    }
-
-    void handlePendingException(JNIEnv& env)
-    {
-      if (env.ExceptionCheck() == JNI_FALSE)
-        return;
-      const auto throwable = ka::scoped(env.ExceptionOccurred(), qi::jni::releaseObject);
-      env.ExceptionClear();
-      throw std::runtime_error(toString(throwableMessage(env, throwable.value)));
-    }
-
-    const char* errorToString(jint code)
-    {
-      switch (code)
-      {
-        default:            return "Unhandled error code.";
-        case JNI_OK:        return "Success.";
-        case JNI_EDETACHED: return "Thread is detached from the virtual machine.";
-        case JNI_EVERSION:  return "JNI version error.";
-        case JNI_ERR:       return "Unknown error.";
-
-        // Android NDK JNI header does not define the JNI_ENOMEM, JNI_EEXIST and JNI_EINVAL error
-        // codes (probably because they seem to be related to the instantiation of the Java
-        // virtual machine). We have to enable each case only if the corresponding code is
-        // defined.
-#ifdef JNI_ENOMEM
-        case JNI_ENOMEM:    return "Not enough memory.";
-#endif
-#ifdef JNI_EEXIST
-        case JNI_EEXIST:    return "Virtual machine has already been created.";
-#endif
-#ifdef JNI_EINVAL
-        case JNI_EINVAL:    return "Invalid arguments.";
-#endif
-      }
-    }
-
-    bool assertion(JNIEnv* env, bool condition, const char* message)
-    {
-      if (!condition)
-        throwNew(env, "java/lang/AssertionError", message);
-      return condition;
-    }
-
-    bool throwIfNull(JNIEnv* env, jobject obj, const char* message)
-    {
-      const auto isNull = env->IsSameObject(obj, nullptr) == JNI_TRUE;
-      if (isNull)
-        throwNewNullPointerException(env, message);
-      return isNull;
-    }
-
-    bool throwIfNull(JNIEnv* env, jlong ptr, const char* message)
-    {
-      const auto isNull = ptr == 0;
-      if (isNull)
-        throwNewNullPointerException(env, message);
-      return isNull;
     }
   } // !jni
 }// !qi

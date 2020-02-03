@@ -2,6 +2,7 @@ package com.aldebaran.qi.serialization;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -416,6 +417,11 @@ public class MethodDescription {
 
         if (AnyObject.class.isAssignableFrom(class1) || AnyObject.class.isAssignableFrom(class2)) {
             return MethodDescription.DISTANCE_ANY_OBJECT;
+        }
+
+        if ((ByteBuffer.class.isAssignableFrom(class1) && byte[].class.equals(class2))
+                || (ByteBuffer.class.isAssignableFrom(class2) && byte[].class.equals(class1))) {
+            return MethodDescription.DISTANCE_COMPATIBLE;
         }
 
         if(class1.isAssignableFrom(class2) || class2.isAssignableFrom(class1)) {
