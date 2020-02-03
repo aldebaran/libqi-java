@@ -772,7 +772,7 @@ namespace qi {
       {
         //TODO do not log here, instead return the jthrowable inside the ka::result_t when available.
         qiLogWarning() << "Failed to convert Java ByteBuffer to qi::Buffer: "
-                        << toString(throwableMessage(*env, src(std::move(exception)).value));
+                        << toString(throwableMessage(*env, src(exception).value));
         return {};
       }
 
