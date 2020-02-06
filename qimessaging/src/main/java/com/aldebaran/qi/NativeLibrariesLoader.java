@@ -141,13 +141,40 @@ abstract class NativeLibrariesLoader {
 
         /**
          * Return the jar file that contains libqi-java package.
-         * @throws IOException if this function is called and libqi-java package is not a jar.
+         * @throws IOException if libqi-java package is not in a jar or jar is not accessible.
          */
         private static JarFile getJarFile() throws IOException {
             try {
-                return new JarFile(new File(NativeLibrariesLoader.class.getProtectionDomain().getCodeSource().getLocation()
-                        .toURI()).getPath());
-            } catch (URISyntaxException e) {
+                // The main problem is it is not possible to consistently get
+                // the jar path from this class (see previous implementation
+                // below).
+                // 
+                // Consequently, the solution is a bit complicated:
+                // 1) get the fully-qualified name of this class.
+                // 2) let the system search for the absolute path of this class,
+                //    which contains the jar path.
+                // 3) extract the jar path.
+
+                // Previous implementation was
+                // `NativeLibrariesLoader.class.getProtectionDomain().getCodeSource().getLocation()`,
+                // but it is not consistent in all contexts (e.g. in Android's
+                // version of Java).
+
+                // 1)
+                Class<?> qiClass = NativeLibrariesLoader.class;
+                // Concatenate the package name and the class name the same way it is in the jar.
+                String resourceName = qiClass.getPackage().getName().replace('.', '/')
+                        + "/" + qiClass.getSimpleName() + ".class";
+
+                // 2)
+                String resourcePath = qiClass.getClassLoader().getResource(resourceName).getPath();
+
+                // 3)
+                // The resourcePath has the following pattern : `file:PATH_TO_JAR_FILE!/RESOURCE_NAME`.
+                // We extract the jar file URL by removing `!/RESOURCE_NAME`.
+                URL jarUrl = new URL(resourcePath.substring(0, resourcePath.lastIndexOf("!/" + resourceName)));
+                return new JarFile(jarUrl.getPath());
+            } catch (NullPointerException e) {
                 // Rethrow the exception as IOException since the jar file is not accessible.
                 throw new IOException(e);
             }

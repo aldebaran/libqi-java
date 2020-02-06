@@ -193,7 +193,7 @@ struct toJObject
       if(optionalReference.optionalHasValue()){
         const auto converted = JObject_from_AnyValue(optionalReference.content());
         *result = JNIOptional(optionalInitFromValue, converted).object();
-        
+
       } else {
         *result = JNIOptional().object();
       }
@@ -237,23 +237,14 @@ public:
       qiLogVerbose() << "visitRaw";
       qi::Buffer buf = value.as<qi::Buffer>();
 
-      // Create a new ByteBuffer and reserve enough space
-      jclass cls = env->FindClass("java/nio/ByteBuffer");
-      jmethodID mid = env->GetStaticMethodID(cls, "allocate", "(I)Ljava/nio/ByteBuffer;");
-      jobject ar = env->CallStaticObjectMethod(cls, mid, buf.size());
-
       // Put qi::Buffer content into a byte[] object
-      const jbyte* data = (const jbyte*) buf.data();
+      const auto data = static_cast<const jbyte*>(buf.data());
       jbyteArray byteArray = env->NewByteArray(buf.size());
       env->SetByteArrayRegion(byteArray, 0, buf.size(), data);
 
-      // Put the byte[] object into the ByteBuffer
-      mid = env->GetMethodID(cls, "put","([BII)Ljava/nio/ByteBuffer;");
-      *result = env->CallObjectMethod(ar, mid, byteArray, 0, buf.size());
+      *result = byteArray;
+
       checkForError();
-      env->DeleteLocalRef(cls);
-      env->DeleteLocalRef(ar);
-      env->DeleteLocalRef(byteArray);
     }
 
     void visitIterator(qi::AnyReference v)
@@ -317,6 +308,43 @@ qi::AnyReference AnyValue_from_JObject_List(jobject val)
 
   return qi::AnyReference::from(res);
 }
+
+qi::AnyReference AnyValue_from_Buffer(qi::Buffer buffer)
+{
+  std::unique_ptr<qi::Buffer> ptr(new auto(std::move(buffer)));
+  auto res = qi::AnyReference::fromPtr(ptr.get());
+  ptr.release();
+  return res;
+}
+
+namespace {
+
+constexpr struct ToBufferFn
+{
+  /// With T raw, ka::opt_t<qi::Buffer> maybeBuffer, the following is valid:
+  ///   maybeBuffer = qi::jni::toBuffer(raw)
+  template<typename T>
+  auto operator()(T&& t) const -> ka::opt_t<qi::Buffer>
+  {
+    return qi::jni::toBuffer(ka::fwd<T>(t));
+  }
+} toBuffer;
+
+} // namespace
+
+qi::AnyReference AnyValue_from_Optional_Buffer(ka::opt_t<qi::Buffer> maybeBuffer)
+{
+  if (maybeBuffer.empty())
+  {
+    const auto errorMessage = "Cannot serialize return value: Cannot convert java object into buffer.";
+    qiLogError() << errorMessage;
+    throw std::runtime_error(errorMessage);
+  }
+  else
+    return AnyValue_from_Buffer(std::move(*maybeBuffer));
+}
+
+auto AnyValue_from_JObject_Raw = ka::compose(AnyValue_from_Optional_Buffer, toBuffer);
 
 qi::AnyReference AnyValue_from_JObject_Map(jobject hashmap)
 {
@@ -492,12 +520,22 @@ qi::AnyReference _AnyValue_from_JObject(jobject val)
     return AnyValue_from_JObject_Future(val, env);
   }
 
+  if (env->IsInstanceOf(val, cls_byte_array))
+  {
+    return AnyValue_from_JObject_Raw(static_cast<jbyteArray>(val));
+  }
+
+  if (env->IsInstanceOf(val, cls_bytebuffer))
+  {
+    return AnyValue_from_JObject_Raw(val);
+  }
+
   if (env->IsInstanceOf(val, cls_anyobject))
   {
     return AnyValue_from_JObject_RemoteObject(val, env);
   }
-  qiLogError() << "Cannot serialize return value: Unable to convert JObject to AnyValue";
-  throw std::runtime_error("Cannot serialize return value: Unable to convert JObject to AnyValue");
+  qiLogError() << "Cannot serialize return value: Unable to convert JObject to AnyValue.";
+  throw std::runtime_error("Cannot serialize return value: Unable to convert JObject to AnyValue.");
 }
 
 

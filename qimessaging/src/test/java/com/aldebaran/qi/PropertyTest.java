@@ -2,13 +2,13 @@ package com.aldebaran.qi;
 
 import org.junit.Test;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 public class PropertyTest {
 
@@ -25,6 +25,15 @@ public class PropertyTest {
         Property<T> prop = new Property<T>(cls, value);
         try {
             assertEquals(value, prop.getValue().get());
+        } catch (ExecutionException e) {
+            fail(e.getMessage());
+        }
+    }
+
+    private void constructWithAValueAndClass(Class<byte[]> cls, byte[] value) {
+        Property<byte[]> prop = new Property<byte[]>(cls, value);
+        try {
+            assertArrayEquals(value, prop.getValue().get());
         } catch (ExecutionException e) {
             fail(e.getMessage());
         }
@@ -160,6 +169,47 @@ public class PropertyTest {
         //noinspection unchecked
         constructWithAValueAndClass((Class<Tuple>)value.getClass(),
                 value);
+    }
+
+    @Test
+    public void constructedWithAByteBufferValueSucceeds() {
+        ByteBuffer originalBuffer = ByteBuffer.wrap("Coucou les amis".getBytes());
+
+        // Need to duplicate the buffer in order to compare remaining elements.
+        ByteBuffer consumedBuffer = originalBuffer.duplicate();
+
+        Property<ByteBuffer> prop = new Property<ByteBuffer>(consumedBuffer);
+        try {
+            assertEquals(originalBuffer, prop.getValue().get());
+        } catch (ExecutionException e) {
+            fail(e.getMessage());
+        }
+
+        // Reduplicate the buffer since consumedBuffer has no remaining elements.
+        consumedBuffer = originalBuffer.duplicate();
+        prop = new Property<ByteBuffer>(ByteBuffer.class, consumedBuffer);
+
+        try {
+            assertEquals(originalBuffer, prop.getValue().get());
+        } catch (ExecutionException e) {
+            fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void constructedWithAByteArrayValueSucceeds() {
+        byte[] value = "Coucou les amis".getBytes();
+        Property<byte[]> prop = new Property<byte[]>(value);
+
+        constructWithAValueAndClass((Class<byte[]>)value.getClass(), value);
+    }
+
+    @Test
+    public void constructedWithAnEmptyByteArrayValueSucceeds() {
+        byte[] value = new byte[0];
+        Property<byte[]> prop = new Property<byte[]>(value);
+
+        constructWithAValueAndClass((Class<byte[]>)value.getClass(), value);
     }
 
     @Test

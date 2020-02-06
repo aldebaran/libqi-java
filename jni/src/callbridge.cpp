@@ -132,8 +132,18 @@ namespace
       }
       return ParamsBoundMethod{ candidate, params };
     };
-    const auto paramsBoundCandidates =
+    const auto paramsBoundCandidatesRange =
       transform(expectedArityCandidates, std::cref(convertAndBindParams));
+
+    // `boost::find_if` dereferences each underlying iterator once to check the
+    // predicate, resulting in n dereferencement for a range of size n. The
+    // returned iterator, if valid, is then typically dereferenced again. This
+    // extra dereferencement is problematic when dereferencement is costly (e.g.
+    // when value is computed on-the-fly, potentially through transformations).
+    // To avoid this, we prefer to first store the dereferenced values in a
+    // `vector` and then use `find_if` on it.
+    std::vector<ParamsBoundMethod> paramsBoundCandidates(
+      begin(paramsBoundCandidatesRange), end(paramsBoundCandidatesRange));
 
     // Find the fitting candidate which is the first one for which each bound parameter is
     // convertible to the type of the respective method parameter.
@@ -152,7 +162,7 @@ namespace
                       candidate.params);
     };
     const auto fittingCandidate =
-      find_if(paramsBoundCandidates, std::cref(allBoundParametersAreConvertible));
+      boost::find_if(paramsBoundCandidates, std::cref(allBoundParametersAreConvertible));
     if (isFound(fittingCandidate, paramsBoundCandidates))
       return *fittingCandidate;
     return suitableMethodNotFoundErrorMessage(env, methodNameMaybeWithSig,
