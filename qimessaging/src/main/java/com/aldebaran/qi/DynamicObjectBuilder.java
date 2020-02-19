@@ -276,7 +276,7 @@ public class DynamicObjectBuilder {
      * @param <INSTANCE>     Instance type of interface.
      * @param interfaceClass Interface that specifies the list of methods to expose.
      * @param instance       Instance of interface implementation.
-     * @return Interface implementation to use for call methods.
+     * @return Instance The instance passed as parameter.
      */
     @Deprecated
     public <INTERFACE, INSTANCE extends INTERFACE> INTERFACE advertiseMethods(final Class<INTERFACE> interfaceClass,
@@ -300,7 +300,7 @@ public class DynamicObjectBuilder {
      *            Interface that specifies the list of methods to expose.
      * @param instance
      *            Instance of interface implementation.
-     * @return Interface implementation to use for call methods.
+     * @return Instance The instance passed as parameter.
      */
     public <INTERFACE, INSTANCE extends INTERFACE> INTERFACE advertiseMethods(final QiSerializer serializer,
                                                                               final Class<INTERFACE> interfaceClass,
@@ -332,8 +332,6 @@ public class DynamicObjectBuilder {
             this.advertiseMethod(this._p, SignatureUtilities.computeSignatureForMethod(method), monitor,
                     interfaceClass.getName(), description);
         }
-
-        return Objects.uncheckedCast(Proxy.newProxyInstance(interfaceClass.getClassLoader(), new Class<?>[] { interfaceClass },
-                new AdvertisedMethodCaller<INTERFACE>(serializer, this, advertisedMethodMonitor)));
+        return instance;
     }
 }

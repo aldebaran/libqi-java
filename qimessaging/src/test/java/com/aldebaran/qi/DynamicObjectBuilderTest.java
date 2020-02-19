@@ -4,10 +4,13 @@
  */
 package com.aldebaran.qi;
 
+import com.aldebaran.qi.serialization.QiSerializer;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.io.Serializable;
 
 public class DynamicObjectBuilderTest {
 
@@ -65,5 +68,50 @@ public class DynamicObjectBuilderTest {
     @Test
     public void advertisePropertyUsesValueTypeSignature_Double() {
         runAdvertisePropertyUsesValueTypeSignature(new Property<Double>(Double.class), "Double");
+    }
+
+    @Test
+    public void advertiseMethodsReturnsInstance()
+    {
+        String instance = new String("toto");
+        String output = (String) builder.advertiseMethods(QiSerializer.getDefault(), Serializable.class, instance);
+        Assert.assertSame(instance, output);
+    }
+
+    @QiStruct
+    public class AStruct {
+        @QiField(0)
+        public int numField;
+        @QiField(1)
+        public String textField;
+    }
+
+
+    public interface AnInterface {
+        AStruct returnAStruct();
+    }
+
+    public class AClass implements AnInterface {
+        public AStruct returnAStruct() {
+            AStruct struct = new AStruct();
+            struct.numField = 5;
+            struct.textField = "five";
+            return struct;
+        }
+    }
+
+    @Test
+    public void advertiseMethodsWithStruct() {
+        AClass anInstance = new AClass();
+        QiSerializer serializer = new QiSerializer();
+        DynamicObjectBuilder objectBuilder = new DynamicObjectBuilder();
+        // An Interface based on a struct must be processed. If an exception occurs, the test fails.
+        AnInterface sameInstance = objectBuilder.advertiseMethods(serializer, AnInterface.class, anInstance);
+        // Checks the output and the input are the same
+        Assert.assertSame(sameInstance, anInstance);
+        AStruct struct = sameInstance.returnAStruct();
+        AStruct initialStruct = anInstance.returnAStruct();
+        Assert.assertEquals(struct.numField, initialStruct.numField);
+        Assert.assertEquals(struct.textField, initialStruct.textField);
     }
 }
