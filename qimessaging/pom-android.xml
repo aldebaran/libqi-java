@@ -43,6 +43,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-artifact</artifactId>
+            <version>3.6.3</version>
+        </dependency>
+        <dependency>
             <groupId>com.google.android</groupId>
             <artifactId>android</artifactId>
             <version>2.2.1</version>
@@ -70,6 +75,13 @@
                 <includes>
                     <include>${nativeResourceFilter}</include>
                 </includes>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>project.properties</include>
+                </includes>
+                <filtering>true</filtering>
             </resource>
         </resources>
         <plugins>
