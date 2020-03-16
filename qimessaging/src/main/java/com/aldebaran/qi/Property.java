@@ -100,18 +100,19 @@ public final class Property<T> {
     /**
      * Create a property with a class, a value and a serializer.
      * @param valueClass The property value class. Must not be null.
-     * @param value Value to initialize the property with. Must not be null.
+     * @param value Value to initialize the property with. Must not be null, except for `Property<AnyObject>` for which it may be.
      * @param serializer Serializer to use for the conversion of the property value. Must not be null.
      * @throws a customized NullPointerException if a parameter is null.
      */
     public Property(Class<T> valueClass, T value, QiSerializer serializer) {
         Objects.requireNonNull(valueClass, "The class of the property must not be null.");
-        Objects.requireNonNull(value, "The value of the property must not be null.");
+        if(valueClass != AnyObject.class) // A AnyObject property value can be null.
+            Objects.requireNonNull(value, "The value of the property must not be null.");
         Objects.requireNonNull(serializer, "The serializer of the property must not be null.");
 
         this.valueClass = valueClass;
         try {
-            this.pointer = createPropertyWithValue(valueClass, serializer.serialize(value));
+            this.pointer = createPropertyWithValue(valueClass, value == null? null: serializer.serialize(value));
         } catch (QiConversionException e) {
             throw new RuntimeException(e);
         }

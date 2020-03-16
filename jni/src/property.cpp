@@ -84,9 +84,7 @@ Java_com_aldebaran_qi_Property_createPropertyWithValue(JNIEnv* env,
   return ka::invoke_catch(
     exceptionMessageHandler(ThrowNewJavaExceptionReturn0{ env }),
     [&]() -> jlong {
-      if ( // TODO: Handle this case in the conversion between AnyValue and jobject.
-          throwIfNull(env, value, nullValuePtrMsg) ||
-          throwIfNull(env, valueClass, nullValueClassPtrMsg))
+      if (throwIfNull(env, valueClass, nullValueClassPtrMsg))
         return 0;
       auto* const valueType = getPropertyValueType(env, valueClass);
       if (!valueType)

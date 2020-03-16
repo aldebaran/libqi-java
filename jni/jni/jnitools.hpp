@@ -376,14 +376,8 @@ public:
    * @brief Create the manager with a property with a given value.
    *
    * Passing a value that refers to a null Java object is undefined behavior.
-   * TODO: Make it defined behavior by handling it in the conversion between AnyValue and jobject.
    */
-  PropertyManager(qi::TypeInterface& valueType, JNIEnv& env, jobject value)
-    : globalReference{ env.NewGlobalRef(value) }
-    , property{ new qi::GenericProperty{
-        qi::AnyValue::from(globalReference).convertCopy(&valueType) } }
-  {
-  }
+  PropertyManager(qi::TypeInterface& valueType, JNIEnv& env, jobject value);
 
   /**
    * @brief Clear global reference if need

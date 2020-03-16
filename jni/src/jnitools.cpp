@@ -482,6 +482,23 @@ qi::TypeInterface *propertyValueClassToType(JNIEnv *env, jclass clazz)
   return qi::typeOf<qi::AnyValue>();
 }
 
+PropertyManager::PropertyManager(qi::TypeInterface& valueType, JNIEnv& env, jobject value)
+    : globalReference{ env.NewGlobalRef(value) }
+    , property{ new qi::GenericProperty{ [&] {
+      const auto& res = ka::scoped(AnyValue_from_JObject(globalReference, valueType.signature()),
+                                  [](std::pair<qi::AnyReference, bool> p) {
+                                    if (p.second)
+                                      p.first.destroy();
+                                  });
+      const auto ok = res.value.second;
+      if (!ok)
+        return qi::AnyValue{};
+      const auto ref = res.value.first;
+      return qi::AnyValue{ ref.convertCopy(&valueType), false /*copy*/, true /*free*/ };
+    }() } }
+  {
+  }
+
 void PropertyManager::setValue(JNIEnv *env, jobject value)
 {
   // Keep a local reference alive until the property has been reset as the property value might
