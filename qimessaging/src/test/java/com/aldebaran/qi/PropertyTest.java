@@ -225,6 +225,13 @@ public class PropertyTest {
         });
     }
 
+    @Test
+    public void constructedWithAnAnyObjectValueSucceeds() {
+        DynamicObjectBuilder ob = new DynamicObjectBuilder();
+        AnyObject value = ob.object();
+        constructWithAValueAndClass(AnyObject.class, value);
+    }
+
     @QiStruct
     static class QiStructForTest {
         @QiField(0)
@@ -286,5 +293,23 @@ public class PropertyTest {
 
         property.setValue(0);
         assertEquals(property.getValue().get(), new Integer(-1));
+    }
+
+    @Test
+    public void constructedWithNullAnyObject() {
+        constructWithAValueAndClass(AnyObject.class, null);
+    }
+
+    @Test
+    public void setWithNullAnyObject() throws ExecutionException {
+        // Force the initial value at non-null object.
+        DynamicObjectBuilder ob = new DynamicObjectBuilder();
+        AnyObject value = ob.object();
+        Property<AnyObject> prop = new Property<AnyObject>(AnyObject.class, value);
+        assertNotNull(prop.getValue().get());
+
+        // Should not throw for `AnyObject`.
+        prop.setValue(null);
+        assertNull(prop.getValue().get());
     }
 }

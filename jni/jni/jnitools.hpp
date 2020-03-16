@@ -415,26 +415,7 @@ public:
    * @param env JNI evironment
    * @param value New value
    */
-  void setValue(JNIEnv *env, jobject value)
-  {
-    // Keep a local reference alive until the property has been reset as the property value might
-    // depend on it.
-    auto scopedOldRef = ka::scoped(env->NewLocalRef(globalReference), &qi::jni::releaseObject);
-
-    clearReference(env);
-    if(env->IsSameObject(value, nullptr) == JNI_TRUE)
-    {
-      globalReference = nullptr;
-    }
-    else
-    {
-      globalReference = env->NewGlobalRef(value);
-    }
-
-    QI_ASSERT_NOT_NULL(property);
-    property->setValue(qi::AnyValue::from(globalReference)).wait();
-  }
+  void setValue(JNIEnv *env, jobject value);
 };
-
 
 #endif // !_JAVA_JNI_JNITOOLS_HPP_

@@ -121,8 +121,7 @@ jlong JNICALL Java_com_aldebaran_qi_Property_set(JNIEnv* env,
   return ka::invoke_catch(
     exceptionMessageHandler(ThrowNewJavaExceptionReturn0{ env }),
     [&]() -> jlong {
-      if (throwIfNull(env, pointer, nullInternalPtrMsg) ||
-          throwIfNull(env, value, nullValuePtrMsg))
+      if (throwIfNull(env, pointer, nullInternalPtrMsg))
         return 0;
       auto propertyManager = reinterpret_cast<PropertyManager*>(pointer);
       propertyManager->setValue(env, value);

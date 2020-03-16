@@ -13,6 +13,7 @@
 #include <qi/signature.hpp>
 #include <qi/session.hpp>
 #include "jnitools.hpp"
+#include <jni/jobjectconverter.hpp>
 
 #include <boost/thread/tss.hpp>
 
@@ -479,6 +480,33 @@ qi::TypeInterface *propertyValueClassToType(JNIEnv *env, jclass clazz)
   // that we expose in Java because it is dynamic and the types it contains are unknown until we
   // instantiate one.
   return qi::typeOf<qi::AnyValue>();
+}
+
+void PropertyManager::setValue(JNIEnv *env, jobject value)
+{
+  // Keep a local reference alive until the property has been reset as the property value might
+  // depend on it.
+  auto scopedOldRef = ka::scoped(env->NewLocalRef(globalReference), &qi::jni::releaseObject);
+
+  clearReference(env);
+  if(env->IsSameObject(value, nullptr) == JNI_TRUE)
+  {
+    globalReference = nullptr;
+  }
+  else
+  {
+    globalReference = env->NewGlobalRef(value);
+  }
+
+  QI_ASSERT_NOT_NULL(property);
+
+  auto result = AnyValue_from_JObject(globalReference, property->signature().children().front());
+  if (!result.second) {
+      throw std::runtime_error(
+                  std::string("failed to convert JObject to ")
+                  + property->signature().children().front().toPrettySignature());
+  }
+  property->setValue(result.first).wait();
 }
 
 namespace qi {
