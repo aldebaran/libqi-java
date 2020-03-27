@@ -12,7 +12,7 @@
 #include <signal.h>
 #include <qi/signature.hpp>
 #include <qi/session.hpp>
-#include "jnitools.hpp"
+#include <jni/jnitools.hpp>
 #include <jni/jobjectconverter.hpp>
 
 #include <boost/thread/tss.hpp>

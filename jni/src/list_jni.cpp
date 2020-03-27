@@ -9,8 +9,8 @@
 
 #include <stdexcept>
 #include <qi/log.hpp>
-#include <jnitools.hpp>
-#include <list_jni.hpp>
+#include <jni/jnitools.hpp>
+#include <jni/list_jni.hpp>
 
 JNIList::JNIList()
 {

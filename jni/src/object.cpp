@@ -13,10 +13,10 @@
 #include <qi/anyobject.hpp>
 #include <qi/jsoncodec.hpp>
 
-#include <jnitools.hpp>
-#include <object.hpp>
-#include <callbridge.hpp>
-#include <jobjectconverter.hpp>
+#include <jni/jnitools.hpp>
+#include <jni/object.hpp>
+#include <jni/callbridge.hpp>
+#include <jni/jobjectconverter.hpp>
 
 qiLogCategory("qimessaging.jni");
 

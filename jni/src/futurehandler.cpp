@@ -7,7 +7,7 @@
 ** See COPYING for the license
 */
 
-#include <futurehandler.hpp>
+#include <jni/futurehandler.hpp>
 
 /**
  * @brief globalFutureHandler

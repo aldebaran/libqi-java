@@ -4,10 +4,10 @@
 #include <ka/errorhandling.hpp>
 #include <qi/type/dynamicobjectbuilder.hpp>
 #include <qi/property.hpp>
-#include <jnitools.hpp>
-#include <jobjectconverter.hpp>
-#include <object.hpp>
-#include <objectbuilder.hpp>
+#include <jni/jnitools.hpp>
+#include <jni/jobjectconverter.hpp>
+#include <jni/object.hpp>
+#include <jni/objectbuilder.hpp>
 
 qiLogCategory("qimessaging.jni.test");
 

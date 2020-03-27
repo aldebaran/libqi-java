@@ -9,10 +9,10 @@
 
 #include <qi/anyvalue.hpp>
 
-#include <jnitools.hpp>
-#include <futurehandler.hpp>
-#include <future_jni.hpp>
-#include <callbridge.hpp>
+#include <jni/jnitools.hpp>
+#include <jni/futurehandler.hpp>
+#include <jni/future_jni.hpp>
+#include <jni/callbridge.hpp>
 
 qiLogCategory("qimessaging.java");
 

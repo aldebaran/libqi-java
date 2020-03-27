@@ -19,14 +19,14 @@
 #include <qi/type/typedispatcher.hpp>
 #include <qi/type/typeinterface.hpp>
 
-#include <jnitools.hpp>
-#include <jobjectconverter.hpp>
-#include <map_jni.hpp>
-#include <list_jni.hpp>
-#include <tuple_jni.hpp>
-#include <optional_jni.hpp>
-#include <object_jni.hpp>
-#include <future_jni.hpp>
+#include <jni/jnitools.hpp>
+#include <jni/jobjectconverter.hpp>
+#include <jni/map_jni.hpp>
+#include <jni/list_jni.hpp>
+#include <jni/tuple_jni.hpp>
+#include <jni/optional_jni.hpp>
+#include <jni/object_jni.hpp>
+#include <jni/future_jni.hpp>
 
 qiLogCategory("qimessaging.jni");
 using namespace qi;

@@ -1,8 +1,8 @@
-#include "property.hpp"
 #include <qi/property.hpp>
 #include <qi/future.hpp>
 #include <ka/errorhandling.hpp>
-#include "jnitools.hpp"
+#include <jni/property.hpp>
+#include <jni/jnitools.hpp>
 
 using namespace qi::jni;
 

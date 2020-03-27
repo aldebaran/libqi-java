@@ -7,7 +7,7 @@
 #include <sstream>
 #include <qi/log.hpp>
 #include <qi/type/dynamicobject.hpp>
-#include "object_jni.hpp"
+#include <jni/object_jni.hpp>
 
 qiLogCategory("qi.jni.object");
 

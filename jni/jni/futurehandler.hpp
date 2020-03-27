@@ -15,7 +15,7 @@
 #include <qi/type/dynamicobjectbuilder.hpp>
 #include <qi/anyfunction.hpp>
 
-#include <jnitools.hpp>
+#include <jni/jnitools.hpp>
 
 namespace qi
 {

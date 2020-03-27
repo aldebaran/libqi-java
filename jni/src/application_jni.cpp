@@ -11,8 +11,8 @@
 
 #include <qi/log.hpp>
 #include <qi/applicationsession.hpp>
-#include <jnitools.hpp>
-#include "application_jni.hpp"
+#include <jni/jnitools.hpp>
+#include <jni/application_jni.hpp>
 
 qiLogCategory("qimessaging.jni");
 

@@ -10,8 +10,8 @@
 #include <stdexcept>
 #include <qi/log.hpp>
 
-#include <jnitools.hpp>
-#include <map_jni.hpp>
+#include <jni/jnitools.hpp>
+#include <jni/map_jni.hpp>
 
 qiLogCategory("qimessaging.jni");
 

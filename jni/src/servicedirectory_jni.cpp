@@ -9,8 +9,8 @@
 
 #include <qi/log.hpp>
 #include <qi/session.hpp>
-#include "jnitools.hpp"
-#include "servicedirectory_jni.hpp"
+#include <jni/jnitools.hpp>
+#include <jni/servicedirectory_jni.hpp>
 
 qiLogCategory("qimessaging.jni");
 
