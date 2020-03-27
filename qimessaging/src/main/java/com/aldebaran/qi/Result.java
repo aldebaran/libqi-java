@@ -18,7 +18,7 @@ import java.util.NoSuchElementException;
  * @param <T> The value type.
  * @param <E> The error type.
  */
-public class Result<T, E> {
+class Result<T, E> {
     private final T value;
     private final E err;
 
@@ -53,25 +53,25 @@ public class Result<T, E> {
         return err;
     }
 
-    public boolean isPresent() {
+    boolean isPresent() {
         return Objects.nonNull(value);
     }
 
-    public void ifPresent(Consumer<? super T> action) throws Throwable {
+    void ifPresent(Consumer<? super T> action) throws Throwable {
         Objects.requireNonNull(action);
         if (isPresent()) {
             action.consume(value);
         }
     }
 
-    public void ifErrPresent(Consumer<? super E> action) throws Throwable {
+    void ifErrPresent(Consumer<? super E> action) throws Throwable {
         Objects.requireNonNull(action);
         if (!isPresent()) {
             action.consume(err);
         }
     }
 
-    public void ifPresentOrElse(Consumer<? super T> valueAction, Consumer<? super E> errorAction) throws Throwable {
+    void ifPresentOrElse(Consumer<? super T> valueAction, Consumer<? super E> errorAction) throws Throwable {
         Objects.requireNonNull(valueAction);
         Objects.requireNonNull(errorAction);
         if (isPresent()) {
@@ -81,7 +81,7 @@ public class Result<T, E> {
         }
     }
 
-    public <U> Result<U, E> map(Function<? super T, ? extends U> mapper) throws Throwable {
+    <U> Result<U, E> map(Function<? super T, ? extends U> mapper) throws Throwable {
         Objects.requireNonNull(mapper);
         if (isPresent()) {
             return Result.of(mapper.execute(value));
@@ -90,7 +90,7 @@ public class Result<T, E> {
         }
     }
 
-    public <F> Result<T, F> mapErr(Function<? super E, ? extends F> mapper) throws Throwable {
+    <F> Result<T, F> mapErr(Function<? super E, ? extends F> mapper) throws Throwable {
         Objects.requireNonNull(mapper);
         if (isPresent()) {
             return selfCast();
@@ -99,7 +99,7 @@ public class Result<T, E> {
         }
     }
 
-    public <U> Result<U, E> flatMap(Function<? super T, ? extends Result<? extends U, E>> mapper) throws Throwable {
+    <U> Result<U, E> flatMap(Function<? super T, ? extends Result<? extends U, E>> mapper) throws Throwable {
         Objects.requireNonNull(mapper);
         if (isPresent()) {
             Result<U, E> r = Objects.uncheckedCast(mapper.execute(value));
@@ -109,7 +109,7 @@ public class Result<T, E> {
         }
     }
 
-    public <F> Result<T, F> flatMapErr(Function<? super E, ? extends Result<T, ? extends F>> mapper) throws Throwable {
+    <F> Result<T, F> flatMapErr(Function<? super E, ? extends Result<T, ? extends F>> mapper) throws Throwable {
         Objects.requireNonNull(mapper);
         if (isPresent()) {
             return selfCast();
@@ -119,7 +119,7 @@ public class Result<T, E> {
         }
     }
 
-    public Result<T, E> or(Supplier<? extends Result<? extends T, ? extends E>> supplier) {
+    Result<T, E> or(Supplier<? extends Result<? extends T, ? extends E>> supplier) {
         Objects.requireNonNull(supplier);
         if (isPresent()) {
             return this;
@@ -129,11 +129,11 @@ public class Result<T, E> {
         }
     }
 
-    public T orElse(T other) {
+    T orElse(T other) {
         return isPresent() ? value : other;
     }
 
-    public T orElseGet(Supplier<? extends T> supplier) {
+    T orElseGet(Supplier<? extends T> supplier) {
         return isPresent() ? value : supplier.get();
     }
 
