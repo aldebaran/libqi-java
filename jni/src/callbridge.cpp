@@ -239,7 +239,7 @@ qi::Future<qi::AnyValue>* call_from_java(JNIEnv* env,
         throwNewDynamicCallException(env, msg.c_str());
         return nullptr;
       },
-      ka::exception_message_t{}),
+      ka::exception_message{}),
     [&]{
       const auto metfut = callSuitableMethod(*env, object, methodNameMaybeWithSig, javaParamsArr);
       qi::Promise<qi::AnyValue> promise;

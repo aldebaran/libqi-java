@@ -31,9 +31,9 @@ namespace
   template<typename Proc>
   auto exceptionMessageHandler(Proc&& proc)
     // TODO: Remove the trailing return type when we can switch to C++14
-    -> decltype(ka::compose(std::forward<Proc>(proc), ka::exception_message_t{}))
+    -> decltype(ka::compose(std::forward<Proc>(proc), ka::exception_message{}))
   {
-    return ka::compose(std::forward<Proc>(proc), ka::exception_message_t{});
+    return ka::compose(std::forward<Proc>(proc), ka::exception_message{});
   }
 
   struct ThrowNewJavaException
