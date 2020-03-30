@@ -213,16 +213,10 @@ public class PropertyTest {
         constructWithAValueAndClass((Class<byte[]>) value.getClass(), value);
     }
 
-    @Test
-    public void setPropertyWithNullValueThrows() {
+    @Test(expected = NullPointerException.class)
+    public void setPropertyWithNullValueThrows() throws ExecutionException {
         final Property<Integer> prop = new Property<Integer>(42);
-        assertThrowsNullPointerException(new Function<Void, Void>() {
-            @Override
-            public Void execute(Void v) {
-                prop.setValue(null);
-                return null;
-            }
-        });
+        prop.setValue(null).get();
     }
 
     @Test

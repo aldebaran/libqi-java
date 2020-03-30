@@ -203,11 +203,13 @@ public final class Property<T> {
      * @param qiSerializer
      *            Serializer to use for serialize the value. Must not be null
      * @param value
-     *            New value. Warning may have strange result with {@code null}
+     *            New value. Must not be null, except for `Property<AnyObject>` for which it may be.
      * @return Future to know when value effectively set
      */
     public Future<Void> setValue(final QiSerializer qiSerializer, final T value) {
         Objects.requireNonNull(serializer, "The serializer of the property getValue must not be null.");
+        if(!this.valueClass.isAssignableFrom(AnyObject.class))
+            Objects.requireNonNull(value, "The value must not be null.");
 
         try {
             this.lastSettedValue = value;
