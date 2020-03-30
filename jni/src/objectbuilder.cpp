@@ -14,11 +14,10 @@
 #include <qi/anyobject.hpp>
 #include <qi/anyfunction.hpp>
 #include <qi/property.hpp>
-#include <jnitools.hpp>
-
-#include <object_jni.hpp>
-#include <callbridge.hpp>
-#include <objectbuilder.hpp>
+#include <jni/jnitools.hpp>
+#include <jni/object_jni.hpp>
+#include <jni/callbridge.hpp>
+#include <jni/objectbuilder.hpp>
 
 JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_DynamicObjectBuilder_create(JNIEnv *QI_UNUSED(env), jobject QI_UNUSED(obj))
 {

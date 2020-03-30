@@ -119,7 +119,7 @@ class Result<T, E> {
         }
     }
 
-    public Result<T, E> or(Supplier<? extends Result<? extends T, ? extends E>> supplier) {
+    Result<T, E> or(Supplier<? extends Result<? extends T, ? extends E>> supplier) {
         Objects.requireNonNull(supplier);
         if (isPresent()) {
             return this;

@@ -1,8 +1,8 @@
-#include "property.hpp"
 #include <qi/property.hpp>
 #include <qi/future.hpp>
 #include <ka/errorhandling.hpp>
-#include "jnitools.hpp"
+#include <jni/property.hpp>
+#include <jni/jnitools.hpp>
 
 using namespace qi::jni;
 
@@ -84,9 +84,7 @@ Java_com_aldebaran_qi_Property_createPropertyWithValue(JNIEnv* env,
   return ka::invoke_catch(
     exceptionMessageHandler(ThrowNewJavaExceptionReturn0{ env }),
     [&]() -> jlong {
-      if ( // TODO: Handle this case in the conversion between AnyValue and jobject.
-          throwIfNull(env, value, nullValuePtrMsg) ||
-          throwIfNull(env, valueClass, nullValueClassPtrMsg))
+      if (throwIfNull(env, valueClass, nullValueClassPtrMsg))
         return 0;
       auto* const valueType = getPropertyValueType(env, valueClass);
       if (!valueType)
@@ -121,8 +119,7 @@ jlong JNICALL Java_com_aldebaran_qi_Property_set(JNIEnv* env,
   return ka::invoke_catch(
     exceptionMessageHandler(ThrowNewJavaExceptionReturn0{ env }),
     [&]() -> jlong {
-      if (throwIfNull(env, pointer, nullInternalPtrMsg) ||
-          throwIfNull(env, value, nullValuePtrMsg))
+      if (throwIfNull(env, pointer, nullInternalPtrMsg))
         return 0;
       auto propertyManager = reinterpret_cast<PropertyManager*>(pointer);
       propertyManager->setValue(env, value);

@@ -1,7 +1,6 @@
-#include "promise_jni.hpp"
-
 #include <qi/future.hpp>
-#include "jnitools.hpp"
+#include <jni/promise_jni.hpp>
+#include <jni/jnitools.hpp>
 
 qiLogCategory("qimessaging.java");
 

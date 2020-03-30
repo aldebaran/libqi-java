@@ -4,10 +4,10 @@
 #include <ka/errorhandling.hpp>
 #include <qi/type/dynamicobjectbuilder.hpp>
 #include <qi/property.hpp>
-#include <jnitools.hpp>
-#include <jobjectconverter.hpp>
-#include <object.hpp>
-#include <objectbuilder.hpp>
+#include <jni/jnitools.hpp>
+#include <jni/jobjectconverter.hpp>
+#include <jni/object.hpp>
+#include <jni/objectbuilder.hpp>
 
 qiLogCategory("qimessaging.jni.test");
 
@@ -151,6 +151,38 @@ TEST(QiJNI, futureErrorIfSetPropertyThrows)
   ASSERT_EQ(initialValue, object.property<int>(propertyName).value());
 }
 
+TEST(QiJNI, propertyOfAnyObjectAcceptsNull)
+{
+  Property<int> whatev(42);
+  const auto initialValue = test::makeObjectWithProperty("tomtom", whatev);
+  const auto newValue = AnyObject();
+  Property<AnyObject> property{AutoAnyReference(initialValue)};
+
+  const std::string propertyName = "nana";
+  auto object = test::makeObjectWithProperty(propertyName, property);
+  auto objectPtr = &object;
+
+  JNIAttach attach{test::environment->jniEnv};
+  auto futureAddress = Java_com_aldebaran_qi_AnyObject_setProperty(
+        test::environment->jniEnv, jobject{},
+        reinterpret_cast<jlong>(objectPtr),
+        toJstring(propertyName),
+        nullptr);
+
+  auto future = reinterpret_cast<Future<AnyValue>*>(futureAddress);
+  switch(const auto status = future->wait(MilliSeconds{200}))
+  {
+    case FutureState_FinishedWithValue:
+      break;
+    case FutureState_FinishedWithError:
+      FAIL() << future->error();
+      break;
+    default:
+      FAIL() << status;
+  }
+  ASSERT_FALSE(object.property<AnyObject>(propertyName).value());
+  ASSERT_FALSE(test::environment->jniEnv->ExceptionCheck());
+}
 
 TEST(QiJNI, dynamicObjectBuilderAdvertiseMethodVoidVoid)
 {

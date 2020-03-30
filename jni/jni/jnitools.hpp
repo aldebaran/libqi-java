@@ -376,14 +376,8 @@ public:
    * @brief Create the manager with a property with a given value.
    *
    * Passing a value that refers to a null Java object is undefined behavior.
-   * TODO: Make it defined behavior by handling it in the conversion between AnyValue and jobject.
    */
-  PropertyManager(qi::TypeInterface& valueType, JNIEnv& env, jobject value)
-    : globalReference{ env.NewGlobalRef(value) }
-    , property{ new qi::GenericProperty{
-        qi::AnyValue::from(globalReference).convertCopy(&valueType) } }
-  {
-  }
+  PropertyManager(qi::TypeInterface& valueType, JNIEnv& env, jobject value);
 
   /**
    * @brief Clear global reference if need
@@ -415,26 +409,7 @@ public:
    * @param env JNI evironment
    * @param value New value
    */
-  void setValue(JNIEnv *env, jobject value)
-  {
-    // Keep a local reference alive until the property has been reset as the property value might
-    // depend on it.
-    auto scopedOldRef = ka::scoped(env->NewLocalRef(globalReference), &qi::jni::releaseObject);
-
-    clearReference(env);
-    if(env->IsSameObject(value, nullptr) == JNI_TRUE)
-    {
-      globalReference = nullptr;
-    }
-    else
-    {
-      globalReference = env->NewGlobalRef(value);
-    }
-
-    QI_ASSERT_NOT_NULL(property);
-    property->setValue(qi::AnyValue::from(globalReference)).wait();
-  }
+  void setValue(JNIEnv *env, jobject value);
 };
-
 
 #endif // !_JAVA_JNI_JNITOOLS_HPP_

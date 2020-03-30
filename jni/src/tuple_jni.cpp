@@ -10,8 +10,8 @@
 #include <stdexcept>
 #include <sstream>
 #include <qi/log.hpp>
-#include <jnitools.hpp>
-#include <tuple_jni.hpp>
+#include <jni/jnitools.hpp>
+#include <jni/tuple_jni.hpp>
 
 JNITuple::JNITuple(jobject obj)
 {

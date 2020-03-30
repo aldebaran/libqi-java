@@ -1,5 +1,4 @@
 package com.aldebaran.qi.serialization;
-
 import com.aldebaran.qi.QiConversionException;
 
 import java.lang.reflect.Type;
@@ -76,7 +75,9 @@ public class QiSerializer {
     }
 
     public Object serialize(Object object) throws QiConversionException {
-        if (object == null)
+        // If an object is null, it should be serialized in another null object.
+        // Passing through a converter is useless and would result in an exception (null does not have a class).
+        if(object == null)
             return null;
 
         for (Converter converter : converters)

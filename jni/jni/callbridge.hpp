@@ -13,7 +13,7 @@
 #include <list>
 #include <jni.h>
 
-#include <jnitools.hpp>
+#include <jni/jnitools.hpp>
 
 // Generic callback for call forward
 qi::Future<qi::AnyValue>*    call_from_java(JNIEnv *env, qi::AnyObject object, const std::string& strMethodName, jobjectArray listParams);

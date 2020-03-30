@@ -15,11 +15,11 @@
 #include <qi/session.hpp>
 
 #include <jni.h>
-#include <jnitools.hpp>
-#include <session_jni.hpp>
-#include <object_jni.hpp>
-#include <callbridge.hpp>
-#include <jobjectconverter.hpp>
+#include <jni/jnitools.hpp>
+#include <jni/session_jni.hpp>
+#include <jni/object_jni.hpp>
+#include <jni/callbridge.hpp>
+#include <jni/jobjectconverter.hpp>
 
 #include <qi/messaging/clientauthenticator.hpp>
 #include <qi/messaging/clientauthenticatorfactory.hpp>

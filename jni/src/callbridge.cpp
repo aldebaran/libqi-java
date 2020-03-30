@@ -21,9 +21,9 @@
 #include <qi/type/dynamicobjectbuilder.hpp>
 #include <qi/anyfunction.hpp>
 
-#include <callbridge.hpp>
-#include <jobjectconverter.hpp>
-#include <jnitools.hpp>
+#include <jni/callbridge.hpp>
+#include <jni/jobjectconverter.hpp>
+#include <jni/jnitools.hpp>
 
 qiLogCategory("qimessaging.jni");
 

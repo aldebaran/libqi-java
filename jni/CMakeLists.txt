@@ -13,7 +13,7 @@ if (I_AM_A_ROBOT)
   include_directories(SYSTEM ${ORACLE-JDK_INCLUDE_DIRS})
 endif()
 
-include_directories("jni")
+include_directories("${PROJECT_SOURCE_DIR}")
 
 set(SOURCE
    jni/session_jni.hpp

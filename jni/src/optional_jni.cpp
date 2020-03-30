@@ -1,6 +1,6 @@
-#include <jnitools.hpp>
 #include <qi/log.hpp>
-#include <optional_jni.hpp>
+#include <jni/jnitools.hpp>
+#include <jni/optional_jni.hpp>
 
 JNIOptional::JNIOptional()
 {
