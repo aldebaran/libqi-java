@@ -1,7 +1,6 @@
 package com.aldebaran.qi;
 
 import com.aldebaran.qi.serialization.QiSerializer;
-import com.aldebaran.qi.serialization.StructConverter;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
@@ -295,7 +294,7 @@ public class PropertyTest {
     }
 
     @Test
-    public void setWithNullAnyObject() throws ExecutionException {
+    public void anyObjectSetPropertyNullAnyObject() throws ExecutionException {
         // Force the initial value at non-null object.
         DynamicObjectBuilder ob = new DynamicObjectBuilder();
         AnyObject value = ob.object();
@@ -305,5 +304,22 @@ public class PropertyTest {
         // Should not throw for `AnyObject`.
         prop.setValue(null);
         assertNull(prop.getValue().get());
+    }
+
+    @Test
+    public void anyObjectSetPropertyNull() {
+        DynamicObjectBuilder builder = new DynamicObjectBuilder();
+        builder.advertiseProperty("myProperty",
+                new Property<Integer>(42));
+        AnyObject object = builder.object();
+        Future<Void> future = object.setProperty("myProperty", null);
+        try {
+            future.getValue();
+        }
+        catch (RuntimeException ex) {
+            assertSame(QiException.class, ex.getCause().getClass());
+            return; // success
+        }
+        fail("object.setProperty should have returned a future in error.");
     }
 }

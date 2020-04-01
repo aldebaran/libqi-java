@@ -105,19 +105,36 @@ public class AnyObject implements Comparable<AnyObject> {
         this._p = _p;
     }
 
-    public Future<Void> setProperty(QiSerializer serializer, String property, Object o) {
+    /**
+     * Sets the AnyObject property with the given name, using a serializer to convert the value.
+     * @param valueConverter A converter that transforms `newValue` into a property value.
+     * @param propertyName The property name.
+     * @param newValue The object to convert as the new property value.
+     *          Must not be null, unless the property value type is AnyObject.
+     * @return A future in error if the given value is null and the property value type is not `AnyObject`, or if
+     *         no property with this name could be found.
+     */
+    public Future<Void> setProperty(QiSerializer valueConverter, String propertyName, Object newValue) {
         try {
             // convert custom structs to tuples if necessary
-            Object convertedProperty = serializer.serialize(o);
-            return new Future<Void>(setProperty(_p, property, convertedProperty));
+            Object convertedValue = valueConverter.serialize(newValue);
+            return new Future<Void>(setProperty(_p, propertyName, convertedValue));
         }
         catch (QiConversionException e) {
             throw new QiRuntimeException(e);
         }
     }
 
-    public Future<Void> setProperty(String property, Object o) {
-        return setProperty(QiSerializer.getDefault(), property, o);
+    /**
+     * Sets a property of the AnyObject defined by a string, using the default serializer to convert the value.
+     * @param propertyName The property name.
+     * @param newValue The object to convert as the new property value.
+     *          Must not be null, unless the property value type is AnyObject.
+     * @return A future in error if the given value is null and the property value type is not `AnyObject`, or if
+     *         no property with this name could be found.
+     */
+    public Future<Void> setProperty(String propertyName, Object newValue) {
+        return setProperty(QiSerializer.getDefault(), propertyName, newValue);
     }
 
     public <T> Future<T> property(String property) {
@@ -132,7 +149,7 @@ public class AnyObject implements Comparable<AnyObject> {
      *            the target result type
      * @param property
      *            the property
-     * @return a future to the converted result
+     * @return A future to the converted result.
      */
     public <T> Future<T> getProperty(final QiSerializer serializer, final Type targetType, String property) {
         return property(property).andThenApply(new Function<Object, T>() {

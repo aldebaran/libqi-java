@@ -63,9 +63,9 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_setProperty(
     const auto propertyId = metaObject.propertyId(propertyName);
     if (propertyId == -1)
     {
-      throw std::runtime_error(
-          std::string("object as no such property \"")
-          + propertyName + std::string("\""));
+      return reinterpret_cast<jlong>(new auto(qi::makeFutureError<qi::AnyValue>(
+        "object as no such property \""+ propertyName + std::string("\"")
+      )));
     }
     const auto* metaProperty = metaObject.property(propertyId);
     QI_ASSERT(metaProperty);
@@ -74,18 +74,17 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_AnyObject_setProperty(
     // Performing the conversion.
     qi::jni::JNIAttach attach(env);
     auto conversionResult = AnyValue_from_JObject(jValue, signatureHint);
-    if (!conversionResult.second)
+    if(!conversionResult.second)
     {
-      throw std::runtime_error(
-          std::string("while setting property \"")
-          + propertyName + "\", could not convert JObject to AnyValue of signature "
-          + signatureHint.toPrettySignature());
+      return reinterpret_cast<jlong>(new auto(qi::makeFutureError<qi::AnyValue>(
+          std::string("while setting property \"") + propertyName +
+          "\", could not convert JObject to AnyValue of signature " +
+          signatureHint.toPrettySignature())));
     }
 
     // Setting the property and wrapping the future result.
-    auto setting = objectPtr->setProperty(propertyName, conversionResult.first).async();
     std::unique_ptr<qi::Future<qi::AnyValue>> futurePtr{new qi::Future<qi::AnyValue>()};
-    *futurePtr = qi::toAnyValueFuture(setting);
+    *futurePtr = qi::toAnyValueFuture(objectPtr->setProperty(propertyName, conversionResult.first).async());
     return reinterpret_cast<jlong>(futurePtr.release());
   }
   catch (std::runtime_error &e)
