@@ -8,7 +8,9 @@ import java.util.Properties;
 /**
  * Maven-based version utilities.
  * more details at https://docs.oracle.com/middleware/1212/core/MAVEN/maven_version.htm#MAVEN400
+ * @deprecated This class is still experimental. We recommend not to use it.
  */
+@Deprecated
 public class Version {
     /**
      * Reads a version from an InputStream.
