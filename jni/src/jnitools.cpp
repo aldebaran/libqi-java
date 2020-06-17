@@ -107,7 +107,9 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* virtualMachine, void* QI_UNUSED(reserv
 
 JNIEXPORT void JNICALL JNI_OnUnload(JavaVM* QI_UNUSED(vm), void* QI_UNUSED(reserved))
 {
-  qi::getEventLoop()->setEmergencyCallback({}); // reset the emergency callback
+  const auto eventLoop = qi::getEventLoop();
+  if(eventLoop != nullptr)
+    eventLoop->setEmergencyCallback({}); // reset the emergency callback
   javaVirtualMachine = nullptr;
 }
 
@@ -616,6 +618,11 @@ namespace qi {
     // Get JNI environment pointer, valid in current thread.
     JNIEnv*     env()
     {
+      if(!javaVirtualMachine)
+      {
+          qiLogError() << "Cannot get JNI environment, the java virtual machine is null.";
+          return nullptr;
+      }
       JNIEnv* env = 0;
 
       javaVirtualMachine->GetEnv(reinterpret_cast<void**>(&env), QI_JNI_MIN_VERSION);

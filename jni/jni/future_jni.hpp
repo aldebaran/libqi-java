@@ -11,6 +11,44 @@
 #define _FUTURE_JNI_HPP_
 
 #include <jni.h>
+#include <jni/jnitools.hpp>
+
+/**
+ * Constructs a Java qi.Future object from a C++ qi::Future.
+ *
+ * The Java qi.Future returned by this function matches the following conditions:
+ *   Its value type is java/lang/Object.
+ *   If T is itself a Future type, the result will be flattened.
+ *
+ * precondition: future shall be valid. It shall not have a struct/tupple parameter which signature is not known by libqi.
+ *               The generic object (which signature is "o") cannot be used because AnyReferenceBase::convert does not manage this case.
+ */
+qi::jni::ScopedJObject<jobject> toJavaFuture(JNIEnv *env, qi::Future<qi::AnyValue> future);
+
+template <typename T>
+qi::jni::ScopedJObject<jobject> toJavaFuture(JNIEnv *env, qi::Future<T> future)
+{
+    return toJavaFuture(env, future.andThen([](const T& v){ return qi::AnyValue::from(v); }));
+}
+
+template <typename T>
+qi::jni::ScopedJObject<jobject> toJavaFuture(JNIEnv *env, qi::Future<qi::Future<T>> future)
+{
+    // qi::Future<T> is recognised as a generic object, that is not managed by AnyReferenceBase::convert, so we chose to flatten the future
+    // to avoid an error in that case.
+    QI_ASSERT_TRUE(future.isValid());
+    return toJavaFuture(env, future.unwrap());
+}
+
+qi::jni::ScopedJObject<jobject> toJavaFuture(JNIEnv *env, qi::Future<void> future);
+
+/**
+ * @brief obtainFutureCfromFutureJava Converts a Java Future into a C++ Future object.
+ * @param env JNI environment
+ * @param future Java Future
+ * @return C future linked
+ */
+qi::Future<qi::AnyValue> toCppFuture(JNIEnv *env, jobject future);
 
 extern "C"
 {
@@ -31,7 +69,7 @@ extern "C"
    * @param function Function to callback
    * @return Created future
    */
-  JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Future_qiFutureAndThen(JNIEnv* env, jobject thisFuture, jlong pFuture, jobject function);
+  JNIEXPORT jobject JNICALL Java_com_aldebaran_qi_Future_qiFutureAndThen(JNIEnv* env, jobject thisFuture, jlong pFuture, jobject function);
   /**
    * Call native future "andThen" for Consumer(P)
    * @param env JNI environment
@@ -40,7 +78,7 @@ extern "C"
    * @param function Void function to callback
    * @return Created future
    */
-  JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Future_qiFutureAndThenVoid(JNIEnv* env, jobject thisFuture, jlong pFuture, jobject function);
+  JNIEXPORT jobject JNICALL Java_com_aldebaran_qi_Future_qiFutureAndThenVoid(JNIEnv* env, jobject thisFuture, jlong pFuture, jobject function);
   /**
    * Call native future "andThen" for Function(P)->Future<R> with automatic unwrap
    * @param env JNI environment
@@ -49,7 +87,7 @@ extern "C"
    * @param function Function to callback
    * @return Created future
    */
-  JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Future_qiFutureAndThenUnwrap(JNIEnv* env, jobject thisFuture, jlong pFuture, jobject function);
+  JNIEXPORT jobject JNICALL Java_com_aldebaran_qi_Future_qiFutureAndThenUnwrap(JNIEnv* env, jobject thisFuture, jlong pFuture, jobject function);
   /**
    * Call native future "then" for FutureFunction(Future<P>)->R
    * @param env JNI environment
@@ -58,7 +96,7 @@ extern "C"
    * @param futureFunction Function to callback
    * @return Created future
    */
-  JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Future_qiFutureThen(JNIEnv* env, jobject thisFuture, jlong pFuture, jobject futureFunction);
+  JNIEXPORT jobject JNICALL Java_com_aldebaran_qi_Future_qiFutureThen(JNIEnv* env, jobject thisFuture, jlong pFuture, jobject futureFunction);
   /**
    * Call native future "then" for and FutureFunction(Future<P>)->Void
    * @param env JNI environment
@@ -67,7 +105,7 @@ extern "C"
    * @param futureFunction Function to callback
    * @return Created future
    */
-  JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Future_qiFutureThenVoid(JNIEnv* env, jobject thisFuture, jlong pFuture, jobject futureFunction);
+  JNIEXPORT jobject JNICALL Java_com_aldebaran_qi_Future_qiFutureThenVoid(JNIEnv* env, jobject thisFuture, jlong pFuture, jobject futureFunction);
   /**
    * Call native future "then" for Function(Future<P>)->Future<R> with automatic unwrap
    * @param env JNI environment
@@ -76,7 +114,7 @@ extern "C"
    * @param function Function to callback
    * @return Created future
    */
-  JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Future_qiFutureThenUnwrap(JNIEnv* env, jobject thisFuture, jlong pFuture, jobject futureFunction);
+  JNIEXPORT jobject JNICALL Java_com_aldebaran_qi_Future_qiFutureThenUnwrap(JNIEnv* env, jobject thisFuture, jlong pFuture, jobject futureFunction);
 } // !extern "C"
 
 #endif //!_FUTURE_JNI_HPP_
