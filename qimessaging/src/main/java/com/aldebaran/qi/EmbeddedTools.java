@@ -35,7 +35,7 @@ class EmbeddedTools {
     static native void initTypeSystem();
 
     /// Static instance definition
-    private static AtomicBoolean embeddedLibrariesLoaded = new AtomicBoolean();
+    private static Boolean embeddedLibrariesLoaded = Boolean.FALSE;
 
     private static void log(LogLevel level, String message) {
         LogReport.log(level, String.format("{}: {}", LOADER_LOG_PREFIX, message));
@@ -219,8 +219,9 @@ class EmbeddedTools {
         }
     }
 
-    static void loadEmbeddedLibraries() {
-        if (embeddedLibrariesLoaded.compareAndSet(false, true)) {
+    static synchronized void loadEmbeddedLibraries() {
+        if (!embeddedLibrariesLoaded) {
+            embeddedLibrariesLoaded = Boolean.TRUE;
             log(LogLevel.INFORMATION, "starting native libraries loading.");
             tryLoadLibraries();
             log(LogLevel.INFORMATION, "starting type system initialization.");
