@@ -80,10 +80,20 @@ void forwardToJavaLogReport(const qi::LogLevel verb,
   // Do nothing if the LogReport Java class could not be loaded.
   if(!msg || !LogReportClass)
      return;
-  qi::jni::JNIAttach attach;
-  auto* const env = attach.get();
-  const auto message = ka::scoped(env->NewStringUTF(msg), qi::jni::releaseString);
-  env->CallStaticVoidMethod(LogReportClass, jniLog, static_cast<jint>(verb), message.value);
+
+  try
+  {
+    qi::jni::JNIAttach attach;
+    auto* const env = attach.get();
+    const auto message = ka::scoped(env->NewStringUTF(msg), qi::jni::releaseString);
+    env->CallStaticVoidMethod(LogReportClass, jniLog, static_cast<jint>(verb), message.value);
+    qi::jni::handlePendingException(*env);
+  }
+  catch (...)
+  {
+    // If the log fails, there is no fallback. The Java VM might be shutting down.
+    // We decide to just ignore the log.
+  }
 }
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* virtualMachine, void* QI_UNUSED(reserved))
