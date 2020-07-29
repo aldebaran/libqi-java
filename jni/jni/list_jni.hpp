@@ -11,6 +11,7 @@
 #define _JAVA_JNI_LIST_HPP_
 
 #include <jni.h>
+#include "jnitools.hpp"
 
 /**
  * @brief The JNIList class Helper class to manipulation Java List<?> in C++
@@ -22,7 +23,8 @@ class JNIList
     JNIList();
 
     int size();
-    jobject get(int index);
+    qi::jni::ScopedJObject<jobject> get(int index);
+
     jobject object();
     bool    push_back(jobject current);
 
