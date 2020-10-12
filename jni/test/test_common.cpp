@@ -93,16 +93,16 @@ namespace qi { namespace jni { namespace test
       "Failed to attach current thread.");
     const auto embeddedToolsClass = jniEnv->FindClass("com/aldebaran/qi/EmbeddedTools");
     QI_ASSERT_NOT_NULL(embeddedToolsClass);
+
     // We need to notify the Java code that the native libraries are already loaded.
-    const auto atomicBooleanClass = jniEnv->FindClass("java/util/concurrent/atomic/AtomicBoolean");
-    QI_ASSERT_NOT_NULL(atomicBooleanClass);
-    const auto embeddedLibrariesLoaded = scopeJObject(jniEnv->GetStaticObjectField(
-          embeddedToolsClass, jniEnv->GetStaticFieldID(embeddedToolsClass, "embeddedLibrariesLoaded", "Ljava/util/concurrent/atomic/AtomicBoolean;")));
-    QI_ASSERT_NOT_NULL(embeddedLibrariesLoaded.value);
-    const auto embeddedLibrariesLoadedSet = jniEnv->GetMethodID(
-        atomicBooleanClass, "set", "(Z)V");
-    QI_ASSERT_NOT_NULL(embeddedLibrariesLoadedSet);
-    jniEnv->CallVoidMethod(embeddedLibrariesLoaded.value, embeddedLibrariesLoadedSet, true);
+    const auto booleanClass = jniEnv->FindClass("java/lang/Boolean");
+    const auto valueOfMethodId = jniEnv->GetStaticMethodID(booleanClass, "valueOf", "(Z)Ljava/lang/Boolean;");
+    const auto booleanObject = scopeJObject(jniEnv->CallStaticObjectMethod(booleanClass, valueOfMethodId, true));
+    QI_ASSERT_NOT_NULL(booleanObject.value);
+
+    const auto embeddedLibrariesLoadedId = jniEnv->GetStaticFieldID(embeddedToolsClass, "embeddedLibrariesLoaded", "Ljava/lang/Boolean;");
+    QI_ASSERT_NOT_NULL(embeddedLibrariesLoadedId);
+    jniEnv->SetStaticObjectField(embeddedToolsClass, embeddedLibrariesLoadedId, booleanObject.value);
     QI_ASSERT_FALSE(jniEnv->ExceptionCheck());
 
     app.emplace(argc, argv);
