@@ -429,7 +429,7 @@ std::string propertyBaseSignature(JNIEnv *env, jclass propertyBase)
   if (env->IsAssignableFrom(propertyBase, cls_anyobject))
     return { static_cast<char>(qi::Signature::Type_Object) };
   if (env->IsAssignableFrom(propertyBase, cls_double))
-    return { static_cast<char>(qi::Signature::Type_Float) };
+    return { static_cast<char>(qi::Signature::Type_Double) };
   if (env->IsAssignableFrom(propertyBase, cls_byte_array) || env->IsAssignableFrom(propertyBase, cls_bytebuffer))
     return { static_cast<char>(qi::Signature::Type_Raw) };
   if (env->IsAssignableFrom(propertyBase, cls_map))

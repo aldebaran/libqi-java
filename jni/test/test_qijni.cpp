@@ -127,6 +127,37 @@ TEST(QiJNI, dynamicObjectBuilderAdvertiseMethodVoidVoid)
   ASSERT_FALSE(test::environment->jniEnv->ExceptionCheck());
 }
 
+TEST(QiJNI, dynamicObjectBuilderAdvertizePropertyDoubleMaxValue)
+{
+    // Creates a builder
+    const auto propertyName = "doubleProperty";
+    const auto propertyClass = test::environment->jniEnv->FindClass("java/lang/Double");
+    ASSERT_NE(nullptr, propertyClass);
+    const auto objectBuilderAddress = Java_com_aldebaran_qi_DynamicObjectBuilder_create(test::environment->jniEnv, nullptr);
+
+    // Adds a Double property
+    test::environment->jniEnv->ExceptionClear();
+    Java_com_aldebaran_qi_DynamicObjectBuilder_advertiseProperty(
+                test::environment->jniEnv, jobject{},
+                objectBuilderAddress,
+                toJstring(propertyName),
+                propertyClass);
+    ASSERT_FALSE(test::environment->jniEnv->ExceptionCheck());
+
+    // Sets the property
+    auto* castedBuilderAddress = reinterpret_cast<qi::DynamicObjectBuilder*>(objectBuilderAddress);
+    auto builderObject = castedBuilderAddress->object();
+    ASSERT_TRUE(builderObject.isValid());
+    const auto maxValueId = test::environment->jniEnv->GetStaticFieldID(propertyClass, "MAX_VALUE", "D");
+    const auto maxValue = test::environment->jniEnv->GetStaticDoubleField(propertyClass, maxValueId);
+    builderObject.setProperty(propertyName, maxValue);
+
+    // Checks the property's value is correct
+    auto propertyValueFut = builderObject.property<double>(propertyName);
+    const auto propertyValue = propertyValueFut.value();
+    ASSERT_TRUE(propertyValue == std::numeric_limits<double>::max());
+}
+
 TEST(QiJNI, className)
 {
   const std::string className("java/lang/NullPointerException");
