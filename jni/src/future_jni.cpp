@@ -351,7 +351,7 @@ struct FutureFunctionFunctor
     }
 };
 /**
- * @brief The FutureFunctionFunctor struct: Future<P>->void
+ * @brief The FutureFunctionFunctorVoid struct: Future<P>->void
  */
 struct FutureFunctionFunctorVoid
 {
@@ -491,8 +491,9 @@ JNIEXPORT jobject JNICALL Java_com_aldebaran_qi_Future_qiFutureAndThenVoid(JNIEn
 {
     auto * future = futureFromPointer(pFuture);
     auto gFunction = qi::jni::makeSharedGlobalRef(env, function);
+
     const auto fut = toJavaFuture(env, future->andThen(qi::FutureCallbackType_Async,
-                                                      FunctionFunctor{gFunction}));
+                                                      FunctionFunctorVoid{gFunction}));
     return env->NewLocalRef(fut.value);
 }
 
