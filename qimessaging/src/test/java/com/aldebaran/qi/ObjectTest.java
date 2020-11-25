@@ -6,10 +6,7 @@ package com.aldebaran.qi;
 
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 import com.aldebaran.qi.serialization.QiSerializer;
@@ -435,6 +432,40 @@ public class ObjectTest {
             assertEquals(originalBuffer, f.<ByteBuffer>get());
         } catch (ExecutionException e) {
             fail("Call to 'byteBufferMethod' failed: " + e.getMessage());
+        }
+    }
+
+    static class BigObject extends QiService
+    {
+        public void returnBigNames(List<Object> input)
+        {
+        };
+    }
+
+    @Test
+    public void advertiseMethodWithBigList()
+    {
+        DynamicObjectBuilder ob = new DynamicObjectBuilder();
+        try
+        {
+            List<String> names = new ArrayList<String>();
+            for(int i = 0; i < 1000; i++)
+            {
+                names.add("name" + i);
+            }
+            List<Tuple> itemList = new ArrayList<Tuple>();
+            for(int i = 0; i < names.size(); ++i)
+            {
+                itemList.add(Tuple.of(names));
+            }
+
+            BigObject bigO = new BigObject();
+            ob.advertiseMethod("returnBigNames::v(m)", bigO, "calling big boy");
+            Future<Void> fut = ob.object().call("returnBigNames", itemList);
+            fut.get();
+        } catch (Exception e)
+        {
+            fail("cannot advertise methods: " + e.getMessage());
         }
     }
 }

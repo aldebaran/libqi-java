@@ -36,6 +36,8 @@ public class SignatureUtilitiesTest {
 
         public void listListString(List<List<String>> list);
 
+        public void tuple(Tuple t);
+
         public void mapIntegerString(Map<Integer, String> map);
 
         public void mapFloatMapStringInteger(Map<Float, Map<String, Integer>> map);
@@ -126,6 +128,7 @@ public class SignatureUtilitiesTest {
         this.assertSignature("double doubleDouble(double)", "doubleDouble::d(d)", "doubleDouble");
         this.assertSignature("String stringString(String)", "stringString::s(s)", "stringString");
         this.assertSignature("void listString(List<String>)", "listString::v([s])", "listString");
+        this.assertSignature("void tuple(Tuple)", "tuple::v(m)", "tuple");
         this.assertSignature("void listListString(List<List<String>>)", "listListString::v([[s]])", "listListString");
         this.assertSignature("void mapIntegerString(Map<Integer, String>)", "mapIntegerString::v({is})", "mapIntegerString");
         this.assertSignature("void mapFloatMapStringInteger(Map<Float, Map<String, Integer>>)",

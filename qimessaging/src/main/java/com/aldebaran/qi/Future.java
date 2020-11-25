@@ -29,15 +29,9 @@ public class Future<T> implements java.util.concurrent.Future<T> {
         EmbeddedTools.loadEmbeddedLibraries();
     }
 
-    /**
-     * Consumer caller to report an error
-     */
-    static class ReportBugConsumer<T1> implements Consumer<Future<T1>> {
-        /**
-         * Called when future is finished
-         */
+    static class ReportBugCallback<T1> implements Callback<T1> {
         @Override
-        public void consume(Future<T1> future) throws Throwable {
+        public void onFinished(Future<T1> future) {
             if (future.hasError() && !future.continuationSpecified.get()) {
                 System.err.println("Uncaught exception on Future: " + future.getErrorMessage());
                 future.getError().printStackTrace();
@@ -80,7 +74,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
      *            Function to callback
      * @return Pointer of created future
      */
-    private native long qiFutureAndThen(long future, Function<T, ?> function);
+    private native Object qiFutureAndThen(long future, Function<T, ?> function);
 
     /**
      * Call native future "andThen" for Consumer(P)
@@ -91,7 +85,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
      *            Function to callback
      * @return Pointer of created future
      */
-    private native long qiFutureAndThenVoid(long future, Consumer<T> consumer);
+    private native Object qiFutureAndThenVoid(long future, Consumer<T> consumer);
 
     /**
      * Call native future "andThen" for Function(P)->Future&lt;R&gt; and unwrap
@@ -103,7 +97,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
      *            Function to callback
      * @return Pointer of created future
      */
-    private native long qiFutureAndThenUnwrap(long future, Function<T, ?> futureOfFutureFunction);
+    private native Object qiFutureAndThenUnwrap(long future, Function<T, ?> futureOfFutureFunction);
 
     /**
      * Call native future <b>then</b> for Function(Future&lt;P&gt;)->R
@@ -114,7 +108,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
      *            Function to callback
      * @return Pointer on created future
      */
-    private native long qiFutureThen(long future, Function<Future<T>, ?> futureFunction);
+    private native Object qiFutureThen(long future, Function<Future<T>, ?> futureFunction);
 
     /**
      * Call native future <b>then</b> for Consumer(Future&lt;P&gt;)
@@ -125,7 +119,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
      *            Function to callback
      * @return Pointer on created future
      */
-    private native long qiFutureThenVoid(long future, Consumer<Future<T>> futureFunction);
+    private native Object qiFutureThenVoid(long future, Consumer<Future<T>> futureFunction);
 
     /**
      * Call native future <b>then</b> for
@@ -137,7 +131,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
      *            Function to callback
      * @return Pointer on created future
      */
-    private native long qiFutureThenUnwrap(long future, Function<Future<T>, ?> futureOfFutureFunction);
+    private native Object qiFutureThenUnwrap(long future, Function<Future<T>, ?> futureOfFutureFunction);
 
     /**
      * Default callback type
@@ -156,7 +150,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
     Future(final long pFuture) {
         this._fut = pFuture;
         this.continuationSpecified = new AtomicBoolean(false);
-        this.qiFutureThenVoid(this._fut, new ReportBugConsumer<T>());
+        this.connect(new ReportBugCallback());
     }
 
     /**
@@ -386,8 +380,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
         }
 
         this.continuationSpecified.set(true);
-        final long futurePointer = this.qiFutureThen(this._fut, function);
-        return new Future<R>(futurePointer);
+        return (Future<R>)this.qiFutureThen(this._fut, function);
     }
 
     /**
@@ -406,8 +399,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
         }
 
         this.continuationSpecified.set(true);
-        final long futurePointer = this.qiFutureThenVoid(this._fut, consumer);
-        return new Future<Void>(futurePointer);
+        return (Future<Void>)this.qiFutureThenVoid(this._fut, consumer);
     }
 
     /**
@@ -430,8 +422,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
         }
 
         this.continuationSpecified.set(true);
-        final long pointer = this.qiFutureThenUnwrap(this._fut, function);
-        return new Future<R>(pointer);
+        return (Future<R>) this.qiFutureThenUnwrap(this._fut, function);
     }
 
     /**
@@ -451,8 +442,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
         }
 
         this.continuationSpecified.set(true);
-        final long futurePointer = this.qiFutureAndThen(this._fut, function);
-        return new Future<R>(futurePointer);
+        return (Future<R>) this.qiFutureAndThen(this._fut, function);
     }
 
     /**
@@ -470,8 +460,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
         }
 
         this.continuationSpecified.set(true);
-        final long futurePointer = this.qiFutureAndThenVoid(this._fut, consumer);
-        return new Future<Void>(futurePointer);
+        return (Future<Void>) this.qiFutureAndThenVoid(this._fut, consumer);
     }
 
     /**
@@ -493,8 +482,7 @@ public class Future<T> implements java.util.concurrent.Future<T> {
         }
 
         this.continuationSpecified.set(true);
-        final long pointer = this.qiFutureAndThenUnwrap(this._fut, function);
-        return new Future<R>(pointer);
+        return (Future<R>) this.qiFutureAndThenUnwrap(this._fut, function);
     }
 
     /**

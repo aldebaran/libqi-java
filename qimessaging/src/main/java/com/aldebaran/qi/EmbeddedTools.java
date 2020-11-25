@@ -35,10 +35,10 @@ class EmbeddedTools {
     static native void initTypeSystem();
 
     /// Static instance definition
-    private static AtomicBoolean embeddedLibrariesLoaded = new AtomicBoolean();
+    private static Boolean embeddedLibrariesLoaded = Boolean.FALSE;
 
     private static void log(LogLevel level, String message) {
-        LogReport.log(level, String.format("{}: {}", LOADER_LOG_PREFIX, message));
+        LogReport.log(level, String.format("%s: %s", LOADER_LOG_PREFIX, message));
     }
 
     /**
@@ -182,7 +182,7 @@ class EmbeddedTools {
                         @Override
                         public void consume(Throwable gnuLoadError) {
                             throw new UnsatisfiedLinkError(String.format(
-                                    "{}: unable to load c++ standard library, c++_shared reason: {}, gnustl_shared reason: {}",
+                                    "%s: unable to load c++ standard library, c++_shared reason: %s, gnustl_shared reason: %s",
                                     LOADER_LOG_PREFIX, cppLoadError.getMessage(), gnuLoadError.getMessage()
                             ));
                         }
@@ -219,8 +219,9 @@ class EmbeddedTools {
         }
     }
 
-    static void loadEmbeddedLibraries() {
-        if (embeddedLibrariesLoaded.compareAndSet(false, true)) {
+    static synchronized void loadEmbeddedLibraries() {
+        if (!embeddedLibrariesLoaded) {
+            embeddedLibrariesLoaded = Boolean.TRUE;
             log(LogLevel.INFORMATION, "starting native libraries loading.");
             tryLoadLibraries();
             log(LogLevel.INFORMATION, "starting type system initialization.");

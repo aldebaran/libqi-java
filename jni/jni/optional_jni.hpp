@@ -3,6 +3,7 @@
 #define QI_JAVA_JNI_OPTIONAL_HPP
 
 #include <jni.h>
+#include "jnitools.hpp"
 
 struct OptionalInitFromInstance{};
 struct OptionalInitFromValue{};
@@ -28,7 +29,7 @@ class JNIOptional
 
     ~JNIOptional();
 
-    jobject value() const;
+    qi::jni::ScopedJObject<jobject> value() const;
     
     bool hasValue() const;
 

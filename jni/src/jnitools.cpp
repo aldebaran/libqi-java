@@ -80,10 +80,20 @@ void forwardToJavaLogReport(const qi::LogLevel verb,
   // Do nothing if the LogReport Java class could not be loaded.
   if(!msg || !LogReportClass)
      return;
-  qi::jni::JNIAttach attach;
-  auto* const env = attach.get();
-  const auto message = ka::scoped(env->NewStringUTF(msg), qi::jni::releaseString);
-  env->CallStaticVoidMethod(LogReportClass, jniLog, static_cast<jint>(verb), message.value);
+
+  try
+  {
+    qi::jni::JNIAttach attach;
+    auto* const env = attach.get();
+    const auto message = ka::scoped(env->NewStringUTF(msg), qi::jni::releaseString);
+    env->CallStaticVoidMethod(LogReportClass, jniLog, static_cast<jint>(verb), message.value);
+    qi::jni::handlePendingException(*env);
+  }
+  catch (...)
+  {
+    // If the log fails, there is no fallback. The Java VM might be shutting down.
+    // We decide to just ignore the log.
+  }
 }
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* virtualMachine, void* QI_UNUSED(reserved))
@@ -97,7 +107,9 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* virtualMachine, void* QI_UNUSED(reserv
 
 JNIEXPORT void JNICALL JNI_OnUnload(JavaVM* QI_UNUSED(vm), void* QI_UNUSED(reserved))
 {
-  qi::getEventLoop()->setEmergencyCallback({}); // reset the emergency callback
+  const auto eventLoop = qi::getEventLoop();
+  if(eventLoop != nullptr)
+    eventLoop->setEmergencyCallback({}); // reset the emergency callback
   javaVirtualMachine = nullptr;
 }
 
@@ -417,7 +429,7 @@ std::string propertyBaseSignature(JNIEnv *env, jclass propertyBase)
   if (env->IsAssignableFrom(propertyBase, cls_anyobject))
     return { static_cast<char>(qi::Signature::Type_Object) };
   if (env->IsAssignableFrom(propertyBase, cls_double))
-    return { static_cast<char>(qi::Signature::Type_Float) };
+    return { static_cast<char>(qi::Signature::Type_Double) };
   if (env->IsAssignableFrom(propertyBase, cls_byte_array) || env->IsAssignableFrom(propertyBase, cls_bytebuffer))
     return { static_cast<char>(qi::Signature::Type_Raw) };
   if (env->IsAssignableFrom(propertyBase, cls_map))
@@ -606,6 +618,11 @@ namespace qi {
     // Get JNI environment pointer, valid in current thread.
     JNIEnv*     env()
     {
+      if(!javaVirtualMachine)
+      {
+          qiLogError() << "Cannot get JNI environment, the java virtual machine is null.";
+          return nullptr;
+      }
       JNIEnv* env = 0;
 
       javaVirtualMachine->GetEnv(reinterpret_cast<void**>(&env), QI_JNI_MIN_VERSION);

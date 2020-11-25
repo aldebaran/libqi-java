@@ -68,10 +68,15 @@ qi_create_lib(
 qi_stage_lib(qimessagingjni)
 
 if (NOT ANDROID)
+
    qi_create_gtest(
      test_qijni
 
      "test/test_qijni.cpp"
+     "test/test_futurejni.cpp"
+     "test/test_common.cpp"
+
+     ARGUMENTS "${CMAKE_CURRENT_LIST_DIR}/../qimessaging/target/classes"
 
      DEPENDS
      jni

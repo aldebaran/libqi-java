@@ -61,6 +61,11 @@ public class SignatureUtilities {
     public static final String OBJECT = "o";
 
     /**
+     * Libqi Dynamic signature
+     */
+    public static final String DYNAMIC = "m";
+
+    /**
      * Compute libqi signature for given method
      *
      * @param method
@@ -327,7 +332,7 @@ public class SignatureUtilities {
                 stringBuilder.append(")");
             }
             else if (Tuple.class.isAssignableFrom(clazz)) {
-                throw new IllegalArgumentException(clazz.getName() + " not annotated as " + QiStruct.class.getName());
+                stringBuilder.append(SignatureUtilities.DYNAMIC);
             }
             else {
                 stringBuilder.append(SignatureUtilities.OBJECT);

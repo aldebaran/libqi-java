@@ -19,7 +19,7 @@ JNITuple::JNITuple(jobject obj)
   _obj = obj;
 }
 
-int JNITuple::size()
+int JNITuple::size() const
 {
   jmethodID mid = _env->GetMethodID(cls_tuple, "size", "()I");
 
@@ -32,7 +32,7 @@ int JNITuple::size()
   return _env->CallIntMethod(_obj, mid);
 }
 
-jobject JNITuple::get(int index)
+qi::jni::ScopedJObject<jobject> JNITuple::get(int index) const
 {
   jmethodID mid = _env->GetMethodID(cls_tuple, "get", "(I)Ljava/lang/Object;");
 
@@ -42,7 +42,7 @@ jobject JNITuple::get(int index)
     throw std::runtime_error("JNITuple : Cannot call method get(I)Ljava/lang/Object;");
   }
 
-  return _env->CallObjectMethod(_obj, mid, index);
+  return qi::jni::scopeJObject(_env->CallObjectMethod(_obj, mid, index));
 }
 
 void JNITuple::set(int index, jobject obj)
@@ -58,7 +58,7 @@ void JNITuple::set(int index, jobject obj)
   _env->CallVoidMethod(_obj, mid, index, obj);
 }
 
-jobject JNITuple::object()
+jobject JNITuple::object() const
 {
   return _obj;
 }

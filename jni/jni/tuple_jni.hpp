@@ -11,6 +11,7 @@
 #define _JAVA_JNI_TUPLE_HPP_
 
 #include <jni.h>
+#include "jnitools.hpp"
 
 /**
  * @brief The JNITuple class Helper class to manipulate com.aldebaran.qimessaging.Tuple classes.
@@ -20,10 +21,11 @@ class JNITuple
   public:
     JNITuple(jobject obj);
 
-    int size();
-    jobject get(int index);
+    int size() const;
+    qi::jni::ScopedJObject<jobject> get(int index) const;
+
     void set(int index, jobject obj);
-    jobject object();
+    jobject object() const;
 
   private:
 

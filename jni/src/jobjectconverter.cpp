@@ -301,8 +301,8 @@ qi::AnyReference AnyValue_from_JObject_List(jobject val)
   res.reserve(size);
   for (int i = 0; i < size; i++)
   {
-    jobject current = list.get(i);
-    std::pair<qi::AnyReference, bool> conv = AnyValue_from_JObject(current);
+    const auto current = list.get(i);
+    const auto conv = AnyValue_from_JObject(current.value);
     res.push_back(qi::AnyValue(conv.first, !conv.second, true));
   }
 
@@ -358,10 +358,10 @@ qi::AnyReference AnyValue_from_JObject_Map(jobject hashmap)
   int size = env->GetArrayLength(keys);
   for (int i = 0; i < size; ++i)
   {
-    jobject key = env->GetObjectArrayElement(keys, i);
-    jobject value = map.get(key);
-    std::pair<qi::AnyReference, bool> convKey = AnyValue_from_JObject(key);
-    std::pair<qi::AnyReference, bool> convValue = AnyValue_from_JObject(value);
+    const auto key = qi::jni::scopeJObject(env->GetObjectArrayElement(keys, i));
+    const auto value = qi::jni::scopeJObject(map.get(key.value));
+    const auto convKey = AnyValue_from_JObject(key.value);
+    const auto convValue = AnyValue_from_JObject(value.value);
     res[qi::AnyValue(convKey.first, !convKey.second, true)] = qi::AnyValue(convValue.first, !convValue.second, true);
   }
   return qi::AnyReference::from(res);
@@ -375,13 +375,13 @@ qi::AnyReference AnyValue_from_JObject_Tuple(jobject val)
   std::vector<qi::AnyReference> toFree;
   while (i < tuple.size())
   {
-    std::pair<qi::AnyReference, bool> convValue = AnyValue_from_JObject(tuple.get(i));
+    const auto convValue = AnyValue_from_JObject(tuple.get(i).value);
     elements.push_back(convValue.first);
     if (convValue.second)
       toFree.push_back(convValue.first);
     i++;
   }
-  qi::AnyReference res = qi::makeGenericTuple(elements); // copies
+  auto res = qi::makeGenericTuple(elements); // copies
   for (unsigned i=0; i<toFree.size(); ++i)
     toFree[i].destroy();
   return res;
@@ -394,7 +394,7 @@ qi::AnyReference AnyValue_from_JObject_Optional(jobject val)
   std::unique_ptr<boost::optional<qi::AnyValue>> res(new boost::optional<qi::AnyValue>());
 
   if(optional.hasValue()){
-    auto convValue = AnyValue_from_JObject(optional.value());
+    const auto convValue = AnyValue_from_JObject(optional.value().value);
     *res = qi::AnyValue(convValue.first, !convValue.second, true);
   }
 

@@ -43,10 +43,9 @@ JNIOptional::JNIOptional(OptionalInitFromValue, jobject value)
 
 JNIOptional::~JNIOptional() {
   qi::jni::releaseObject(_obj);
-  
 }
 
-jobject JNIOptional::value() const
+qi::jni::ScopedJObject<jobject> JNIOptional::value() const
 {
   jmethodID mid = _env->GetMethodID(cls_optional, "get", "()Ljava/lang/Object;");
 
@@ -60,8 +59,8 @@ jobject JNIOptional::value() const
   auto handle = ka::scoped([&](){
     qi::jni::handlePendingException(*_env);
   });
-  
-  return _env->CallObjectMethod(_obj, mid);
+
+  return qi::jni::scopeJObject(_env->CallObjectMethod(_obj, mid));
 }
 
 bool JNIOptional::hasValue() const

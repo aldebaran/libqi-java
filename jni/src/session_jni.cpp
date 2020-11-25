@@ -20,6 +20,7 @@
 #include <jni/object_jni.hpp>
 #include <jni/callbridge.hpp>
 #include <jni/jobjectconverter.hpp>
+#include <jni/future_jni.hpp>
 
 #include <qi/messaging/clientauthenticator.hpp>
 #include <qi/messaging/clientauthenticatorfactory.hpp>
@@ -54,7 +55,7 @@ static void adaptFuture(qi::Future<void> f, qi::Promise<qi::AnyValue> p)
     p.setValue(qi::AnyValue(qi::typeOf<void>()));
 }
 
-JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Session_qiSessionConnect(JNIEnv *env, jobject QI_UNUSED(obj), jlong pSession, jstring jurl)
+JNIEXPORT jobject JNICALL Java_com_aldebaran_qi_Session_qiSessionConnect(JNIEnv *env, jobject QI_UNUSED(obj), jlong pSession, jstring jurl)
 {
   if (pSession == 0)
   {
@@ -64,9 +65,9 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Session_qiSessionConnect(JNIEnv *e
 
   // After this function return, callbacks are going to be set on new created Future.
   // Save the JVM pointer here to avoid big issues when callbacks will be called.
-  qi::Future<qi::AnyValue> *fref = new qi::Future<qi::AnyValue>();
   qi::Promise<qi::AnyValue> promise;
-  *fref = promise.future();
+  auto fut = toJavaFuture(env, promise.future());
+
   qi::Session *s = reinterpret_cast<qi::Session*>(pSession);
   try
   {
@@ -77,18 +78,18 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Session_qiSessionConnect(JNIEnv *e
   {
     promise.setError(e.what());
   }
-  return (jlong) fref;
+  return env->NewLocalRef(fut.value);
 }
 
-JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Session_qiSessionClose(JNIEnv *QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pSession)
+JNIEXPORT jobject JNICALL Java_com_aldebaran_qi_Session_qiSessionClose(JNIEnv *env, jobject QI_UNUSED(obj), jlong pSession)
 {
   qi::Session *session = reinterpret_cast<qi::Session*>(pSession);
   qi::Future<void> closeFuture = session->close();
-  auto futurePtr = new qi::Future<void>(std::move(closeFuture));
-  return reinterpret_cast<jlong>(futurePtr);
+  auto fut = toJavaFuture(env, closeFuture);
+  return env->NewLocalRef(fut.value);
 }
 
-JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Session_service(JNIEnv *env, jobject QI_UNUSED(obj), jlong pSession, jstring jname)
+JNIEXPORT jobject JNICALL Java_com_aldebaran_qi_Session_service(JNIEnv *env, jobject QI_UNUSED(obj), jlong pSession, jstring jname)
 {
   qi::Session *s = reinterpret_cast<qi::Session*>(pSession);
   std::string serviceName = qi::jni::toString(jname);
@@ -98,8 +99,8 @@ JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Session_service(JNIEnv *env, jobje
     qi::Future<qi::AnyObject> serviceFuture = s->service(serviceName);
     // qiFutureCallGet() requires that the future returns a qi::AnyValue
     qi::Future<qi::AnyValue> future = qi::toAnyValueFuture(std::move(serviceFuture));
-    auto futurePtr = new qi::Future<qi::AnyValue>(std::move(future));
-    return reinterpret_cast<jlong>(futurePtr);
+    auto fut = toJavaFuture(env, future);
+    return env->NewLocalRef(fut.value);
   }
   catch (std::runtime_error &e)
   {
@@ -135,13 +136,13 @@ JNIEXPORT jint JNICALL Java_com_aldebaran_qi_Session_registerService(JNIEnv *env
   return ret;
 }
 
-JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Session_unregisterService(JNIEnv *QI_UNUSED(env), jobject QI_UNUSED(obj), jlong pSession, jint serviceId)
+JNIEXPORT jobject JNICALL Java_com_aldebaran_qi_Session_unregisterService(JNIEnv *env, jobject QI_UNUSED(obj), jlong pSession, jint serviceId)
 {
   qi::Session*    session = reinterpret_cast<qi::Session*>(pSession);
   unsigned int    id = static_cast<unsigned int>(serviceId);
   qi::Future<void> unregisterFuture = session->unregisterService(id);
-  auto futurePtr = new qi::Future<void>(std::move(unregisterFuture));
-  return reinterpret_cast<jlong>(futurePtr);
+  auto fut = toJavaFuture(env, unregisterFuture);
+  return env->NewLocalRef(fut.value);
 }
 
 JNIEXPORT void JNICALL Java_com_aldebaran_qi_Session_onDisconnected(JNIEnv *env, jobject jobj, jlong pSession, jstring jcallbackName, jobject jobjectInstance)
@@ -290,13 +291,13 @@ JNIEXPORT void JNICALL Java_com_aldebaran_qi_Session_endpoints(JNIEnv * env, job
  * @param obj Object Java instance.
  * @param pointerSession Pointer on current session
  * @param jServiceName Service name to wait its connection
- * @return Pointer on future to track/link the connection
+ * @return Future java object to track/link the connection
  */
-JNIEXPORT jlong JNICALL Java_com_aldebaran_qi_Session_waitForService(JNIEnv * env, jobject obj, jlong pointerSession,  jstring jServiceName)
+JNIEXPORT jobject JNICALL Java_com_aldebaran_qi_Session_waitForService(JNIEnv * env, jobject obj, jlong pointerSession,  jstring jServiceName)
 {
   qi::Session* session = reinterpret_cast<qi::Session*>(pointerSession);
   std::string serviceName = qi::jni::toString(jServiceName);
   qi::Future<void> waitForServiceFuture = session->waitForService(serviceName);
-  auto futurePtr = new qi::Future<void>(std::move(waitForServiceFuture));
-  return reinterpret_cast<jlong>(futurePtr);
+  auto fut = toJavaFuture(env, waitForServiceFuture);
+  return env->NewLocalRef(fut.value);
 }

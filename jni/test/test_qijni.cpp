@@ -1,92 +1,13 @@
 #include <gtest/gtest.h>
 #include <boost/algorithm/string/replace.hpp>
-#include <jni.h>
 #include <ka/errorhandling.hpp>
-#include <qi/type/dynamicobjectbuilder.hpp>
-#include <qi/property.hpp>
-#include <jni/jnitools.hpp>
 #include <jni/jobjectconverter.hpp>
 #include <jni/object.hpp>
 #include <jni/objectbuilder.hpp>
 
+#include "test_common.hpp"
+
 qiLogCategory("qimessaging.jni.test");
-
-namespace qi { namespace jni { namespace test
-{
-
-namespace
-{
-  /// Procedure<jint()> Proc
-  /// OStreamable O
-  template<typename Proc, typename O = const char*>
-  void assertSuccess(Proc&& p, O&& errorPrefix = {})
-  {
-    const auto status = std::forward<Proc>(p)();
-    if (status != JNI_OK)
-      FAIL() << std::forward<O>(errorPrefix) << "Status: " << errorToString(status);
-  }
-}
-
-class Environment : public ::testing::Environment
-{
-  void SetUp() override
-  {
-    JavaVMOption options[1];
-    JavaVMInitArgs vm_args;
-
-    char classPathDefinition[] = "-Djava.class.path=.";
-    options[0].optionString = classPathDefinition;
-    memset(&vm_args, 0, sizeof(vm_args));
-    vm_args.version = QI_JNI_MIN_VERSION;
-    vm_args.nOptions = 1;
-    vm_args.options = options;
-    assertSuccess(
-      [&]{ return JNI_CreateJavaVM(&javaVM, reinterpret_cast<void**>(&jniEnv), &vm_args); },
-      "Failed to create the Java virtual machine.");
-    assertSuccess(
-      [&]{ return javaVM->AttachCurrentThread(reinterpret_cast<void**>(&jniEnv), nullptr); },
-      "Failed to attach current thread.");
-
-    // Real Java apps will always call this when loading the library.
-    ASSERT_NO_THROW(EXPECT_EQ(QI_JNI_MIN_VERSION, JNI_OnLoad(javaVM, nullptr)));
-    ASSERT_NO_THROW(Java_com_aldebaran_qi_EmbeddedTools_initTypeSystem(jniEnv));
-  }
-
-  void TearDown() override
-  {
-    ASSERT_NO_THROW(JNI_OnUnload(javaVM, nullptr));
-
-    jniEnv = nullptr;
-    if (const auto localJavaVM = ka::exchange(javaVM, nullptr))
-    {
-      assertSuccess([&]{ return localJavaVM->DetachCurrentThread(); },
-                    "Failed to detach current thread.");
-      assertSuccess([&]{ return localJavaVM->DestroyJavaVM(); },
-                    "Failed to destroy the Java virtual machine.");
-    }
-  }
-
-public:
-  JavaVM* javaVM = nullptr;
-  JNIEnv* jniEnv = nullptr;
-};
-
-Environment* environment = nullptr;
-
-namespace
-{
-
-template <typename T>
-AnyObject makeObjectWithProperty(const std::string& propertyName, Property<T>& property)
-{
-  DynamicObjectBuilder objectBuilder;
-  objectBuilder.advertiseProperty(propertyName, &property);
-  return objectBuilder.object();
-}
-
-} // anonymous namespace
-
-}}} // namespace jni::test
 
 using namespace qi;
 using namespace qi::jni;
@@ -97,7 +18,7 @@ int main(int argc, char** argv)
   log::addFilter("qimessaging.jni", LogLevel_Debug);
   ::testing::InitGoogleTest(&argc, argv);
   test::environment =
-    static_cast<test::Environment*>(::testing::AddGlobalTestEnvironment(new test::Environment));
+    static_cast<test::Environment*>(::testing::AddGlobalTestEnvironment(new test::Environment(argc, argv)));
   return RUN_ALL_TESTS();
 }
 
@@ -204,6 +125,37 @@ TEST(QiJNI, dynamicObjectBuilderAdvertiseMethodVoidVoid)
         toJstring(javaObjectClassName),
         toJstring("Whatever"));
   ASSERT_FALSE(test::environment->jniEnv->ExceptionCheck());
+}
+
+TEST(QiJNI, dynamicObjectBuilderAdvertizePropertyDoubleMaxValue)
+{
+    // Creates a builder
+    const auto propertyName = "doubleProperty";
+    const auto propertyClass = test::environment->jniEnv->FindClass("java/lang/Double");
+    ASSERT_NE(nullptr, propertyClass);
+    const auto objectBuilderAddress = Java_com_aldebaran_qi_DynamicObjectBuilder_create(test::environment->jniEnv, nullptr);
+
+    // Adds a Double property
+    test::environment->jniEnv->ExceptionClear();
+    Java_com_aldebaran_qi_DynamicObjectBuilder_advertiseProperty(
+                test::environment->jniEnv, jobject{},
+                objectBuilderAddress,
+                toJstring(propertyName),
+                propertyClass);
+    ASSERT_FALSE(test::environment->jniEnv->ExceptionCheck());
+
+    // Sets the property
+    auto* castedBuilderAddress = reinterpret_cast<qi::DynamicObjectBuilder*>(objectBuilderAddress);
+    auto builderObject = castedBuilderAddress->object();
+    ASSERT_TRUE(builderObject.isValid());
+    const auto maxValueId = test::environment->jniEnv->GetStaticFieldID(propertyClass, "MAX_VALUE", "D");
+    const auto maxValue = test::environment->jniEnv->GetStaticDoubleField(propertyClass, maxValueId);
+    builderObject.setProperty(propertyName, maxValue);
+
+    // Checks the property's value is correct
+    auto propertyValueFut = builderObject.property<double>(propertyName);
+    const auto propertyValue = propertyValueFut.value();
+    ASSERT_TRUE(propertyValue == std::numeric_limits<double>::max());
 }
 
 TEST(QiJNI, className)

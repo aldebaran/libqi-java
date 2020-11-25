@@ -39,17 +39,17 @@ public class Session {
 
     private native void qiSessionDestroy(long pSession);
 
-    private native long qiSessionConnect(long pSession, String url);
+    private native Object qiSessionConnect(long pSession, String url);
 
     private native boolean qiSessionIsConnected(long pSession);
 
-    private native long qiSessionClose(long pSession);
+    private native Object qiSessionClose(long pSession);
 
-    private native long service(long pSession, String name);
+    private native Object service(long pSession, String name);
 
     private native int registerService(long pSession, String name, AnyObject obj);
 
-    private native long unregisterService(long pSession, int idx);
+    private native Object unregisterService(long pSession, int idx);
 
     private native void onDisconnected(long pSession, String callback, Object obj);
 
@@ -59,7 +59,7 @@ public class Session {
 
     private native void loadService(long pSession, String name);
 
-    private native long waitForService(long pointerSession, String serviceName);
+    private native Object waitForService(long pointerSession, String serviceName);
 
     /**
      * List of URL session endpoints.
@@ -105,8 +105,7 @@ public class Session {
      * @throws Exception on error.
      */
     public Future<Void> connect(String serviceDirectoryAddress) {
-        long pFuture = qiSessionConnect(_session, serviceDirectoryAddress);
-        return new Future<Void>(pFuture);
+        return (Future<Void>)(qiSessionConnect(_session, serviceDirectoryAddress));
     }
 
     /**
@@ -116,8 +115,7 @@ public class Session {
      * @return the AnyObject future
      */
     public Future<AnyObject> service(String name) {
-        long pFuture = service(_session, name);
-        return new Future<AnyObject>(pFuture);
+        return (Future<AnyObject>)(service(_session, name));
     }
 
     /**
@@ -126,8 +124,7 @@ public class Session {
      * @return Future to track/linked the effective close
      */
     public Future<Void> close() {
-        final long pFuture = qiSessionClose(this._session);
-        return new Future<Void>(pFuture);
+        return (Future<Void>)(qiSessionClose(this._session));
     }
 
     /**
@@ -160,8 +157,7 @@ public class Session {
      * @see #registerService(String, AnyObject)
      */
     public Future<Void> unregisterService(int idx) {
-        final long pFuture = unregisterService(this._session, idx);
-        return new Future<Void>(pFuture);
+        return (Future<Void>)(unregisterService(this._session, idx));
     }
 
     @Deprecated
@@ -256,7 +252,6 @@ public class Session {
      * @return Future to track/link service connection
      */
     public Future<Void> waitForService(String serviceName) {
-        final long pFuture = this.waitForService(this._session, serviceName);
-        return new Future<Void>(pFuture);
+        return (Future<Void>)(this.waitForService(this._session, serviceName));
     }
 }

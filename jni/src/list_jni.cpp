@@ -45,7 +45,7 @@ int JNIList::size()
   return _env->CallIntMethod(_obj, mid);
 }
 
-jobject JNIList::get(int index)
+qi::jni::ScopedJObject<jobject> JNIList::get(int index)
 {
   jmethodID mid = _env->GetMethodID(cls_list, "get", "(I)Ljava/lang/Object;");
 
@@ -55,7 +55,7 @@ jobject JNIList::get(int index)
     throw std::runtime_error("JNIList::get() : Cannot call get()");
   }
 
-  return _env->CallObjectMethod(_obj, mid, index);
+  return qi::jni::scopeJObject(_env->CallObjectMethod(_obj, mid, index));
 }
 
 jobject JNIList::object()
